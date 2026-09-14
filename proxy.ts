@@ -1,0 +1,3 @@
+import { NextResponse, type NextRequest } from 'next/server'
+export function proxy(request:NextRequest){const requestId=request.headers.get('x-request-id')??`req_${crypto.randomUUID().slice(0,12)}`;const traceId=request.headers.get('x-trace-id')??`trace_${crypto.randomUUID().replaceAll('-','').slice(0,24)}`;const headers=new Headers(request.headers);headers.set('x-request-id',requestId);headers.set('x-trace-id',traceId);const response=NextResponse.next({request:{headers}});response.headers.set('x-request-id',requestId);response.headers.set('x-trace-id',traceId);return response}
+export const config={matcher:['/api/:path*','/admin/:path*']}

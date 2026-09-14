@@ -1,0 +1,6 @@
+import Image from 'next/image'
+import { notFound } from 'next/navigation'
+import { StorefrontShell } from '@/components/storefront/storefront-shell'
+import { articles } from '@/lib/mock-data'
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const article=articles.find(a=>a.slug===slug);return{title:article?.title||'Guia',description:article?.excerpt}}
+export default async function ArticlePage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const article=articles.find(a=>a.slug===slug);if(!article)notFound();return <StorefrontShell><article className="content-prose"><div className="breadcrumbs">Guias / {article.category}</div><div className="kicker">{article.category.toUpperCase()} · {article.readTime}</div><h1>{article.title}</h1><p style={{fontSize:20}}>{article.excerpt}</p><div className="article-image" style={{aspectRatio:'16/9',margin:'35px 0'}}><Image src={article.image} alt="Imagem de abertura do artigo" fill/></div>{article.content.map((p,i)=><p key={i}>{p}</p>)}<h2>Em resumo</h2><p>Priorize o uso real, compare o custo total e desconfie de urgência artificial. As referências citadas neste protótipo são apenas demonstrativas.</p></article></StorefrontShell>}

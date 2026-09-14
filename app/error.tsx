@@ -1,0 +1,2 @@
+'use client'
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){return <main className="not-found"><div><div className="kicker">ALGO NÃO SAIU COMO ESPERADO</div><h1>Não conseguimos carregar esta descoberta.</h1><p>Tente novamente. Nenhum dado real foi perdido neste protótipo.</p><button className="btn primary" onClick={reset}>Tentar novamente</button></div></main>}
