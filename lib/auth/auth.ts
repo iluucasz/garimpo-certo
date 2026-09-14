@@ -38,6 +38,15 @@ export const auth = betterAuth({
   },
   account: {
     modelName: 'accounts',
+    // Mesmo e-mail = mesma conta: entrar com o Google vincula à conta de e-mail/senha existente
+    // (e vice-versa), e a pessoa pode usar os dois métodos. Como ainda não há envio de e-mail de
+    // verificação, as contas de senha nunca ficam com emailVerified=true — sem desligar
+    // requireLocalEmailVerified o Better Auth recusaria o vínculo com "account_not_linked".
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['google'],
+      requireLocalEmailVerified: false,
+    },
     fields: {
       accessToken: 'accessTokenEncrypted',
       refreshToken: 'refreshTokenEncrypted',
