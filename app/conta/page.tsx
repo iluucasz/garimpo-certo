@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
-import { ArrowRight, ArrowUpRight, Bookmark, Check, ChevronRight, Clock3, GitCompareArrows, Heart, LockKeyhole, LogOut, Search, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronRight, Clock3, GitCompareArrows, Heart, LockKeyhole, LogOut, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
 import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
@@ -29,7 +29,7 @@ export default function AccountPage() {
   useEffect(() => {
     const syncSection = () => {
       const section = window.location.hash.slice(1)
-      if (['perfil', 'preferencias', 'buscas'].includes(section)) setActiveSection(section)
+      if (['perfil', 'preferencias'].includes(section)) setActiveSection(section)
     }
     syncSection()
     window.addEventListener('hashchange', syncSection)
@@ -74,7 +74,6 @@ export default function AccountPage() {
   const sections = [
     { id: 'perfil', label: 'Meu perfil', icon: UserRound },
     { id: 'preferencias', label: 'Preferências', icon: SlidersHorizontal },
-    { id: 'buscas', label: 'Buscas salvas', icon: Bookmark },
   ]
   const shortcuts = [
     { href: '/favoritos', label: 'Seus favoritos', count: state.favorites.length, caption: 'Ver produtos salvos', icon: Heart },
@@ -117,10 +116,7 @@ export default function AccountPage() {
             <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
           </section>
 
-          <section className={styles.panel} id="buscas" aria-labelledby="searches-title"><div className={styles.panelHeader}><div><span className={styles.sectionLabel}>PARA RETOMAR DEPOIS</span><h2 id="searches-title">Suas buscas salvas</h2><p>Volte direto ao que você estava procurando.</p></div><span className={styles.savedCount}>{state.savedSearches.length}</span></div>
-            {state.savedSearches.length ? <ul className={styles.savedList}>{state.savedSearches.map((search) => <li key={search}><Link href={`/buscar?q=${encodeURIComponent(search)}`}><Search aria-hidden="true"/>{search}<ArrowUpRight aria-hidden="true"/></Link><button type="button" aria-label={`Excluir busca ${search}`} onClick={() => state.removeSavedSearch(search)}><Trash2 aria-hidden="true"/></button></li>)}</ul> : <div className={styles.emptySearches}><Bookmark aria-hidden="true"/><div><strong>Uma boa busca merece ficar por perto.</strong><p>Salve uma busca no catálogo para encontrá-la aqui quando quiser.</p><Link href="/buscar">Explorar o catálogo <ArrowRight aria-hidden="true"/></Link></div></div>}
-          </section>
-          <div className={styles.privacyNote}><ShieldCheck aria-hidden="true"/><p>Seus interesses e buscas salvas ficam neste navegador. <Link href="/privacidade">Gerenciar privacidade e cookies</Link></p></div>
+          <div className={styles.privacyNote}><ShieldCheck aria-hidden="true"/><p>Seus interesses ficam salvos neste navegador. <Link href="/privacidade">Gerenciar privacidade e cookies</Link></p></div>
         </div>
       </div>
     </div>

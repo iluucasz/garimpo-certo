@@ -85,20 +85,6 @@
 .switch[aria-checked=true] { background: #5b7548; }
 .switch[aria-checked=true] > span { transform: translateX(14px); }
 .autosave { display: flex; align-items: center; gap: 7px; padding: 13px 26px; margin: 0; border-top: 1px solid #e5e8dd; background: #f6f7f0; color: #657356; font-size: 13px; border-radius: 0 0 5px 5px; }
-.savedCount { display: grid; place-items: center; min-width: 25px; height: 25px; border-radius: 50%; background: #eeefe6; color: #657255; font-size: 14px; }
-.savedList { list-style: none; margin: 0; padding: 0 26px; }
-.savedList li { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 0; }
-.savedList li + li { border-top: 1px solid #e9ebdf; }
-.savedList a { display: flex; align-items: center; gap: 12px; font-size: 15px; color: #4c5b40; min-width: 0; overflow-wrap: anywhere; }
-.savedList a > svg:first-child { width: 15px; flex-shrink: 0; color: #7b8869; }
-.savedList a > svg:last-child { width: 12px; flex-shrink: 0; }
-.savedList button { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 0; border-radius: 3px; background: transparent; color: #79846c; cursor: pointer; }
-.savedList button:hover { background: #f4e8e0; color: #a24c30; }
-.emptySearches { padding: 28px 26px; display: flex; align-items: center; gap: 16px; }
-.emptySearches > svg { flex-shrink: 0; width: 33px; height: 33px; stroke-width: 1; color: #8a9579; }
-.emptySearches strong { display: block; font-size: 15px; color: #535f46; font-weight: 500; }
-.emptySearches p { margin: 6px 0 9px; font-size: 14px; line-height: 1.6; color: #657158; }
-.emptySearches a { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #536a40; }
 .privacyNote { display: flex; align-items: center; gap: 15px; padding: 4px 0; }
 .privacyNote > svg { width: 18px; height: 18px; color: #7a866b; flex-shrink: 0; }
 .privacyNote p { margin: 0; font-size: 14px; color: #657158; line-height: 1.7; }
@@ -150,7 +136,5 @@
   .communication { padding: 21px 18px; }
   .communication > p { line-height: 1.6; }
   .autosave { padding-inline: 18px; font-size: 13px; line-height: 1.5; }
-  .savedList { padding-inline: 18px; }
-  .emptySearches { padding: 24px 18px; align-items: flex-start; gap: 12px; }
   .privacyNote { align-items: flex-start; gap: 10px; }
 }
