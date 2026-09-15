@@ -3,11 +3,14 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
-import { Bell, Check, Clock3, GitCompareArrows, Heart, LogOut, Shield, Trash2 } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Bookmark, Check, ChevronRight, Clock3, GitCompareArrows, Heart, LockKeyhole, LogOut, Search, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from 'lucide-react'
 import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
+import { ContentSkeleton } from '@/components/storefront/store-loading'
 import { signOut, updateUser, useSession } from '@/lib/auth/client'
+import { formatPrice } from '@/lib/mock-data'
+import styles from './account.module.css'
 
 export default function AccountPage() {
   const state = useMock()
@@ -15,15 +18,48 @@ export default function AccountPage() {
   const router = useRouter()
   const { data: session, isPending } = useSession()
   const [name, setName] = useState('')
-  const [message, setMessage] = useState('')
+  const [feedback, setFeedback] = useState<{ text: string; error: boolean } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [sessionError, setSessionError] = useState('')
+  const [activeSection, setActiveSection] = useState('perfil')
 
   useEffect(() => { if (session?.user.name) setName(session.user.name) }, [session?.user.name])
-  useEffect(() => { if (!isPending && !session) router.push('/entrar') }, [isPending, session, router])
+  useEffect(() => { if (!isPending && !session && !leaving) router.replace('/entrar') }, [isPending, session, leaving, router])
+  useEffect(() => {
+    const syncSection = () => {
+      const section = window.location.hash.slice(1)
+      if (['perfil', 'preferencias', 'buscas'].includes(section)) setActiveSection(section)
+    }
+    syncSection()
+    window.addEventListener('hashchange', syncSection)
+    return () => window.removeEventListener('hashchange', syncSection)
+  }, [])
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault()
-    await updateUser({ name })
-    setMessage('Perfil atualizado.')
+    if (saving) return
+    if (!name.trim()) { setFeedback({ text: 'Preencha seu nome para salvar.', error: true }); return }
+    setSaving(true)
+    setFeedback(null)
+    try {
+      const result = await updateUser({ name: name.trim() })
+      if (result.error) { setFeedback({ text: result.error.message || 'Não foi possível salvar. Tente novamente.', error: true }); return }
+      setFeedback({ text: 'Seu perfil foi atualizado.', error: false })
+    } catch {
+      setFeedback({ text: 'Não foi possível salvar. Confira sua conexão e tente novamente.', error: true })
+    } finally { setSaving(false) }
+  }
+
+  async function leaveAccount() {
+    if (leaving) return
+    setLeaving(true)
+    setSessionError('')
+    try {
+      const result = await signOut()
+      if (result.error) { setSessionError('Não foi possível sair. Tente novamente.'); setLeaving(false); return }
+      router.replace('/')
+    } catch { setSessionError('Não foi possível sair. Confira sua conexão.'); setLeaving(false) }
   }
 
   function toggleCategory(category: string) {
@@ -31,17 +67,62 @@ export default function AccountPage() {
     state.savePreferences({ ...state.preferences, categories: selected ? state.preferences.categories.filter((item) => item !== category) : [...state.preferences.categories, category] })
   }
 
-  if (!session) return null
+  if (!session) return <StorefrontShell><ContentSkeleton variant="account"/></StorefrontShell>
+
+  const firstName = session.user.name.trim().split(/\s+/)[0] || 'visitante'
+  const initials = session.user.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'G'
+  const sections = [
+    { id: 'perfil', label: 'Meu perfil', icon: UserRound },
+    { id: 'preferencias', label: 'Preferências', icon: SlidersHorizontal },
+    { id: 'buscas', label: 'Buscas salvas', icon: Bookmark },
+  ]
+  const shortcuts = [
+    { href: '/favoritos', label: 'Seus favoritos', count: state.favorites.length, caption: 'Ver produtos salvos', icon: Heart },
+    { href: '/historico', label: 'Vistos recentemente', count: state.recent.length, caption: 'Retomar descobertas', icon: Clock3 },
+    { href: '/comparar', label: 'No comparador', count: state.compare.length, caption: 'Comparar produtos', icon: GitCompareArrows },
+  ]
 
   return <StorefrontShell>
-    <section className="page-hero container"><div className="kicker">CONTA</div><h1>Olá, {session.user.name}.</h1><p>Preferências de descoberta salvas neste navegador; sua conta e sessão são reais.</p></section>
-    <section className="container section" style={{ paddingTop: 10 }}>
-      <div className="stat-grid"><Link className="stat-card" href="/favoritos"><Heart/><span>Favoritos</span><strong>{state.favorites.length}</strong><small>Ver produtos salvos</small></Link><Link className="stat-card" href="/historico"><Clock3/><span>Vistos recentemente</span><strong>{state.recent.length}</strong><small>Revisar histórico</small></Link><Link className="stat-card" href="/comparar"><GitCompareArrows/><span>No comparador</span><strong>{state.compare.length}</strong><small>Comparar escolhas</small></Link><Link className="stat-card" href="/privacidade"><Shield/><span>Privacidade</span><strong>Local</strong><small>Gerenciar consentimento</small></Link></div>
-      <div className="admin-grid">
-        <div className="panel"><h2>Preferências de descoberta</h2><p>Escolha os temas que devem influenciar suas vitrines.</p><div className="preference-chips">{categories.map((category) => <button key={category.id} className={state.preferences.categories.includes(category.name) ? 'active' : ''} onClick={() => toggleCategory(category.name)}>{state.preferences.categories.includes(category.name) && <Check/>}{category.name}</button>)}</div><label>Faixa de preço preferida: até R$ {state.preferences.maxPrice.toLocaleString('pt-BR')}<input type="range" min="250" max="4000" step="50" value={state.preferences.maxPrice} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/></label><div className="toggle-row"><span><strong>Alertas de queda de preço</strong><small>Simulação local, sem envios.</small></span><button className={`toggle ${state.preferences.notifications ? 'on' : ''}`} aria-pressed={state.preferences.notifications} onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}/></div><div className="toggle-row"><span><strong>Resumo editorial semanal</strong><small>Preferência pronta para um mailer real.</small></span><button className={`toggle ${state.preferences.newsletter ? 'on' : ''}`} aria-pressed={state.preferences.newsletter} onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}/></div></div>
-        <form className="panel" onSubmit={saveProfile}><h2>Perfil</h2><div className="form-stack"><label>Nome<input className="input" value={name} onChange={(event) => setName(event.target.value)} required/></label><label>E-mail<input className="input" type="email" value={session.user.email} disabled/></label><button className="btn primary" type="submit">Salvar alterações</button><button className="btn secondary" type="button" onClick={async () => { await signOut(); router.push('/') }}><LogOut/> Sair da conta</button>{message && <p className="form-success" role="status">{message}</p>}</div></form>
+    <div className={`container ${styles.account}`}>
+      <nav className={styles.breadcrumb} aria-label="Caminho da página"><Link href="/">Início</Link><ChevronRight aria-hidden="true"/><span aria-current="page">Minha conta</span></nav>
+      <header className={styles.heading}><div><h1>Seu <em>Garimpo.</em></h1><p>Olá, {firstName}. Seus achados e preferências, em um só lugar.</p></div><Link className={styles.backLink} href="/buscar">Continuar explorando <ArrowUpRight aria-hidden="true"/></Link></header>
+      <div className={styles.layout}>
+        <aside className={styles.sidebar} aria-label="Sua conta">
+          <div className={styles.identity}><div className={styles.avatar} aria-hidden="true">{initials}</div><strong>{session.user.name}</strong><span>{session.user.email}</span></div>
+          <nav className={styles.navigation} aria-label="Seções da conta">{sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`} className={activeSection === id ? styles.current : ''} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setActiveSection(id)}><Icon aria-hidden="true"/>{label}</a>)}<Link href="/privacidade"><ShieldCheck aria-hidden="true"/>Privacidade<ArrowUpRight aria-hidden="true"/></Link></nav>
+          <button className={styles.signOut} type="button" disabled={leaving} onClick={leaveAccount}><LogOut aria-hidden="true"/>{leaving ? 'Saindo…' : 'Sair da conta'}</button>
+          {sessionError && <p className={styles.sessionError} role="alert">{sessionError}</p>}
+          <div className={styles.sidebarNote}><LockKeyhole aria-hidden="true"/><p>Você controla suas informações e as preferências da sua conta.</p></div>
+        </aside>
+
+        <div className={styles.content}>
+          <nav className={styles.shortcuts} aria-label="Suas descobertas">{shortcuts.map(({ href, label, count, caption, icon: Icon }) => <Link href={href} className={styles.shortcut} key={href}><div><span className={styles.shortcutLabel}><Icon aria-hidden="true"/>{label}</span><strong>{count.toLocaleString('pt-BR')}</strong><small>{caption}</small></div><ArrowUpRight aria-hidden="true"/></Link>)}</nav>
+
+          <section className={styles.panel} id="perfil" aria-labelledby="profile-title">
+            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>SEUS DADOS</span><h2 id="profile-title">Um pouco sobre você</h2><p>Como vamos chamar você por aqui.</p></div><UserRound aria-hidden="true"/></div>
+            <form className={styles.profileForm} onSubmit={saveProfile} aria-busy={saving}>
+              <div className={styles.fields}><label className={styles.field}>Seu nome<input name="name" autoComplete="name" value={name} onChange={(event) => { setName(event.target.value); setFeedback(null) }} required disabled={saving}/></label><label className={styles.field}>E-mail<input name="email" type="email" autoComplete="email" value={session.user.email} readOnly aria-describedby="email-help"/><small id="email-help">O e-mail de acesso não pode ser alterado por aqui.</small></label></div>
+              <div className={styles.formFooter}><span>As alterações serão salvas na sua conta.</span><button className={styles.saveButton} type="submit" disabled={saving || name.trim() === session.user.name}>{saving ? 'Salvando…' : 'Salvar alterações'}<Check aria-hidden="true"/></button></div>
+              {feedback && <p className={`${styles.formMessage} ${feedback.error ? styles.error : ''}`} role={feedback.error ? 'alert' : 'status'}>{!feedback.error && <Check aria-hidden="true"/>}{feedback.text}</p>}
+            </form>
+          </section>
+
+          <section className={styles.panel} id="preferencias" aria-labelledby="preferences-title">
+            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>DO SEU JEITO</span><h2 id="preferences-title">O que chama sua atenção?</h2><p>Ajuste seus interesses e a faixa de preço que você prefere.</p></div><SlidersHorizontal aria-hidden="true"/></div>
+            <div className={styles.preferences}>
+              <fieldset className={styles.categories}><legend>Seus interesses</legend><div className={styles.categoryOptions}>{categories.map((category) => { const selected = state.preferences.categories.includes(category.name); return <button className={styles.category} key={category.id} type="button" aria-pressed={selected} onClick={() => toggleCategory(category.name)}><span aria-hidden="true">{selected && <Check/>}</span>{category.name}</button> })}</div></fieldset>
+              <div className={styles.pricePreference}><div className={styles.priceHeading}><label htmlFor="preferred-price">Quanto você pretende gastar?</label><output htmlFor="preferred-price">Até {formatPrice(state.preferences.maxPrice)}</output></div><input id="preferred-price" type="range" min="250" max="4000" step="50" value={state.preferences.maxPrice} aria-valuetext={`Até ${formatPrice(state.preferences.maxPrice)}`} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/><div className={styles.rangeLabels}><span>R$ 250</span><span>R$ 4.000</span></div></div>
+            </div>
+            <div className={styles.communication}><h3>Alertas e novidades</h3><p>Preferências demonstrativas. Nenhum alerta ou e-mail será enviado.</p><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong><small>Interesse em alertas sobre produtos mais baratos.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong><small>Interesse em novidades e seleções editoriais.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
+            <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
+          </section>
+
+          <section className={styles.panel} id="buscas" aria-labelledby="searches-title"><div className={styles.panelHeader}><div><span className={styles.sectionLabel}>PARA RETOMAR DEPOIS</span><h2 id="searches-title">Suas buscas salvas</h2><p>Volte direto ao que você estava procurando.</p></div><span className={styles.savedCount}>{state.savedSearches.length}</span></div>
+            {state.savedSearches.length ? <ul className={styles.savedList}>{state.savedSearches.map((search) => <li key={search}><Link href={`/buscar?q=${encodeURIComponent(search)}`}><Search aria-hidden="true"/>{search}<ArrowUpRight aria-hidden="true"/></Link><button type="button" aria-label={`Excluir busca ${search}`} onClick={() => state.removeSavedSearch(search)}><Trash2 aria-hidden="true"/></button></li>)}</ul> : <div className={styles.emptySearches}><Bookmark aria-hidden="true"/><div><strong>Uma boa busca merece ficar por perto.</strong><p>Salve uma busca no catálogo para encontrá-la aqui quando quiser.</p><Link href="/buscar">Explorar o catálogo <ArrowRight aria-hidden="true"/></Link></div></div>}
+          </section>
+          <div className={styles.privacyNote}><ShieldCheck aria-hidden="true"/><p>Seus interesses e buscas salvas ficam neste navegador. <Link href="/privacidade">Gerenciar privacidade e cookies</Link></p></div>
+        </div>
       </div>
-      <div className="admin-grid"><div className="panel"><h2><Bell/> Buscas salvas</h2>{state.savedSearches.length ? state.savedSearches.map((search) => <div className="toggle-row" key={search}><Link href={`/buscar?q=${encodeURIComponent(search)}`}>{search}</Link><button className="icon-btn static" aria-label={`Excluir busca ${search}`} onClick={() => state.removeSavedSearch(search)}><Trash2/></button></div>) : <p>Salve uma busca na página de catálogo para vê-la aqui.</p>}</div><div className="panel"><h2>Avisos</h2><p>Notificações e alertas permanecem simulados. A interface e os contratos já separam preferências do futuro canal de entrega.</p></div></div>
-    </section>
+    </div>
   </StorefrontShell>
 }

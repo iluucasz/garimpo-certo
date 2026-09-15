@@ -1,6 +1,6 @@
 export type Category = { id: string; name: string; slug: string; icon: string; description: string }
 export type Provider = { id: string; name: string; slug: string; rating: number; verified: boolean; color: string }
-export type Offer = { id: string; productId: string; providerId: string; price: number; previousPrice?: number; shipping: number; installment: string; stock: 'disponível' | 'últimas unidades' | 'indisponível'; url: string; updatedAt: string }
+export type Offer = { id: string; productId: string; providerId: string; price: number; previousPrice?: number; shipping: number; installment: string; stock: 'disponível' | 'últimas unidades' | 'indisponível'; url: string; updatedAt: string; soldCount?: number }
 export type Product = {
   id: string; name: string; slug: string; brand: string; category: string; description: string; longDescription: string
   image: string; images: string[]; rating: number; reviews: number; score: number; growth: number; tags: string[]

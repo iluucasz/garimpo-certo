@@ -6,7 +6,7 @@ import { CheckCircle2, ExternalLink, GitCompareArrows, Heart, ShieldCheck, Star,
 import { useEffect, useMemo, useState } from 'react'
 import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
-import { formatPrice } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/mock-data'
 import { generateRecommendations } from '@/lib/recommendation/engine'
 import type { Product } from '@/lib/types'
 import { ProductGrid } from './product-card'
@@ -55,7 +55,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <p className="pdp-description">{product.longDescription}</p>
           {bestOffer && bestProvider && <div className="primary-offer-card">
             <div className="primary-offer-heading"><div><span className="offer-kicker">MELHOR CUSTO TOTAL</span><h2>{bestProvider.name}</h2></div><span className="verified-store"><CheckCircle2 /> Loja verificada</span></div>
-            <div className="primary-offer-price"><div><s>{previousPrice > bestOffer.price ? formatPrice(previousPrice) : '\u00a0'}</s><strong>{formatPrice(bestOffer.price)}</strong>{saving > 0 && <span>Economize {formatPrice(saving)}</span>}</div><div className="primary-offer-details"><span><Truck /> {bestOffer.shipping === 0 ? 'Frete grátis' : `${formatPrice(bestOffer.shipping)} de frete`}</span><span>{bestOffer.installment}</span><span>{bestOffer.stock} · atualizado {bestOffer.updatedAt}</span></div></div>
+            <div className="primary-offer-price"><div><s>{previousPrice > bestOffer.price ? formatPrice(previousPrice) : '\u00a0'}</s><strong>{formatPrice(bestOffer.price)}</strong>{saving > 0 && <span>Economize {formatPrice(saving)}</span>}</div><div className="primary-offer-details"><span><Truck /> {bestOffer.shipping === 0 ? 'Frete grátis' : `${formatPrice(bestOffer.shipping)} de frete`}</span><span>{bestOffer.installment}</span>{bestOffer.soldCount ? <span>{formatSoldCount(bestOffer.soldCount)} na {bestProvider.name}</span> : null}<span>{bestOffer.stock} · atualizado {bestOffer.updatedAt}</span></div></div>
             <a className="btn primary primary-buy-button" href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ExternalLink /></a>
             <small className="total-note">Custo total: <strong>{formatPrice(total)}</strong>. Preço e estoque podem mudar no parceiro.</small>
           </div>}

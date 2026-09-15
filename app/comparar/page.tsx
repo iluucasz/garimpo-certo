@@ -1,8 +1,44 @@
 'use client'
+
+import Image from 'next/image'
 import Link from 'next/link'
-import { GitCompareArrows, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, GitCompareArrows, LockKeyhole, MoveHorizontal, Star, X } from 'lucide-react'
 import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
+import { ContentSkeleton } from '@/components/storefront/store-loading'
+import { EmptyCollection, PersonalHeading, SuggestedProducts } from '@/components/storefront/personal-page-parts'
 import { formatPrice } from '@/lib/mock-data'
-export default function ComparePage(){const {compare,toggleCompare}=useMock();const{products,getOffers}=useStoreData();const items=products.filter(p=>compare.includes(p.id));return <StorefrontShell><section className="page-hero container"><div className="kicker">COMPARADOR</div><h1>Coloque as escolhas lado a lado.</h1><p>Compare até quatro produtos. Sua lista fica salva somente neste navegador.</p></section><section className="container section" style={{paddingTop:10}}>{items.length?<div style={{overflowX:'auto'}}><table className="compare-table"><thead><tr><th>Critério</th>{items.map(p=><th key={p.id}>{p.name}<button className="icon-btn" style={{position:'static',display:'inline-grid',marginLeft:8}} onClick={()=>toggleCompare(p.id)}><X/></button></th>)}</tr></thead><tbody><tr><td>Melhor oferta</td>{items.map(p=><td key={p.id}><strong>{formatPrice(getOffers(p.id)[0]?.price??0)}</strong></td>)}</tr><tr><td>Índice Garimpo</td>{items.map(p=><td key={p.id}>{p.score}/100</td>)}</tr><tr><td>Avaliação</td>{items.map(p=><td key={p.id}>{p.rating}/5</td>)}</tr><tr><td>Marca</td>{items.map(p=><td key={p.id}>{p.brand}</td>)}</tr><tr><td>Destaques</td>{items.map(p=><td key={p.id}>{Object.entries(p.specs).slice(0,2).map(([k,v])=><div key={k}><small>{k}</small><br/>{v}</div>)}</td>)}</tr><tr><td></td>{items.map(p=><td key={p.id}><Link href={`/produto/${p.slug}`} className="btn primary">Ver detalhes</Link></td>)}</tr></tbody></table></div>:<div className="empty-state"><GitCompareArrows/><h2>Seu comparador está vazio</h2><p>Adicione produtos pelos cards ou pela página de detalhes.</p><Link href="/buscar" className="btn primary">Encontrar produtos</Link></div>}</section></StorefrontShell>}
+import styles from '@/components/storefront/personal-pages.module.css'
+
+export default function ComparePage() {
+  const { compare, toggleCompare, hydrated } = useMock()
+  const { products, getBestOffer, getProvider } = useStoreData()
+  if (!hydrated) return <StorefrontShell><ContentSkeleton variant="compare"/></StorefrontShell>
+  const items = compare.flatMap((id) => { const product = products.find((item) => item.id === id); return product ? [product] : [] }).slice(0, 4)
+  const available = products.filter((product) => !compare.includes(product.id))
+  const offers = items.map((product) => getBestOffer(product.id))
+  const lowest = Math.min(...offers.flatMap((offer) => offer ? [offer.price] : []))
+  const specNames = [...new Set(items.flatMap((product) => Object.keys(product.specs)))]
+
+  return <StorefrontShell><div className={`container ${styles.page}`}><PersonalHeading mode="compare"/>
+    <div className={styles.toolbar}><p><strong>{items.length} de 4</strong> produtos no comparador</p><label htmlFor="add-compare-product">Adicionar produto<select id="add-compare-product" value="" disabled={items.length >= 4 || !available.length} onChange={(event) => { if (event.target.value && items.length < 4) toggleCompare(event.target.value) }}><option value="">{items.length >= 4 ? 'Limite de 4 produtos' : 'Escolha no catálogo'}</option>{available.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label></div>
+    {items.length ? <>
+      {items.length === 1 && <p className={styles.comparisonHint}><GitCompareArrows aria-hidden="true"/>Adicione mais um produto para comparar as diferenças.</p>}
+      <p className={styles.mobileHint}><MoveHorizontal aria-hidden="true"/>Deslize a tabela para ver todos os produtos.</p>
+      <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="Tabela de comparação de produtos">
+        <table className={styles.comparisonTable} style={{ minWidth: 148 + Math.max(items.length, 2) * 224 }}><caption className="sr-only">Comparação de preços e características dos produtos selecionados</caption><thead><tr><th scope="col"><span className={styles.tableLabel}><GitCompareArrows aria-hidden="true"/>Seus produtos,<br/>lado a lado.</span></th>{items.map((product) => <th scope="col" key={product.id}><div className={styles.productHeading}><button className={styles.removeProduct} type="button" aria-label={`Remover ${product.name} do comparador`} onClick={() => toggleCompare(product.id)}><X aria-hidden="true"/></button><Link href={`/produto/${product.slug}`}><div className={styles.productImage}><Image src={product.image} alt="" fill sizes="220px"/></div><small>{product.brand}</small><h2>{product.name}</h2></Link></div></th>)}</tr></thead>
+        <tbody>
+          <tr><th scope="row">Preço do produto</th>{items.map((product, index) => { const offer = offers[index]; const provider = offer ? getProvider(offer.providerId) : null; return <td key={product.id}>{offer ? <><strong className={styles.price}>{formatPrice(offer.price)}</strong>{provider && <span className={styles.storeName}>na {provider.name}</span>}{offers.filter(Boolean).length > 1 && offer.price === lowest && <span className={styles.lowest}>Menor preço da seleção</span>}</> : 'Sem oferta disponível'}</td> })}</tr>
+          <tr><th scope="row">Avaliação</th>{items.map((product) => <td key={product.id}><span className={styles.rating}><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} / 5</span><span className={styles.reviewCount}>{product.reviews.toLocaleString('pt-BR')} avaliações</span></td>)}</tr>
+          <tr><th scope="row">Índice Garimpo</th>{items.map((product) => <td key={product.id}><span className={styles.score}>{product.score}<small> / 100</small></span></td>)}</tr>
+          <tr><th scope="row">Marca</th>{items.map((product) => <td key={product.id}>{product.brand}</td>)}</tr>
+          <tr><th scope="row">Disponibilidade</th>{items.map((product, index) => <td key={product.id}>{offers[index]?.stock ?? 'Sem oferta'}</td>)}</tr>
+          {specNames.map((spec) => <tr key={spec}><th scope="row">{spec}</th>{items.map((product) => <td key={product.id}>{product.specs[spec] ?? <span aria-label="Não informado">—</span>}</td>)}</tr>)}
+          <tr><th scope="row">Saiba mais</th>{items.map((product, index) => { const offer = offers[index]; return <td key={product.id}><div className={styles.tableActions}>{offer && <a className={styles.primaryLink} href={offer.url} target="_blank" rel="sponsored noopener noreferrer" aria-label={`Ver oferta de ${product.name}`}>Ver oferta <ArrowUpRight aria-hidden="true"/></a>}<Link className={styles.textLink} href={`/produto/${product.slug}`}>Ver detalhes <ArrowRight aria-hidden="true"/></Link></div></td> })}</tr>
+        </tbody></table>
+      </div>
+    </> : <><EmptyCollection mode="compare"/><SuggestedProducts mode="compare"/></>}
+    <p className={styles.localNote}><LockKeyhole aria-hidden="true"/>Sua comparação fica salva neste navegador. Preços e avaliações demonstrativos.</p>
+  </div></StorefrontShell>
+}

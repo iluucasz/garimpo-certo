@@ -68,6 +68,7 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
     id: row.id, productId: row.productId, providerId: row.providerId, price: Number(row.price),
     previousPrice: row.originalPrice ? Number(row.originalPrice) : undefined, shipping: 0, installment: '',
     stock: availabilityToStock[row.availability] ?? 'disponível', url: row.affiliateUrl ?? row.externalUrl, updatedAt: relativeUpdatedAt(row.lastSyncedAt),
+    soldCount: row.soldCount ?? undefined,
   }))
 
   const storeProviders: Provider[] = providerRows.map((row) => ({

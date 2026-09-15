@@ -1,0 +1,54 @@
+.screen { background: #fbfaf7; min-height: 100vh; }
+.notice { height: 29px; background: #eaece2; }
+.header { width: min(1200px, calc(100% - 80px)); height: 84px; display: flex; justify-content: space-between; align-items: center; gap: 70px; margin: auto; }
+.bone { background: #e8e9e0; height: 11px; width: 100%; border-radius: 3px; animation: breathe 1.8s ease-in-out infinite; }
+.search { width: 45%; height: 40px; background: #efefe8; }
+.headerIcons { display: flex; gap: 22px; }
+.headerIcons i { width: 17px; height: 17px; border-radius: 50%; background: #e1e4d8; }
+.nav { border-block: 1px solid #e4e6da; padding-block: 17px; }
+.nav > div { width: min(1200px, calc(100% - 80px)); margin: auto; display: flex; gap: 32px; }
+.nav span { width: 60px; height: 11px; }
+.content { width: min(1200px, calc(100% - 80px)); margin-inline: auto; padding-block: 34px 64px; min-height: 65vh; }
+.breadcrumb { width: 90px; height: 9px; margin-bottom: 32px; }
+.title { width: min(320px, 70%); height: 43px; }
+.subtitle { width: min(410px, 85%); height: 12px; margin-top: 18px; margin-bottom: 36px; }
+.toolbar { display: flex; justify-content: space-between; gap: 30px; padding-block: 22px; border-block: 1px solid #e6e8df; margin-bottom: 26px; }
+.toolbar > div { width: 120px; }
+.products { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.image { aspect-ratio: 1; height: auto; background: #eeeee7; }
+.productTitle { width: 86%; margin-block: 17px 13px; }
+.price { width: 42%; height: 20px; }
+.account { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 48px; border-top: 1px solid #e4e6db; padding-top: 32px; }
+.sidebar > div:not(.avatar) { max-width: 155px; margin-block: 24px; }
+.avatar { height: 54px; width: 54px; border-radius: 50%; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; padding-bottom: 24px; }
+.number { width: 35px; height: 30px; margin-top: 17px; }
+.form { border: 1px solid #e4e6db; background: #fffefa; padding: 26px; margin-bottom: 22px; border-radius: 5px; }
+.formTitle { width: 40%; height: 22px; margin-bottom: 26px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.input { height: 43px; background: #f0f1e9; }
+.button { width: 130px; height: 35px; margin: 25px 0 0 auto; }
+.comparison { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #e0e3d6; padding: 25px; gap: 40px; }
+.comparison .image { aspect-ratio: 1.5; }
+.row { height: 50px; border-bottom: 1px solid #e5e7dd; margin-top: 8px; }
+@keyframes breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .bone { animation: none; } }
+@media (max-width: 1000px) {
+  .header, .nav > div, .content { width: calc(100% - 48px); }
+  .account { grid-template-columns: 185px minmax(0, 1fr); gap: 28px; }
+}
+@media (max-width: 700px) {
+  .header, .nav > div, .content { width: calc(100% - 36px); }
+  .header { height: 126px; display: grid; grid-template-columns: 1fr auto; gap: 10px; padding-block: 17px; }
+  .search { width: 100%; grid-column: 1 / -1; grid-row: 2; height: 38px; }
+  .nav { display: none; }
+  .content { padding-block: 24px 40px; }
+  .title { height: 36px; }
+  .products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 15px; }
+  .account { display: block; }
+  .sidebar { display: none; }
+  .form { padding: 20px; }
+  .fields { grid-template-columns: 1fr; gap: 20px; }
+  .comparison { grid-template-columns: 1fr 1fr; gap: 20px; padding: 18px; }
+  .comparison > div:last-child { display: none; }
+}

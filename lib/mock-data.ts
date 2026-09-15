@@ -91,6 +91,7 @@ export const adminModules = [
  ['Sistema',['Integrações','Tracking','AI','Segurança','Tema']],
 ] as const
 export const formatPrice=(value:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value)
+export const formatSoldCount=(value:number)=>`${new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(value)} ${value===1?'vendido':'vendidos'}`
 export const getProduct=(slug:string)=>products.find(p=>p.slug===slug)
 export const getOffers=(id:string)=>offers.filter(o=>o.productId===id).sort((a,b)=>(a.price+a.shipping)-(b.price+b.shipping))
 export const getBestOffer=(id:string)=>getOffers(id).find(offer=>offer.stock!=='indisponível')

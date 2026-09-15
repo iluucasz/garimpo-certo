@@ -21,3 +21,6 @@ coverage/
 # Local tool caches / build artifacts
 .sf/
 *.tsbuildinfo
+
+# Claude Code (configurações pessoais)
+.claude/settings.local.json
