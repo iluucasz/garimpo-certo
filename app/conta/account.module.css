@@ -27,7 +27,7 @@
 .sidebarNote > svg { color: #788369; width: 18px; height: 18px; }
 .sidebarNote p { color: #657158; font-size: 14px; line-height: 1.7; margin: 9px 0 0; }
 .content { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
-.shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid #e0e2d7; padding: 22px 0; margin-bottom: 4px; }
+.shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px 0 14px; }
 .shortcut { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 0 22px; }
 .shortcut:first-child { padding-left: 0; }
 .shortcut + .shortcut { border-left: 1px solid #dedfd3; }
@@ -130,7 +130,7 @@
   .signOut { min-height: 34px; padding: 6px 0; font-size: 14px; }
   .sidebarNote { display: none; }
   .content { gap: 18px; }
-  .shortcuts { padding-block: 18px; margin: 0; }
+  .shortcuts { border-top: 1px solid #e0e2d7; padding-block: 18px; margin: 0; }
   .shortcut { padding-inline: 12px; }
   .shortcutLabel { font-size: 13px; line-height: 1.4; min-height: 28px; align-items: flex-start; }
   .shortcutLabel svg { display: none; }
