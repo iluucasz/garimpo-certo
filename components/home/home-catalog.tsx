@@ -22,9 +22,9 @@ export function HomeCatalog({ activeFilter = 'trending' }: { activeFilter?: Filt
     return offer?.previousPrice && offer.previousPrice > offer.price ? (1 - offer.price / offer.previousPrice) : 0
   }
   const sorted = {
-    trending: [...products].sort((a, b) => b.growth - a.growth),
+    trending: [...products].sort((a, b) => (getBestOffer(b.id)?.soldCount ?? 0) - (getBestOffer(a.id)?.soldCount ?? 0)),
     discount: [...products].sort((a, b) => discount(b.id) - discount(a.id)),
-    rating: [...products].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews),
+    rating: [...products].sort((a, b) => b.rating - a.rating || (getBestOffer(b.id)?.soldCount ?? 0) - (getBestOffer(a.id)?.soldCount ?? 0)),
     budget: products.filter((product) => { const offer = getBestOffer(product.id); return offer && offer.price <= 300 }).sort((a, b) => b.score - a.score),
   }[activeFilter]
 

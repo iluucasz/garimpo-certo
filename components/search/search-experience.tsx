@@ -11,7 +11,7 @@ import { rankProducts, searchProducts } from '@/lib/mock-services'
 import { platformServices } from '@/lib/platform'
 
 const PAGE_SIZE = 8
-const signalLabels = ['Escolha do editor', 'Em alta', 'Bom custo-benefício', 'Entrega grátis']
+const signalLabels = ['Mais vendidos', 'Bem avaliados', 'Em promoção', 'Bom custo-benefício']
 
 export function SearchExperience({ initialCategory }: { initialCategory?: string }) {
   const params = useSearchParams()
@@ -45,11 +45,14 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
 
   const results = useMemo(() => rankProducts(searchProducts(products, query, category).filter((product) => {
     const price = product.priceHistory.length ? Math.min(...product.priceHistory.map((point) => point.price)) : 0
+    const offer = offers.find((item) => item.productId === product.id)
+    const soldCount = offer?.soldCount ?? 0
+    const offerDiscount = offer?.previousPrice && offer.previousPrice > offer.price ? 1 - offer.price / offer.previousPrice : 0
     const matchesSignals = signals.every((signal) => {
-      if (signal === 'Escolha do editor') return product.score >= 90
-      if (signal === 'Em alta') return product.growth >= 15
+      if (signal === 'Mais vendidos') return soldCount >= 1000
+      if (signal === 'Bem avaliados') return product.rating >= 4.8
+      if (signal === 'Em promoção') return offerDiscount >= .2 || product.tags.includes('Em promoção')
       if (signal === 'Bom custo-benefício') return product.score >= 85 && price <= 1500
-      if (signal === 'Entrega grátis') return true
       return true
     })
     return price <= max && matchesSignals

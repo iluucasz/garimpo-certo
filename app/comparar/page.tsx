@@ -8,7 +8,7 @@ import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
 import { EmptyCollection, PersonalHeading, SuggestedProducts } from '@/components/storefront/personal-page-parts'
-import { formatPrice } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/mock-data'
 import styles from '@/components/storefront/personal-pages.module.css'
 
 export default function ComparePage() {
@@ -29,8 +29,8 @@ export default function ComparePage() {
       <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="Tabela de comparação de produtos">
         <table className={styles.comparisonTable} style={{ minWidth: 160 + Math.max(items.length, 2) * 240 }}><caption className="sr-only">Comparação de preços e características dos produtos selecionados</caption><thead><tr><th scope="col"><span className={styles.tableLabel}><GitCompareArrows aria-hidden="true"/>Seus produtos,<br/>lado a lado.</span></th>{items.map((product) => <th scope="col" key={product.id}><div className={styles.productHeading}><button className={styles.removeProduct} type="button" aria-label={`Remover ${product.name} do comparador`} onClick={() => toggleCompare(product.id)}><X aria-hidden="true"/></button><Link href={`/produto/${product.slug}`}><div className={styles.productImage}><Image src={product.image} alt="" fill sizes="220px"/></div><small>{product.brand}</small><h2>{product.name}</h2></Link></div></th>)}</tr></thead>
         <tbody>
-          <tr><th scope="row">Preço do produto</th>{items.map((product, index) => { const offer = offers[index]; const provider = offer ? getProvider(offer.providerId) : null; return <td key={product.id}>{offer ? <><strong className={styles.price}>{formatPrice(offer.price)}</strong>{provider && <span className={styles.storeName}>na {provider.name}</span>}{offers.filter(Boolean).length > 1 && offer.price === lowest && <span className={styles.lowest}>Menor preço da seleção</span>}</> : 'Sem oferta disponível'}</td> })}</tr>
-          <tr><th scope="row">Avaliação</th>{items.map((product) => <td key={product.id}><span className={styles.rating}><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} / 5</span><span className={styles.reviewCount}>{product.reviews.toLocaleString('pt-BR')} avaliações</span></td>)}</tr>
+          <tr><th scope="row">Preço do produto</th>{items.map((product, index) => { const offer = offers[index]; const provider = offer ? getProvider(offer.providerId) : null; return <td key={product.id}>{offer ? <><strong className={styles.price}>{formatPrice(offer.price)}</strong>{offer.priceMax && offer.priceMax > offer.price ? <span className={styles.storeName}>até {formatPrice(offer.priceMax)}, conforme a variação</span> : null}{provider && <span className={styles.storeName}>na {provider.name}</span>}{offers.filter(Boolean).length > 1 && offer.price === lowest && <span className={styles.lowest}>Menor preço da seleção</span>}</> : 'Sem oferta disponível'}</td> })}</tr>
+          <tr><th scope="row">Avaliação e vendas</th>{items.map((product, index) => <td key={product.id}><span className={styles.rating}><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} / 5</span>{offers[index]?.soldCount ? <span className={styles.reviewCount}>{formatSoldCount(offers[index]!.soldCount!)}</span> : null}</td>)}</tr>
           <tr><th scope="row">Índice Garimpo</th>{items.map((product) => <td key={product.id}><span className={styles.score}>{product.score}<small> / 100</small></span></td>)}</tr>
           <tr><th scope="row">Marca</th>{items.map((product) => <td key={product.id}>{product.brand}</td>)}</tr>
           <tr><th scope="row">Disponibilidade</th>{items.map((product, index) => <td key={product.id}>{offers[index]?.stock ?? 'Sem oferta'}</td>)}</tr>
@@ -39,6 +39,6 @@ export default function ComparePage() {
         </tbody></table>
       </div>
     </> : <><EmptyCollection mode="compare"/><SuggestedProducts mode="compare"/></>}
-    <p className={styles.localNote}><LockKeyhole aria-hidden="true"/>Sua comparação fica salva neste navegador. Preços e avaliações demonstrativos.</p>
+    <p className={styles.localNote}><LockKeyhole aria-hidden="true"/>Sua comparação fica salva neste navegador. Preços e avaliações vêm da Shopee e podem mudar lá.</p>
   </div></StorefrontShell>
 }

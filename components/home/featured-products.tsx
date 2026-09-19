@@ -53,9 +53,9 @@ export function FeaturedProducts() {
       <div className={styles.copy}>
         <span className={styles.brand}>{product.brand}</span>
         <h2>{product.name}</h2>
-        <span className={styles.rating}><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}<span>({product.reviews.toLocaleString('pt-BR')} avaliações)</span>{offer.soldCount ? <span className={styles.sold}>{formatSoldCount(offer.soldCount)}</span> : null}</span>
+        <span className={styles.rating}><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}{product.reviews > 0 ? <span>({product.reviews.toLocaleString('pt-BR')} avaliações)</span> : null}{offer.soldCount ? <span className={styles.sold}>{formatSoldCount(offer.soldCount)}</span> : null}</span>
         <div className={styles.price}>{offer.previousPrice && offer.previousPrice > offer.price && <s>{formatPrice(offer.previousPrice)}</s>}<strong>{formatPrice(offer.price)}</strong></div>
-        <span className={styles.provider}>{provider ? `na ${provider.name}` : 'na loja parceira'}{offer.shipping === 0 ? ' · Frete grátis' : ''}</span>
+        <span className={styles.provider}>{provider ? `na ${provider.name}` : 'na loja parceira'}{offer.priceMax && offer.priceMax > offer.price ? ` · até ${formatPrice(offer.priceMax)}` : ''}</span>
         <a className={styles.buy} href={offer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar agora <ArrowUpRight aria-hidden="true"/></a>
       </div>
     </div>

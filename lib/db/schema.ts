@@ -262,6 +262,7 @@ export const offers = pgTable("offers", {
 	affiliateUrl: text("affiliate_url"),
 	currency: text().default('BRL').notNull(),
 	price: numeric({ precision: 12, scale:  2 }).notNull(),
+	priceMax: numeric("price_max", { precision: 12, scale:  2 }),
 	originalPrice: numeric("original_price", { precision: 12, scale:  2 }),
 	discountPercentage: numeric("discount_percentage", { precision: 5, scale:  2 }),
 	commissionRate: numeric("commission_rate", { precision: 6, scale:  4 }),

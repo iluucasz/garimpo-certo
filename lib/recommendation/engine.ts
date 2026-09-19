@@ -1,9 +1,9 @@
-import { offers as defaultOffers, products as defaultProducts } from '@/lib/mock-data'
-import type { Offer, Product } from '@/lib/types'
+import type { Offer, Product, ProductMetrics } from '@/lib/types'
 
-export type RecommendationCatalog = { products: Product[]; offers: Offer[] }
+/** Catálogo real da loja. `metrics` traz o engajamento medido; sem ele a engine usa só os sinais da oferta. */
+export type RecommendationCatalog = { products: Product[]; offers: Offer[]; metrics?: Record<string, ProductMetrics> }
 
-export const ALGORITHM_VERSION = 'mock-ranker-2.1.0'
+export const ALGORITHM_VERSION = 'garimpo-ranker-3.0.0'
 export type CandidateSource = 'trending' | 'category' | 'similar' | 'history' | 'favorites' | 'co_visit' | 'co_click' | 'editorial' | 'price_drop' | 'high_rating' | 'new_products'
 export type ReasonCode = 'TRENDING' | 'SIMILAR_PRODUCT' | 'BASED_ON_HISTORY' | 'BASED_ON_CATEGORY' | 'PRICE_DROP' | 'EDITORIAL_PICK' | 'HIGH_RATING' | 'EXPLORATION'
 export type ScoringWeights = { relevance: number; affinity: number; engagement: number; quality: number; commercial: number; price: number; freshness: number; similarity: number }
@@ -49,43 +49,65 @@ function sourceMembership(catalogProducts: Product[], product: Product, input: R
   if (sourceProduct && (sourceProduct.category === product.category || sourceProduct.brand === product.brand)) sources.push('similar')
   if (historyCategories.has(product.category)) sources.push('history')
   if (favoriteBrands.has(product.brand)) sources.push('favorites')
-  if (ratio(`visit:${input.seed}:${product.id}`) > .62) sources.push('co_visit')
-  if (ratio(`click:${input.seed}:${product.id}`) > .72) sources.push('co_click')
-  if (product.tags.some((tag) => /editor|comunidade|custo/i.test(tag))) sources.push('editorial')
+  if (features.views > 0 && features.ctr > .06) sources.push('co_visit')
+  if (features.conversionRate > .04) sources.push('co_click')
+  if (product.score >= 85) sources.push('editorial')
   if (features.priceDiscount > .08) sources.push('price_drop')
-  if (product.rating >= 4.7 && product.reviews >= 100) sources.push('high_rating')
+  if (product.rating >= 4.7 && features.reviewConfidence > .5) sources.push('high_rating')
   if (features.freshness > .72) sources.push('new_products')
   return sources.length ? sources : ['editorial']
 }
 
+const DAY = 86_400_000
+const emptyMetrics: ProductMetrics = { views: 0, clicks: 0, favorites: 0, conversions: 0, views24h: 0, views7d: 0, clicks7d: 0 }
+
+/** Popularidade em escala logarítmica: 10 vendas ≈ .25, 1.000 ≈ .5, 100.000 ≈ .83. */
+const popularity = (sales: number) => clamp(Math.log10(Math.max(sales, 0) + 1) / 6)
+
 function featuresFor(catalog: RecommendationCatalog, product: Product, input: RecommendationInput): FeatureVector {
   const offer = bestOffer(catalog.offers, product.id)
   const productOffers = catalog.offers.filter((item) => item.productId === product.id)
-  const min = Math.min(...productOffers.map((item) => item.price + item.shipping))
-  const max = Math.max(...productOffers.map((item) => item.price + item.shipping))
-  const latest = product.priceHistory.at(-1)?.price ?? min
-  const initial = product.priceHistory[0]?.price ?? latest
-  const views = 20 + Math.floor(ratio(`views:${product.id}`) * 6000)
-  const clicks = Math.floor(views * (.015 + ratio(`clicks:${product.id}`) * .13))
-  const favorites = Math.floor(views * (.006 + ratio(`favorites:${product.id}`) * .075))
-  const conversions = Math.floor(clicks * (.012 + ratio(`conversions:${product.id}`) * .11))
-  const temporal = { h1: ratio(`1h:${product.id}`), h6: ratio(`6h:${product.id}`), h24: ratio(`24h:${product.id}`), d7: ratio(`7d:${product.id}`), d30: ratio(`30d:${product.id}`) }
-  const trendingScore = clamp(temporal.h1 * .34 + temporal.h6 * .26 + temporal.h24 * .2 + temporal.d7 * .13 + temporal.d30 * .07)
+  const min = Math.min(...productOffers.map((item) => item.price + (item.shipping ?? 0)))
+  const max = Math.max(...productOffers.map((item) => item.price + (item.shipping ?? 0)))
+  const latest = offer?.price ?? product.priceHistory.at(-1)?.price ?? min
+  const initial = offer?.previousPrice ?? product.priceHistory[0]?.price ?? latest
+  const metrics = catalog.metrics?.[product.id] ?? emptyMetrics
+  const soldCount = offer?.soldCount ?? 0
+  const now = input.now ?? new Date()
+  const ageDays = product.createdAt ? Math.max(0, (now.getTime() - new Date(product.createdAt).getTime()) / DAY) : 30
+
+  // Sem tráfego próprio medido, a popularidade da oferta na loja parceira é o melhor sinal disponível.
+  const measuredTrend = metrics.views7d + metrics.clicks7d > 0
+    ? clamp((metrics.views24h * 3 + metrics.views7d + metrics.clicks7d * 4) / 60)
+    : popularity(soldCount)
   const sourceProduct = catalog.products.find((item) => item.id === input.productId)
   const categoryAffinity = clamp(input.category === product.category ? 1 : input.interests?.[product.category] ?? .12)
   const brandAffinity = clamp((input.favoriteIds ?? []).some((id) => catalog.products.find((item) => item.id === id)?.brand === product.brand) ? .9 : .2)
-  const similarityScore = sourceProduct ? clamp((sourceProduct.category === product.category ? .6 : 0) + (sourceProduct.brand === product.brand ? .3 : 0) + ratio(`similar:${sourceProduct.id}:${product.id}`) * .1) : .25
+  const similarityScore = sourceProduct
+    ? clamp((sourceProduct.category === product.category ? .65 : 0) + (sourceProduct.brand === product.brand ? .35 : 0))
+    : .25
+  const commissionValue = (offer?.commissionRate ?? 0) * (offer?.price ?? latest)
   return {
     relevance: clamp(product.score / 100 * .65 + categoryAffinity * .35), categoryAffinity, brandAffinity,
-    priceAffinity: clamp(1 - latest / 4000), views, ctr: bayesianRate(clicks, views), favoriteRate: bayesianRate(favorites, views, .018, 100),
-    conversionRate: bayesianRate(conversions, clicks, .025, 60), expectedCommission: clamp(((offer?.price ?? latest) * (.025 + ratio(`commission:${product.id}`) * .055)) / 250),
-    rating: clamp(product.rating / 5), reviewConfidence: clamp(Math.log10(product.reviews + 1) / 4), priceDiscount: clamp((initial - latest) / Math.max(initial, 1)),
-    priceCompetitiveness: max === min ? .8 : clamp(1 - ((offer?.price ?? max) - min) / (max - min)), freshness: ratio(`fresh:${product.id}`),
-    availabilityConfidence: offer ? .92 : 0, similarityScore, recency: clamp(.45 + temporal.h24 * .55), trendingScore,
+    priceAffinity: clamp(1 - latest / 4000),
+    views: metrics.views,
+    ctr: bayesianRate(metrics.clicks, metrics.views),
+    favoriteRate: bayesianRate(metrics.favorites, metrics.views, .018, 100),
+    conversionRate: bayesianRate(metrics.conversions, metrics.clicks, .025, 60),
+    expectedCommission: clamp(commissionValue / 25),
+    rating: clamp(product.rating / 5),
+    reviewConfidence: clamp(Math.log10(Math.max(product.reviews, soldCount) + 1) / 4),
+    priceDiscount: clamp((initial - latest) / Math.max(initial, 1)),
+    priceCompetitiveness: max === min ? .8 : clamp(1 - ((offer?.price ?? max) - min) / (max - min)),
+    freshness: clamp(Math.exp(-ageDays / 45)),
+    availabilityConfidence: offer && offer.stock !== 'indisponível' ? .92 : 0,
+    similarityScore,
+    recency: clamp(metrics.views24h > 0 ? .55 + popularity(metrics.views24h) * .45 : .45),
+    trendingScore: measuredTrend,
   }
 }
 
-export function generateRecommendations(input: RecommendationInput = {}, catalog: RecommendationCatalog = { products: defaultProducts, offers: defaultOffers }): RecommendationSnapshot {
+export function generateRecommendations(input: RecommendationInput = {}, catalog: RecommendationCatalog = { products: [], offers: [] }): RecommendationSnapshot {
   const seed = input.seed ?? 'anonymous'; const slot = input.slot ?? 'home_for_you'; const limit = Math.max(1, Math.min(input.limit ?? 6, 20))
   const weights = normalizeWeights(input.weights); const excluded = new Set([...(input.exclude ?? []), ...(input.historyIds ?? []).slice(-1)])
   const generatedAt = input.now ?? new Date(); const explorationRate = clamp(input.explorationRate ?? .12)
@@ -109,6 +131,15 @@ export function generateRecommendations(input: RecommendationInput = {}, catalog
   }
   const explorationPool = scored.filter((item) => !selected.includes(item)).sort((a, b) => ratio(`explore:${seed}:${b.product.id}`) - ratio(`explore:${seed}:${a.product.id}`))
   for (const item of explorationPool.slice(0, explorationCount)) selected.push({ ...item, explored: true, reasonCode: 'EXPLORATION', reason: 'Novidade para você descobrir' })
+  // Completa a lista respeitando os limites de diversidade; só ignora as cotas se ainda faltar item.
+  for (const item of scored) {
+    if (selected.length >= limit) break
+    if (selected.includes(item)) continue
+    if ((categoryCount.get(item.product.category) ?? 0) >= 2 || (brandCount.get(item.product.brand) ?? 0) >= 2) continue
+    selected.push(item)
+    categoryCount.set(item.product.category, (categoryCount.get(item.product.category) ?? 0) + 1)
+    brandCount.set(item.product.brand, (brandCount.get(item.product.brand) ?? 0) + 1)
+  }
   for (const item of scored) { if (selected.length >= limit) break; if (!selected.includes(item)) selected.push(item) }
   const inputHash = hash(JSON.stringify({ ...input, now: undefined, weights })).toString(16)
   return { id: `rec_${hash(`${seed}:${slot}:${generatedAt.toISOString().slice(0, 13)}`).toString(16)}`, slot, seed, algorithmVersion: ALGORITHM_VERSION, generatedAt: generatedAt.toISOString(), expiresAt: new Date(generatedAt.getTime() + 15 * 60_000).toISOString(), inputHash, recommendations: selected, diagnostics: { candidates: scored.length, filtered: catalog.products.length - scored.length, explorationCount: selected.filter((item) => item.explored).length, weights } }

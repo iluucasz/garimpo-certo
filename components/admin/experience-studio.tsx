@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Beaker, Check, ChevronDown, GripVertical, Plus, Save, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { generateRecommendations, assignExperiment, type CandidateSource, type ScoringWeights } from '@/lib/recommendation/engine'
-import { products } from '@/lib/mock-data'
+import { useStoreData } from '@/components/store-data-provider'
 import { platformServices } from '@/lib/platform'
 
 type Props = { slug: string; disabled: boolean; notify: (message: string) => void }
@@ -36,7 +36,8 @@ function StudioFrame({ eyebrow, title, children, aside }: { eyebrow: string; tit
 function RankingStudio({ disabled, notify }: Props) {
   const [weights, setWeights] = useState<ScoringWeights>({ relevance:18, affinity:15, engagement:14, quality:16, commercial:8, price:12, freshness:8, similarity:9 })
   const [exploration, setExploration] = useState(12); const [sample, setSample] = useState(80); const [seed, setSeed] = useState('simulacao-admin')
-  const snapshot = useMemo(() => generateRecommendations({ seed, limit: 6, explorationRate: exploration / 100, weights }), [weights, exploration, seed])
+  const { products, offers, metrics } = useStoreData()
+  const snapshot = useMemo(() => generateRecommendations({ seed, limit: 6, explorationRate: exploration / 100, weights }, { products, offers, metrics }), [weights, exploration, seed, products, offers, metrics])
   const labels: Record<keyof ScoringWeights,string> = { relevance:'Relevância',affinity:'Afinidade',engagement:'Engajamento',quality:'Qualidade',commercial:'Valor comercial',price:'Preço',freshness:'Frescor',similarity:'Similaridade' }
   return <StudioFrame eyebrow="SCORING LAB" title="Perfil de ranking sustentável" aside={<><h3>Controles do modelo</h3><label>Exploration <strong>{exploration}%</strong><input type="range" min="0" max="40" value={exploration} disabled={disabled} onChange={(e)=>setExploration(+e.target.value)}/></label><label>Amostra mínima<input className="input" type="number" value={sample} disabled={disabled} onChange={(e)=>setSample(+e.target.value)}/></label><label>Seed de simulação<input className="input" value={seed} onChange={(e)=>setSeed(e.target.value)}/></label><button className="btn primary full" disabled={disabled} onClick={()=>persist('ranking',{weights,exploration,sample},notify)}><Save/> Publicar perfil</button></>}><div className="weight-grid">{Object.entries(weights).map(([key,value])=><label className="weight-control" key={key}><span>{labels[key as keyof ScoringWeights]}<strong>{value}</strong></span><input type="range" min="0" max="40" value={value} disabled={disabled} onChange={(e)=>setWeights((current)=>({...current,[key]:+e.target.value}))}/></label>)}</div><div className="simulation-list"><div className="simulation-head"><h3>Re-ranking simulado</h3><span>{snapshot.algorithmVersion} · {snapshot.diagnostics.explorationCount} exploração</span></div>{snapshot.recommendations.map((item,index)=><article key={item.product.id}><b>{index+1}</b><img src={item.product.image} alt=""/><span><strong>{item.product.name}</strong><small>{item.reason} · {item.sources.slice(0,3).map((source)=>sourceLabels[source]).join(', ')}</small></span><em>{(item.score*100).toFixed(1)}</em></article>)}</div></StudioFrame>
 }
@@ -76,6 +77,7 @@ function CampaignStudio({ disabled, notify }: Props) {
 }
 
 function CollectionStudio({ disabled, notify }: Props) {
-  const [title,setTitle]=useState('Mesa bem resolvida'); const [selected,setSelected]=useState(['1','2','5'])
+  const { products } = useStoreData()
+  const [title,setTitle]=useState('Mesa bem resolvida'); const [selected,setSelected]=useState<string[]>([])
   return <StudioFrame eyebrow="EDITORIAL COLLECTION" title="Curadoria de produtos" aside={<><h3>Publicação</h3><label>Título<input className="input" value={title} disabled={disabled} onChange={(e)=>setTitle(e.target.value)}/></label><p>{selected.length} produtos selecionados e ordenados.</p><button className="btn primary full" disabled={disabled||!selected.length} onClick={()=>persist('colecoes',{title,selected},notify)}><Save/> Publicar coleção</button></>}><div className="product-picker">{products.map((product)=><button key={product.id} disabled={disabled} aria-pressed={selected.includes(product.id)} className={selected.includes(product.id)?'active':''} onClick={()=>setSelected((current)=>current.includes(product.id)?current.filter((id)=>id!==product.id):[...current,product.id])}><img src={product.image} alt=""/><span><strong>{product.name}</strong><small>{product.category} · score {product.score}</small></span><Check/></button>)}</div></StudioFrame>
 }

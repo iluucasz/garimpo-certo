@@ -21,8 +21,8 @@ export type StoreCatalog = { products: Product[]; offers: Offer[]; providers: Pr
 
 export async function getStoreCatalog(): Promise<StoreCatalog> {
   const [productRows, offerRows, providerRows, categoryRows, brandRows, productCategoryRows, imageRows, tagRows, priceHistoryRows, attributeValueRows] = await Promise.all([
-    db.select().from(products),
-    db.select().from(offers),
+    db.select().from(products).where(eq(products.status, 'active')),
+    db.select().from(offers).where(eq(offers.status, 'active')),
     db.select().from(providers),
     db.select().from(categories),
     db.select().from(brands),
@@ -60,7 +60,7 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
       description: row.description ?? '', longDescription: row.description ?? '',
       image: images[0] ?? '/placeholder.jpg', images, rating: Number(row.rating), reviews: row.reviewsCount,
       score: Number(row.editorialScore), growth: Number(row.growthPercentage), tags: tagsByProduct.get(row.id) ?? [],
-      specs: specsByProduct.get(row.id) ?? {}, priceHistory: priceHistoryByProduct.get(row.id) ?? [],
+      specs: specsByProduct.get(row.id) ?? {}, priceHistory: priceHistoryByProduct.get(row.id) ?? [], createdAt: row.createdAt,
     }
   })
 
@@ -69,6 +69,8 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
     previousPrice: row.originalPrice ? Number(row.originalPrice) : undefined, shipping: 0, installment: '',
     stock: availabilityToStock[row.availability] ?? 'disponível', url: row.affiliateUrl ?? row.externalUrl, updatedAt: relativeUpdatedAt(row.lastSyncedAt),
     soldCount: row.soldCount ?? undefined,
+    priceMax: row.priceMax ? Number(row.priceMax) : undefined,
+    commissionRate: row.commissionRate ? Number(row.commissionRate) : undefined,
   }))
 
   const storeProviders: Provider[] = providerRows.map((row) => ({

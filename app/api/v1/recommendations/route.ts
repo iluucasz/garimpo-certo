@@ -2,6 +2,7 @@ import { fail, ok } from '@/lib/server/api'
 import { mockCache } from '@/lib/server/mock-cache'
 import { generateRecommendations } from '@/lib/recommendation/engine'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { getProductMetrics } from '@/lib/db/repositories/product-metrics'
 
 function parseInterests(value: string | null) {
   if (!value) return undefined
@@ -27,8 +28,8 @@ export async function GET(request: Request) {
   const cacheKey = `recommendation:${JSON.stringify(input)}`
   const cached = mockCache.get<ReturnType<typeof generateRecommendations>>(cacheKey)
   if (cached) return ok({ ...cached, cache: 'HIT' })
-  const { products, offers } = await getStoreCatalog()
-  const snapshot = generateRecommendations(input, { products, offers })
+  const [{ products, offers }, metrics] = await Promise.all([getStoreCatalog(), getProductMetrics()])
+  const snapshot = generateRecommendations(input, { products, offers, metrics })
   mockCache.set(cacheKey, snapshot, 900)
   return ok({ ...snapshot, cache: 'MISS' })
 }

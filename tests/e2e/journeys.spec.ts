@@ -28,5 +28,36 @@ test('home abre detalhes pelo card e compra direta pelo botão', async ({ page, 
   await expect(page).toHaveURL(/\/produto\//)
   await expect(page.getByRole('heading', { name: productName, exact: true }).first()).toBeVisible()
 })
-test('busca, filtro e produto',async({page})=>{await page.goto('/buscar');await page.getByLabel('Buscar no catálogo').fill('headphone');await expect(page.getByText('Headphone Quiet Pro').first()).toBeVisible();await page.getByText('Headphone Quiet Pro').first().click();await expect(page.getByRole('heading',{name:'Headphone Quiet Pro'})).toBeVisible();await expect(page.getByRole('link',{name:/Comprar na/})).toHaveAttribute('href',/^https:\/\//);await expect(page.getByRole('heading',{name:'Outras 2 ofertas'})).toBeVisible()})
-test('admin cria registro e respeita leitor',async({page})=>{await page.goto('/admin/produtos');await page.getByRole('button',{name:/Novo produto/}).click();await page.getByLabel('Produto').fill('Produto E2E');await page.getByLabel('Marca').fill('Marca E2E');await page.getByLabel('Categoria').fill('Tecnologia');await page.getByLabel('Score').fill('90');await page.getByRole('button',{name:'Salvar registro'}).click();await expect(page.getByText('Produto E2E')).toBeVisible();await page.locator('.role-switch select').selectOption('viewer');await expect(page.getByText('Modo somente leitura')).toBeVisible()})
+
+test('busca encontra um produto real do catálogo e abre a oferta', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('garimpo:consent', 'false'))
+  await page.goto('/')
+  const nome = await page.locator('.product-card h3').first().innerText()
+  const termo = nome.split(/\s+/).slice(0, 2).join(' ')
+  await page.goto('/buscar')
+  const campo = page.getByLabel('Buscar no catálogo').last()
+  await campo.fill(termo)
+  await campo.press('Escape')
+  const card = page.locator('.product-card').filter({ hasText: termo }).first()
+  await expect(card).toBeVisible()
+  await expect(card.locator('.product-buy-button')).toHaveAttribute('href', /^https:\/\/s\.shopee\.com\.br\//)
+  await card.locator('.product-card-link').click()
+  await expect(page).toHaveURL(/\/produto\//)
+  await expect(page.getByRole('link', { name: /Comprar na/ })).toHaveAttribute('href', /^https:\/\//)
+})
+
+test('admin exige sessão com papel para abrir um módulo', async ({ page }) => {
+  const session = {
+    user: { id: 'admin-test', name: 'Admin Teste', email: 'admin@example.com', emailVerified: true, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
+    session: { id: 'admin-session', userId: 'admin-test', token: 'browser-test-only', expiresAt: '2099-01-01T00:00:00Z' },
+  }
+  let roles: unknown[] = []
+  await page.route('**/api/auth/get-session**', (route) => route.fulfill({ json: session }))
+  await page.route('**/api/v1/me', (route) => route.fulfill({ json: { data: { roles } } }))
+  await page.goto('/admin/produtos')
+  await expect(page).toHaveURL(/\/$/)
+
+  roles = [{ code: 'ADMIN', permissions: ['catalog:read', 'catalog:write'] }]
+  await page.goto('/admin/produtos')
+  await expect(page.getByRole('button', { name: /Novo produto/ })).toBeVisible()
+})

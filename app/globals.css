@@ -188,6 +188,12 @@ input::placeholder,textarea::placeholder{color:var(--muted-foreground)}
 .product-card .product-info h3{min-height:0;margin:0;font-size:17px;line-height:1.25}
 .product-card .product-info>p{min-height:0;margin:0;color:var(--muted-foreground);font-size:13px;line-height:1.45}
 .product-card-meta{min-height:20px}
+.product-card .product-stats{display:grid;grid-template-columns:auto auto;align-items:center;justify-content:end;gap:2px;flex-shrink:0;margin-left:auto;color:#666d60;font-size:10px;font-weight:400;line-height:1.5;text-transform:none;letter-spacing:normal}
+.product-card .product-stats>span:nth-child(2){font-size:11px}
+.product-card .product-stats>.product-sold-count{grid-column:1 / -1;justify-self:end}
+.product-card .product-rating{display:inline-flex;align-items:center;gap:3px;color:#4c6735;font-size:11px;font-weight:650;white-space:nowrap}
+.product-card .product-rating svg{width:10px;height:10px;flex-shrink:0}
+.product-card .product-stats>span{white-space:nowrap}
 .product-card-meta .rating svg{flex:0 0 auto}
 .product-price-block{display:flex;flex-direction:column;gap:1px;margin:2px 0 0}
 .product-price-block s{height:auto;min-height:17px;color:var(--muted-foreground);font-size:11px;line-height:1.35}

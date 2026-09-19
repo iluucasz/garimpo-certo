@@ -1,0 +1,1 @@
+ALTER TABLE "offers" ADD COLUMN "price_max" numeric(12, 2);

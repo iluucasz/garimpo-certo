@@ -15,7 +15,7 @@ export function SiteFooter() {
         <div><h2>Seu Garimpo</h2><Link href="/favoritos">Favoritos</Link><Link href="/comparar">Comparador</Link><Link href="/historico">Vistos recentemente</Link><Link href="/conta">Minha conta</Link></div>
         <div><h2>Sobre</h2><Link href="/como-funciona">Como funciona</Link><Link href="/como-funciona#afiliados">Links de afiliados</Link><Link href="/privacidade">Privacidade e cookies</Link></div>
       </div>
-      <div className={`container ${styles.footerBottom}`}><span>© 2026 Garimpo certo</span><span>Ambiente demonstrativo · preços, estoque e avaliações simulados.</span><Link href="/privacidade">Privacidade</Link></div>
+      <div className={`container ${styles.footerBottom}`}><span>© 2026 Garimpo certo</span><span>Preços e estoque conforme a última sincronização com a Shopee · usamos links de afiliado.</span><Link href="/privacidade">Privacidade</Link></div>
     </footer>
     {hydrated && consent === null && <aside className="cookie-banner" aria-label="Preferências de cookies"><div><strong>Suas preferências de privacidade</strong><p>Usamos armazenamento local para favoritos, histórico e preferências deste protótipo.</p></div><div><button className="btn secondary" onClick={() => setConsent(false)}>Somente essenciais</button><button className="btn primary" onClick={() => setConsent(true)}>Aceitar todos</button></div></aside>}
   </>

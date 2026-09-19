@@ -24,7 +24,7 @@ export function SiteHeader() {
   const closeMenu = () => setOpen(false)
 
   return <>
-    <aside className={styles.notice} aria-label="Ambiente demonstrativo">Uma vitrine para explorar. <span>Preços e avaliações demonstrativos.</span></aside>
+    <aside className={styles.notice} aria-label="Aviso da vitrine">Preços e avaliações vêm da Shopee. <span>Usamos links de afiliado.</span></aside>
     <header className={styles.header}>
       <div className={`${styles.headerMain} container`}>
         <StoreBrand/>
