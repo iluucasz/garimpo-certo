@@ -10,7 +10,7 @@ test('home abre detalhes pelo card e compra direta pelo botão', async ({ page, 
   await expect(card.locator('.product-buy-button')).toHaveAttribute('target', '_blank')
   const offerUrl = await card.locator('.product-buy-button').getAttribute('href')
   await expect(card.locator('.product-buy-button')).toHaveText('Comprar agora')
-  await expect(card.locator('.product-sold-count')).toHaveText(/vendidos?$/)
+  await expect(card.locator('.product-sold-count')).toHaveText(/vendas? recentes?$/)
   await expect(card.locator('.product-card-link')).toHaveAttribute('href', /^\/produto\//)
   await expect(card.getByText('Ver detalhes', { exact: true })).toHaveCount(0)
   await context.route(offerUrl!, route => route.fulfill({ body: 'Oferta da loja' }))
