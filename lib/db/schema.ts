@@ -334,6 +334,7 @@ export const priceHistory = pgTable("price_history", {
 	offerId: uuid("offer_id").notNull(),
 	price: numeric({ precision: 12, scale:  2 }).notNull(),
 	originalPrice: numeric("original_price", { precision: 12, scale:  2 }),
+	soldCount: integer("sold_count"),
 	capturedAt: timestamp("captured_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	index("price_history_offer_idx").using("btree", table.offerId.asc().nullsLast().op("timestamptz_ops"), table.capturedAt.asc().nullsLast().op("timestamptz_ops")),

@@ -44,7 +44,7 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
   const brandId = await getOrCreateBrand(item.brandName)
   const categoryId = await getOrCreateCategory(item.categorySlug, categoryName)
 
-  const [existingOffer] = await db.select({ id: offers.id, productId: offers.productId, price: offers.price })
+  const [existingOffer] = await db.select({ id: offers.id, productId: offers.productId, price: offers.price, soldCount: offers.soldCount })
     .from(offers).where(and(eq(offers.providerId, providerId), eq(offers.externalId, item.externalId)))
   const [existingBySlug] = existingOffer ? [] : await db.select({ id: products.id }).from(products).where(eq(products.slug, item.slug))
 
@@ -85,13 +85,16 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
     .onConflictDoUpdate({ target: [offers.externalId, offers.providerId], set: offerValues })
     .returning({ id: offers.id })
 
+  // Snapshot a cada mudança de preço OU de vendas: é o histórico que a Shopee não devolve.
   const priceChanged = !existingOffer || Number(existingOffer.price) !== item.price
-  if (priceChanged) {
+  const soldChanged = !existingOffer || (existingOffer.soldCount ?? -1) !== item.soldCount
+  if (priceChanged || soldChanged) {
     await db.insert(priceHistory).values({
       offerId: offer.id, price: item.price.toFixed(2), originalPrice: item.originalPrice?.toFixed(2) ?? null,
+      soldCount: item.soldCount,
     })
   }
-  return { isNew, priceChanged }
+  return { isNew, priceChanged: priceChanged || soldChanged }
 }
 
 export async function importCatalogItems(items: CatalogItem[], providerId: string, categoryNames: Record<string, string>): Promise<ImportSummary> {
