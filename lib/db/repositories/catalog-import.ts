@@ -120,6 +120,20 @@ export async function archiveProductsWithoutAffiliateOffer() {
   return orphans.map((orphan) => orphan.slug)
 }
 
+/** Arquiva produtos ativos do parceiro que não estão mais na seleção da importação atual. */
+export async function archiveProductsOutsideSelection(externalIds: string[], providerId: string) {
+  const mantidos = new Set(externalIds)
+  const ativos = await db.select({ id: products.id, slug: products.slug, externalId: offers.externalId })
+    .from(products).innerJoin(offers, eq(offers.productId, products.id))
+    .where(and(eq(products.status, 'active'), eq(offers.providerId, providerId)))
+  const sobrando = ativos.filter((row) => !mantidos.has(row.externalId))
+  for (const row of sobrando) {
+    await db.update(products).set({ status: 'removed', updatedAt: new Date().toISOString() }).where(eq(products.id, row.id))
+    await db.update(offers).set({ status: 'removed' }).where(eq(offers.productId, row.id))
+  }
+  return sobrando.map((row) => row.slug)
+}
+
 export async function countCatalog() {
   const [row] = await db.select({
     products: sql<number>`count(distinct ${products.id})::int`,

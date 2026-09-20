@@ -75,6 +75,7 @@
 .store :global(.product-card-meta) :global(.rating) svg { width: 10px; height: 10px; }
 .store :global(.product-price-block) { margin-top: auto; }
 .store :global(.product-price-block) > div { gap: 10px; }
+.store :global(.price-from) { align-self: baseline; font-size: 13px; font-weight: 500; color: #717567; }
 .store :global(.product-price-block) strong { font-size: 26px; font-weight: 800; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
 .store :global(.product-price-block) s { font-size: 13px; color: #77796b; min-height: 0; }
 .store :global(.product-offer-source) { border: 0; padding: 0; margin-top: 5px; font-size: 13px; color: #717567; }
@@ -130,7 +131,8 @@
   .store :global(.product-card) :global(.product-info) h3 { font-size: 15px; min-height: 44px; margin-block: 5px 10px; }
   .store :global(.product-card-meta) > span:first-child { display: block; font-size: 12px; }
   .store :global(.product-price-block) > div { gap: 4px 7px; }
-  .store :global(.product-price-block) strong { font-size: 22px; }
+  .store :global(.price-from) { align-self: baseline; font-size: 13px; font-weight: 500; color: #717567; }
+.store :global(.product-price-block) strong { font-size: 22px; }
   .store :global(.product-price-block) s { font-size: 12px; }
           .store :global(.discount-badge) { top: 8px; left: 8px; font-size: 12px; padding: 3px 5px; }
   .store :global(.product-card) :global(.icon-btn) { top: 6px; right: 6px; width: 34px; height: 34px; }
