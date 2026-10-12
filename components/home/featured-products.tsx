@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
@@ -10,7 +10,7 @@ import styles from './featured-products.module.css'
 
 export function FeaturedProducts() {
   const { products, getBestOffer, getProvider } = useStoreData()
-  const featured = [...products].filter((product) => getBestOffer(product.id)).sort((a, b) => b.score - a.score).slice(0, 4)
+  const featured = useMemo(() => [...products].filter((product) => getBestOffer(product.id)).sort((a, b) => b.score - a.score).slice(0, 4), [products, getBestOffer])
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -43,7 +43,7 @@ export function FeaturedProducts() {
   const select = (next: number) => { setPlaying(false); setIndex((next + featured.length) % featured.length) }
 
   return <section className={styles.featured} aria-label="Produtos em destaque" aria-roledescription="carrossel" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest('[data-carousel-rotation]')) setPlaying(false) }}>
-    <div className={styles.top}><span>PRODUTOS EM DESTAQUE</span>{featured.length > 1 && <button type="button" data-carousel-rotation aria-label={playing ? 'Pausar destaques' : 'Reproduzir destaques'} onClick={() => setPlaying((current) => !current)}>{playing ? <Pause aria-hidden="true"/> : <Play aria-hidden="true"/>}</button>}</div>
+    <div className={styles.top}><span>Produtos em destaque</span>{featured.length > 1 && <button type="button" data-carousel-rotation aria-label={playing ? 'Pausar destaques' : 'Reproduzir destaques'} onClick={() => setPlaying((current) => !current)}>{playing ? <Pause aria-hidden="true"/> : <Play aria-hidden="true"/>}</button>}</div>
     <div className={styles.slide} aria-live={playing ? 'off' : 'polite'} aria-atomic="true">
       <Link className={styles.slideLink} href={`/produto/${product.slug}`} aria-label={`Ver detalhes de ${product.name}`}/>
       <div className={styles.image}>

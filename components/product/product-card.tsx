@@ -23,11 +23,12 @@ export function ProductCard({ product }: { product: Product }) {
     <div className="product-image">
       <Image src={product.image} alt={product.name} fill sizes="(max-width: 700px) 50vw, (max-width: 1000px) 33vw, 25vw"/>
       <button type="button" onClick={() => toggleFavorite(product.id)} className={isFavorite ? 'icon-btn active product-card-action' : 'icon-btn product-card-action'} aria-pressed={isFavorite} aria-label={isFavorite ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}><Heart fill={isFavorite ? 'currentColor' : 'none'}/></button>
-      {discount > 0 && <span className="discount-badge">−{discount}%</span>}
+      {discount > 0 && <span className="discount-badge">−{discount}%<span className="sr-only"> de desconto</span></span>}
     </div>
     <div className="product-info">
-      <div className="product-card-meta"><span>{product.brand}</span><div className="product-stats"><span className="product-rating"><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}<span className="sr-only">de 5 estrelas</span></span>{product.reviews > 0 ? <span>({product.reviews.toLocaleString('pt-BR')} avaliações)</span> : null}{offer?.soldCount ? <span className="product-sold-count">{formatSoldCount(offer.soldCount)}</span> : null}</div></div>
+      <span className="product-card-brand">{product.brand}</span>
       <h3>{product.name}</h3>
+      <div className="product-card-signals">{product.rating > 0 ? <span className="product-card-stars"><Star fill="currentColor" aria-hidden="true"/>{product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}<span className="sr-only"> de 5 estrelas</span></span> : null}{product.reviews > 0 ? <span>({product.reviews.toLocaleString('pt-BR')} avaliações)</span> : null}{offer?.soldCount ? <span className="product-sold-count">{formatSoldCount(offer.soldCount)}</span> : null}</div>
       <div className="product-price-block">{offer ? <div>{offer.priceMax && offer.priceMax > offer.price ? <span className="price-from">a partir de</span> : null}<strong>{formatPrice(offer.price)}</strong>{previous > offer.price && <s>{formatPrice(previous)}</s>}</div> : <span className="unavailable-offer">Sem oferta disponível</span>}</div>
       {provider && <div className="product-offer-source"><span>na {provider.name}</span></div>}
       <div className="product-card-footer">

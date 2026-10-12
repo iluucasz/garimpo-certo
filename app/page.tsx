@@ -1,47 +1,58 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BadgeCheck, ExternalLink, RefreshCw } from 'lucide-react'
 import { HomeCatalog } from '@/components/home/home-catalog'
+import { HomeSelections } from '@/components/home/home-selections'
+import { HeroStat } from '@/components/home/hero-stat'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
-import { articles, collections, products } from '@/lib/mock-data'
+import { articles } from '@/lib/mock-data'
 import styles from '@/components/home/home.module.css'
 
 const validFilters = ['trending', 'discount', 'rating', 'budget'] as const
 type HomeFilter = (typeof validFilters)[number]
-const collectionImages = [products[4].image, products[12].image, products[7].image]
+
+const siteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Garimpo certo',
+  url: 'https://garimpo.example',
+  inLanguage: 'pt-BR',
+  potentialAction: { '@type': 'SearchAction', target: 'https://garimpo.example/buscar?q={search_term_string}', 'query-input': 'required name=search_term_string' },
+}
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ filtro?: string }> }) {
   const params = await searchParams
   const activeFilter = validFilters.includes(params.filtro as HomeFilter) ? params.filtro as HomeFilter : 'trending'
 
   return <StorefrontShell>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}/>
     <div className={styles.home}>
       <section className={`${styles.hero} container`} aria-labelledby="home-title">
         <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>ENCONTRE. COMPARE. APROVEITE.</span>
-          <h1 id="home-title">Bons produtos.<br/><em>Preços que valem.</em></h1>
-          <p>Encontre seu próximo achado e compre direto na loja com a melhor oferta disponível.</p>
-          <Link className={styles.heroButton} href="#ofertas">Ver ofertas <ArrowRight aria-hidden="true"/></Link>
-          <div className={styles.heroFootnote}><span>Casa, tecnologia e muito mais</span><ArrowDown aria-hidden="true"/></div>
+          <HeroStat/>
+          <h1 id="home-title">Bons produtos. <span>Preços que valem.</span></h1>
+          <p className={styles.heroLead}>Encontre seu próximo achado e compre direto na loja com a melhor oferta disponível.</p>
+          <div className={styles.heroActions}>
+            <Link className={styles.heroButton} href="#ofertas">Ver ofertas <ArrowRight aria-hidden="true"/></Link>
+            <Link className={styles.heroLink} href="/como-funciona">Como funciona</Link>
+          </div>
+          <ul className={styles.trust} aria-label="Como o Garimpo trabalha">
+            <li><ExternalLink aria-hidden="true"/>Você compra na Shopee, não aqui</li>
+            <li><RefreshCw aria-hidden="true"/>Preços e vendas da última sincronização</li>
+            <li><BadgeCheck aria-hidden="true"/>Links de afiliado sempre sinalizados</li>
+          </ul>
         </div>
         <FeaturedProducts/>
       </section>
 
       <HomeCatalog activeFilter={activeFilter}/>
-
-      <section className={`${styles.collections} container`} id="colecoes" aria-labelledby="collections-title">
-        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>SELEÇÕES GARIMPO</span><h2 id="collections-title">Um ponto de partida.</h2></div><p>Reunimos algumas ideias para você explorar.</p></div>
-        <div className={styles.collectionGrid}>{collections.map((collection, index) => <Link href={`/colecoes/${collection.slug}`} className={styles.collection} key={collection.id}>
-          <div className={styles.collectionImage}><Image src={collectionImages[index]} alt="" fill sizes="(max-width: 700px) 90vw, 33vw"/><span>0{index + 1}</span></div>
-          <div className={styles.collectionCaption}><div><span>{collection.tone}</span><h3>{collection.title}</h3></div><ArrowUpRight aria-hidden="true"/></div>
-        </Link>)}</div>
-      </section>
+      <HomeSelections/>
 
       <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
-        <div className={styles.guideIntro}><span className={styles.eyebrow}>ANTES DE ESCOLHER</span><h2 id="guides-title">Vale a<br/> <em>leitura.</em></h2><p>Detalhes que ajudam a decidir qual produto combina com você.</p><Link href="/guias">Todos os guias <ArrowRight aria-hidden="true"/></Link></div>
+        <div className={styles.guideIntro}><h2 id="guides-title">Vale a leitura.</h2><p>Detalhes que ajudam a decidir qual produto combina com você.</p><Link href="/guias">Todos os guias <ArrowRight aria-hidden="true"/></Link></div>
         <div className={styles.guideList}>{articles.map((article) => <Link href={`/guias/${article.slug}`} className={styles.guide} key={article.id}>
-          <div className={styles.guideImage}><Image src={article.image} alt="" fill sizes="(max-width: 700px) 100px, 140px"/></div><div><span>{article.category} <i/> {article.readTime} de leitura</span><h3>{article.title}</h3></div><ArrowUpRight aria-hidden="true"/>
+          <div className={styles.guideImage}><Image src={article.image} alt="" fill sizes="(max-width: 700px) 88px, 140px"/></div><div><span>{article.category} <i/> {article.readTime} de leitura</span><h3>{article.title}</h3></div><ArrowUpRight aria-hidden="true"/>
         </Link>)}</div>
       </div></section>
 

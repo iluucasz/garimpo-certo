@@ -45,6 +45,7 @@ Gotchas the API imposes, don't "fix" them by inventing data:
 
 **Still mock, deliberately, not an oversight**:
 - `app/colecoes/[slug]` and `app/guias*` (curated collections, editorial articles) — no real backing tables exist for these; they're content/CMS concepts, not catalog data.
+  - The homepage no longer reads `collections` from mock data: its "Escolha pelo que importa" block (`components/home/home-selections.tsx`) is derived from the real catalog and links to `/buscar` filters. `lib/catalog/signals.ts` is the single source for those filter criteria (`matchesSignal`/`currentPrice`), shared with `components/search/search-experience.tsx` so counts and results never diverge. Only the `/colecoes/*` pages and the guides list on the home are still mock.
 - `components/admin/module-content.tsx`'s generic per-module CRUD table (`LocalRepository`/browser storage) — spans ~29 unrelated admin modules (SEO, tema, campanhas, LGPD, ...), most without any real table to bind to.
 - `components/admin/experience-studio.tsx`'s campaign/segment simulators and `app/admin/page.tsx`'s dashboard numbers (`auditEvents`, `jobs` from `lib/mock-data`) — admin-only demo tooling. The ranking simulator inside it is real now (real catalog + metrics).
 

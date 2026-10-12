@@ -8,10 +8,10 @@ import { useMock } from '@/components/mock-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import { useStoreData } from '@/components/store-data-provider'
 import { rankProducts, searchProducts } from '@/lib/mock-services'
+import { catalogSignals, currentPrice, matchesSignal } from '@/lib/catalog/signals'
 import { platformServices } from '@/lib/platform'
 
 const PAGE_SIZE = 8
-const signalLabels = ['Mais vendidos', 'Bem avaliados', 'Em promoção', 'Bom custo-benefício']
 
 export function SearchExperience({ initialCategory }: { initialCategory?: string }) {
   const params = useSearchParams()
@@ -22,7 +22,9 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const [query, setQuery] = useState(params.get('q') ?? '')
   const [category, setCategory] = useState(initialCategory ?? params.get('categoria') ?? 'todos')
   const [sort, setSort] = useState(params.get('ordem') ?? 'relevancia')
-  const [max, setMax] = useState(Number(params.get('precoMax') ?? 4000))
+  const priceCeiling = useMemo(() => Math.max(50, Math.ceil(Math.max(0, ...products.map((product) => currentPrice(product, offers))) / 10) * 10), [products, offers])
+  const [maxParam, setMax] = useState<number | null>(params.get('precoMax') ? Number(params.get('precoMax')) : null)
+  const max = Math.min(maxParam ?? priceCeiling, priceCeiling)
   const [signals, setSignals] = useState<string[]>(params.get('sinais')?.split(',').filter(Boolean) ?? [])
   const [page, setPage] = useState(Number(params.get('pagina') ?? 1))
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -43,36 +45,23 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
     return products.filter((product) => `${product.name} ${product.brand}`.toLocaleLowerCase('pt-BR').includes(term)).slice(0, 5)
   }, [query, products])
 
-  const results = useMemo(() => rankProducts(searchProducts(products, query, category).filter((product) => {
-    const price = product.priceHistory.length ? Math.min(...product.priceHistory.map((point) => point.price)) : 0
-    const offer = offers.find((item) => item.productId === product.id)
-    const soldCount = offer?.soldCount ?? 0
-    const offerDiscount = offer?.previousPrice && offer.previousPrice > offer.price ? 1 - offer.price / offer.previousPrice : 0
-    const matchesSignals = signals.every((signal) => {
-      if (signal === 'Mais vendidos') return soldCount >= 1000
-      if (signal === 'Bem avaliados') return product.rating >= 4.8
-      if (signal === 'Em promoção') return offerDiscount >= .2 || product.tags.includes('Em promoção')
-      if (signal === 'Bom custo-benefício') return product.score >= 85 && price <= 1500
-      return true
-    })
-    return price <= max && matchesSignals
-  }), sort, offers), [products, offers, query, category, max, signals, sort])
+  const results = useMemo(() => rankProducts(searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers))), sort, offers), [products, offers, query, category, max, signals, sort])
 
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
   const visible = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-  const activeFilterCount = (category !== 'todos' ? 1 : 0) + (max !== 4000 ? 1 : 0) + signals.length
+  const activeFilterCount = (category !== 'todos' ? 1 : 0) + (max < priceCeiling ? 1 : 0) + signals.length
 
   useEffect(() => {
     const next = new URLSearchParams()
     if (query) next.set('q', query)
     if (category !== 'todos') next.set('categoria', category)
     if (sort !== 'relevancia') next.set('ordem', sort)
-    if (max !== 4000) next.set('precoMax', String(max))
+    if (max < priceCeiling) next.set('precoMax', String(max))
     if (signals.length) next.set('sinais', signals.join(','))
     if (page > 1) next.set('pagina', String(page))
     const url = `${pathname}${next.size ? `?${next.toString()}` : ''}`
     window.history.replaceState(null, '', url)
-  }, [query, category, sort, max, signals, page, pathname])
+  }, [query, category, sort, max, priceCeiling, signals, page, pathname])
 
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [page, totalPages])
 
@@ -94,7 +83,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
     setQuery('')
     setCategory(initialCategory ?? 'todos')
     setSort('relevancia')
-    setMax(4000)
+    setMax(null)
     setSignals([])
     setPage(1)
   }
@@ -121,7 +110,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
 
   const heading = query ? `Resultados para “${query}”` : activeCategory ? activeCategory.name : 'Descubra sem se perder'
   const subheading = query
-    ? 'Filtros úteis, ordenação clara e URLs compartilháveis. Preços e resultados são demonstrativos.'
+    ? 'Preços e vendas conforme a última sincronização com a Shopee.'
     : activeCategory
       ? `${categoryCounts.get(activeCategory.slug) ?? 0} produtos selecionados em ${activeCategory.name.toLocaleLowerCase('pt-BR')}, prontos para comparar.`
       : `${products.length} produtos em ${categories.length} categorias, com filtros úteis, ordenação clara e URLs compartilháveis.`
@@ -185,7 +174,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
         <fieldset>
           <legend>Preço máximo</legend>
           <div className="price-filter">
-            <input type="range" min="150" max="4000" step="50" value={max} onChange={(event) => { setMax(Number(event.target.value)); setPage(1) }} aria-label="Preço máximo"/>
+            <input type="range" min="10" max={priceCeiling} step="10" value={Math.max(10, max)} onChange={(event) => { setMax(Number(event.target.value)); setPage(1) }} aria-label="Preço máximo"/>
             <strong>Até R$ {max.toLocaleString('pt-BR')}</strong>
           </div>
         </fieldset>
@@ -193,7 +182,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
         <fieldset>
           <legend>Sinais</legend>
           <div className="signal-chips">
-            {signalLabels.map((signal) => { const active = signals.includes(signal); return <button type="button" key={signal} className={`signal-chip ${active ? 'active' : ''}`} aria-pressed={active} onClick={() => toggleSignal(signal)}>{active && <Check/>}{signal}</button> })}
+            {catalogSignals.map((signal) => { const active = signals.includes(signal); return <button type="button" key={signal} className={`signal-chip ${active ? 'active' : ''}`} aria-pressed={active} onClick={() => toggleSignal(signal)}>{active && <Check/>}{signal}</button> })}
           </div>
         </fieldset>
       </aside>
