@@ -1,4 +1,4 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-const routes=['/','/buscar','/produto/headphone-quiet-pro','/admin/ranking','/admin/analytics']
-for(const route of routes)test(`sem violações críticas em ${route}`,async({page})=>{await page.goto(route);await page.waitForLoadState('networkidle');const results=await new AxeBuilder({page}).disableRules(['color-contrast']).analyze();expect(results.violations.filter((item)=>['critical','serious'].includes(item.impact??''))).toEqual([])})
+const routes=['/','/buscar','/produto/:primeiro','/admin/ranking','/admin/analytics']
+for(const route of routes)test(`sem violações críticas em ${route}`,async({page,request})=>{let path=route;if(route.endsWith(':primeiro')){const response=await request.get('/api/v1/products?limit=1');const first=(await response.json()).data?.[0]?.slug;expect(first,'catálogo precisa ter ao menos um produto').toBeTruthy();path=`/produto/${first}`}await page.goto(path);await page.waitForLoadState('networkidle');const results=await new AxeBuilder({page}).disableRules(['color-contrast']).analyze();expect(results.violations.filter((item)=>['critical','serious'].includes(item.impact??''))).toEqual([])})
