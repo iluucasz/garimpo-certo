@@ -254,3 +254,15 @@
 .facts dd { margin: 0; text-align: right; font-weight: 600; color: #2e3138; }
 .facts code { font-size: 12px; font-weight: 500; }
 .quiet { background: #e8f3ec; color: #1c6b4a; }
+
+/* Alertas operacionais na visão geral */
+.health { margin-bottom: 18px; padding: 16px 18px; border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: 12px; background: var(--card); }
+.healthWarning { border-left-color: #b45309; }
+.healthCritical { border-left-color: #b42318; background: color-mix(in srgb, #b42318 5%, var(--card)); }
+.health h2 { margin: 0 0 8px; font-size: 16px; }
+.health ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.health li { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; }
+.health li strong a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.health li span { color: var(--muted-foreground); }
+.healthItemWarning strong { color: #b45309; }
+.healthItemCritical strong { color: #b42318; }

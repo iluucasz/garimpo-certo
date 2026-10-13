@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, RefreshCw } from 'lucide-react'
 import { getAdminOverview } from '@/lib/db/repositories/admin-overview'
+import { getOpsHealth } from '@/lib/ops/health'
 import { formatPrice } from '@/lib/format'
 import styles from '@/components/admin/admin.module.css'
 
@@ -13,7 +14,8 @@ const dateTime = (iso: string | null) => iso
   : 'nunca'
 
 export default async function AdminDashboard() {
-  const overview = await getAdminOverview()
+  const [overview, health] = await Promise.all([getAdminOverview(), getOpsHealth()])
+  const attention = health.checks.filter((check) => check.severity !== 'ok')
   const { catalog, clicks, conversions, audience, topProducts } = overview
   // Mínimo de 4 para o eixo ter degraus inteiros e distintos mesmo com poucos cliques.
   const peak = Math.max(4, ...clicks.byDay.map((entry) => entry.count))
@@ -26,6 +28,14 @@ export default async function AdminDashboard() {
       <div><div className={styles.pageEyebrow}>Painel da operação</div><h1>Visão geral</h1><p>O que o catálogo e os cliques mostram hoje. Todos os números vêm do banco.</p></div>
       <Link href="/admin/imports-jobs" className="btn primary"><RefreshCw aria-hidden="true"/>Importar catálogo</Link>
     </div>
+
+    <section className={`${styles.health} ${health.status === 'critical' ? styles.healthCritical : health.status === 'warning' ? styles.healthWarning : styles.healthOk}`} aria-labelledby="health-title">
+      <h2 id="health-title">{attention.length === 0 ? 'Tudo em ordem' : attention.length === 1 ? '1 ponto precisa de atenção' : `${attention.length} pontos precisam de atenção`}</h2>
+      <ul>{(attention.length ? attention : health.checks).map((check) => <li key={check.id} className={check.severity === 'critical' ? styles.healthItemCritical : check.severity === 'warning' ? styles.healthItemWarning : undefined}>
+        <strong><Link href={check.href}>{check.label}</Link></strong>
+        <span>{check.message}</span>
+      </li>)}</ul>
+    </section>
 
     <section className={styles.metrics} aria-label="Indicadores da operação">
       <Stat label="Produtos ativos" value={number.format(catalog.active)} note={`${number.format(catalog.archived)} arquivados · ${number.format(catalog.offers)} ofertas`}/>

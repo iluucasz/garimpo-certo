@@ -29,7 +29,8 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 | ✅ | Fila de pedidos de titulares (LGPD) e consentimento gravado no banco | Formulário em `/privacidade#pedido`; fila em Painel → LGPD; escolhas de cookies em `consent_records`. Falta aviso ao time quando chega pedido novo. |
 | 🙋 | Redesign de identidade autoral do site (`docs/PROXIMOS-PASSOS.md`, seção 3) | É decisão de gosto, e o site já está no ar: preciso que você diga a direção (referências, o que manter, o que mudar) antes de eu mexer. Posso preparar 2 ou 3 propostas lado a lado para você escolher. |
 | ✅ | CMS visual da home (portado do nextrotta) | Painel → Home: seções e blocos, prévia, rascunho, publicar e versões. Primeira versão só da home; outras páginas, agendamento e tema por página ficam para depois. |
-| ⏳ | Alertas operacionais (importação falhou, catálogo velho) | |
+| ✅ | Alertas operacionais no painel (importação, comissões, tarefas, prazo da LGPD) | Bloco no topo de `/admin`. `/api/v1/health` responde 503 quando está crítico. |
+| 🙋 | Cadastrar um monitor externo em `/api/v1/health` (UptimeRobot, Better Stack…) | É o jeito mais barato de receber aviso no celular enquanto o bot do Telegram não existe. |
 | ⏳ | Alerta de queda de preço para o visitante | |
 | ⏳ | Teste A/B de verdade | |
 | ⏳ | Segmentação que direciona conteúdo | |

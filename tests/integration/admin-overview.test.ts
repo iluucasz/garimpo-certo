@@ -21,6 +21,9 @@ describe('números do painel administrativo', () => {
     expect(active.length).toBeGreaterThanOrEqual(1)
     // Um produto com várias ofertas não pode aparecer duas vezes na lista.
     expect(new Set(active.map((item) => item.id)).size).toBe(active.length)
-    for (const item of active) expect(item.price).not.toBeNull()
+    // Outros testes criam produtos (ainda sem oferta) ao mesmo tempo: só os que têm oferta de afiliado entram na checagem.
+    const withOffer = active.filter((item) => item.hasAffiliateLink)
+    expect(withOffer.length).toBeGreaterThan(0)
+    for (const item of withOffer) expect(item.price).not.toBeNull()
   })
 })

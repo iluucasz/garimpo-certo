@@ -38,6 +38,8 @@ Preview valida migrations e contratos antes do tráfego. Em produção, migratio
 
 ## Observabilidade
 
+**Saúde do sistema:** `GET /api/v1/health` devolve `{ status, checkedAt }` (`ok`, `warning` ou `critical`) e responde **503** quando algo está crítico (importação ou comissões sem sucesso por muito tempo, prazo da LGPD vencido). Cadastre esse endereço em um monitor externo e alerte em qualquer 5xx. O detalhe de cada verificação está na visão geral do painel.
+
 Requests propagam `request_id` e `trace_id` (`proxy.ts`). A importação agendada registra o resultado nos logs da função. Core Web Vitals de campo vêm do Vercel Speed Insights, carregado só com o consentimento de medição; ative-o em *Project → Speed Insights* no painel da Vercel. Alertas ainda não existem (ver `docs/BACKLOG.md`).
 
 O script `load-tests/core-journeys.js` cobre navegação, recomendação e ingestão com k6.
