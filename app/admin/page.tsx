@@ -24,7 +24,7 @@ export default async function AdminDashboard() {
   return <div className={styles.dashboard}>
     <div className="admin-title">
       <div><div className={styles.pageEyebrow}>Painel da operação</div><h1>Visão geral</h1><p>O que o catálogo e os cliques mostram hoje. Todos os números vêm do banco.</p></div>
-      <Link href="/admin/catalogo" className="btn primary"><RefreshCw aria-hidden="true"/>Catálogo e importação</Link>
+      <Link href="/admin/imports-jobs" className="btn primary"><RefreshCw aria-hidden="true"/>Importar catálogo</Link>
     </div>
 
     <section className={styles.metrics} aria-label="Indicadores da operação">
@@ -59,18 +59,18 @@ export default async function AdminDashboard() {
           <div><dt>Ofertas ativas</dt><dd>{number.format(catalog.offers)}</dd></div>
           <div><dt>Importação automática</dt><dd>Diária, pelo cron da Vercel (exige <code>CRON_SECRET</code>)</dd></div>
         </dl>
-        <div className={styles.cardFooter}><Link href="/admin/catalogo">Importar agora <ArrowRight aria-hidden="true"/></Link></div>
+        <div className={styles.cardFooter}><Link href="/admin/imports-jobs">Importar agora <ArrowRight aria-hidden="true"/></Link></div>
       </section>
 
       <section className={`${styles.card} ${styles.productsCard}`} aria-labelledby="products-title">
-        <div className={styles.cardHeader}><div><h2 id="products-title">Mais vendidos do catálogo</h2><p>Vendas recentes informadas pela Shopee</p></div><Link className={styles.subtleLink} href="/admin/catalogo">Ver catálogo <ArrowUpRight aria-hidden="true"/></Link></div>
+        <div className={styles.cardHeader}><div><h2 id="products-title">Mais vendidos do catálogo</h2><p>Vendas recentes informadas pela Shopee</p></div><Link className={styles.subtleLink} href="/admin/produtos">Ver catálogo <ArrowUpRight aria-hidden="true"/></Link></div>
         <div className={styles.productTableScroll}><table className={styles.productTable}><thead><tr><th scope="col">Produto</th><th scope="col">Vendas</th><th scope="col">Preço</th><th scope="col">Nota</th></tr></thead><tbody>{topProducts.map((product) => <tr key={product.id}>
           <td><Link href={`/produto/${product.slug}`} className={styles.productIdentity}><span><strong>{product.name}</strong><small>{product.brand}</small></span></Link></td>
           <td>{number.format(product.soldCount)}</td>
           <td>{formatPrice(product.price)}</td>
           <td>{product.rating > 0 ? product.rating.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) : '—'}</td>
         </tr>)}</tbody></table></div>
-        {topProducts.length === 0 && <p className={styles.emptyCatalog}>O catálogo está vazio. <Link href="/admin/catalogo">Importar da Shopee <ArrowRight aria-hidden="true"/></Link></p>}
+        {topProducts.length === 0 && <p className={styles.emptyCatalog}>O catálogo está vazio. <Link href="/admin/imports-jobs">Importar da Shopee <ArrowRight aria-hidden="true"/></Link></p>}
       </section>
     </div>
   </div>

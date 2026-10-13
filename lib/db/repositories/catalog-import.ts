@@ -47,6 +47,10 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
   const [existingOffer] = await db.select({ id: offers.id, productId: offers.productId, price: offers.price, soldCount: offers.soldCount })
     .from(offers).where(and(eq(offers.providerId, providerId), eq(offers.externalId, item.externalId)))
   const [existingBySlug] = existingOffer ? [] : await db.select({ id: products.id }).from(products).where(eq(products.slug, item.slug))
+  const knownProductId = existingOffer?.productId ?? existingBySlug?.id
+  const [lockRow] = knownProductId ? await db.select({ locked: products.editorialLocked }).from(products).where(eq(products.id, knownProductId)) : []
+  // Editado pelo painel: a importação só atualiza o que vem da Shopee (nota, índice, preço), nunca o texto e a classificação.
+  const locked = Boolean(lockRow?.locked)
 
   const productValues = {
     slug: item.slug, name: item.name, brandId, description: item.description,
@@ -55,22 +59,29 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
   }
   let productId = existingOffer?.productId ?? existingBySlug?.id
   const isNew = !productId
-  if (productId) await db.update(products).set(productValues).where(eq(products.id, productId))
+  if (productId && locked) {
+    await db.update(products).set({ rating: productValues.rating, editorialScore: productValues.editorialScore, updatedAt: productValues.updatedAt }).where(eq(products.id, productId))
+  } else if (productId) await db.update(products).set(productValues).where(eq(products.id, productId))
   else {
     const [created] = await db.insert(products).values(productValues).returning({ id: products.id })
     productId = created.id
   }
 
-  await db.delete(productCategories).where(eq(productCategories.productId, productId))
-  await db.insert(productCategories).values({ productId, categoryId, isPrimary: true })
+  if (!locked) {
+    await db.delete(productCategories).where(eq(productCategories.productId, productId))
+    await db.insert(productCategories).values({ productId, categoryId, isPrimary: true })
+  }
 
+  // A imagem acompanha a Shopee mesmo com o bloqueio: é dado do fornecedor, não editorial.
   await db.delete(productImages).where(eq(productImages.productId, productId))
   await db.insert(productImages).values({ productId, providerId, sourceUrl: item.imageUrl, isPrimary: true, position: 0 })
 
-  await db.delete(productTags).where(eq(productTags.productId, productId))
-  for (const label of item.tags) {
-    const tagId = await getOrCreateTag(label)
-    await db.insert(productTags).values({ productId, tagId }).onConflictDoNothing()
+  if (!locked) {
+    await db.delete(productTags).where(eq(productTags.productId, productId))
+    for (const label of item.tags) {
+      const tagId = await getOrCreateTag(label)
+      await db.insert(productTags).values({ productId, tagId }).onConflictDoNothing()
+    }
   }
 
   const offerValues = {

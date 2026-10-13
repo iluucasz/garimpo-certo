@@ -120,6 +120,8 @@ export const products = pgTable("products", {
 	reviewsCount: integer("reviews_count").default(0).notNull(),
 	editorialScore: numeric("editorial_score", { precision: 5, scale: 2 }).default('0').notNull(),
 	growthPercentage: numeric("growth_percentage", { precision: 6, scale: 2 }).default('0').notNull(),
+	/** Verdadeiro depois de uma edição pelo painel: a importação não sobrescreve nome, status, categoria e tags. */
+	editorialLocked: boolean("editorial_locked").default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -792,3 +794,94 @@ export const providerCapabilities = pgTable("provider_capabilities", {
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.capability, table.providerId], name: "provider_capabilities_provider_id_capability_pk"}),
 ]);
+
+/** Cupons e campanhas de desconto. A API de afiliados da Shopee não expõe cupons: entram à mão ou de `shopeeOfferV2`. */
+export const coupons = pgTable("coupons", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	title: text().notNull(),
+	code: text(),
+	description: text(),
+	discountLabel: text("discount_label"),
+	minSpend: numeric("min_spend", { precision: 12, scale: 2 }),
+	url: text().notNull(),
+	imageUrl: text("image_url"),
+	/** `manual` (cadastrado pela equipe) ou `shopee_campaign` (vem de shopeeOfferV2). */
+	source: text().default('manual').notNull(),
+	externalId: text("external_id"),
+	isActive: boolean("is_active").default(true).notNull(),
+	startsAt: timestamp("starts_at", { withTimezone: true, mode: 'string' }),
+	endsAt: timestamp("ends_at", { withTimezone: true, mode: 'string' }),
+	lastSyncedAt: timestamp("last_synced_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("coupons_active_idx").using("btree", table.isActive.asc().nullsLast().op("bool_ops"), table.endsAt.asc().nullsLast().op("timestamptz_ops")),
+	unique("coupons_source_external_unique").on(table.source, table.externalId),
+]);
+
+/** Faixas editoriais exibidas na home, com janela de exibição. */
+export const campaigns = pgTable("campaigns", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	slug: text().notNull(),
+	title: text().notNull(),
+	headline: text().notNull(),
+	description: text(),
+	ctaLabel: text("cta_label").default('Ver agora').notNull(),
+	ctaUrl: text("cta_url").notNull(),
+	imageUrl: text("image_url"),
+	status: text().default('draft').notNull(),
+	startsAt: timestamp("starts_at", { withTimezone: true, mode: 'string' }),
+	endsAt: timestamp("ends_at", { withTimezone: true, mode: 'string' }),
+	sortOrder: integer("sort_order").default(0).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("campaigns_slug_unique").on(table.slug),
+]);
+
+/** Artigos (`/artigos/...`) e páginas institucionais (`/p/...`) editados pelo painel. */
+export const contentPages = pgTable("content_pages", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	kind: text().default('article').notNull(),
+	slug: text().notNull(),
+	title: text().notNull(),
+	summary: text(),
+	body: text().default('').notNull(),
+	status: text().default('draft').notNull(),
+	seoTitle: text("seo_title"),
+	seoDescription: text("seo_description"),
+	coverImageUrl: text("cover_image_url"),
+	authorId: uuid("author_id"),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("content_pages_kind_slug_unique").on(table.kind, table.slug),
+	index("content_pages_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops"), table.publishedAt.desc().nullsLast().op("timestamptz_ops")),
+]);
+
+/** Coleções montadas à mão: lista ordenada de produtos (uuid). */
+export const curatedCollections = pgTable("curated_collections", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	slug: text().notNull(),
+	title: text().notNull(),
+	tone: text().default('Selecionados pela nossa equipe').notNull(),
+	description: text().default('').notNull(),
+	status: text().default('draft').notNull(),
+	productIds: jsonb("product_ids").default([]).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("curated_collections_slug_unique").on(table.slug),
+]);
+
+/** Audiências salvas, com regras sobre `analytics_events` (o alcance é calculado na hora). */
+export const segments = pgTable("segments", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	name: text().notNull(),
+	description: text(),
+	match: text().default('all').notNull(),
+	rules: jsonb().default([]).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});

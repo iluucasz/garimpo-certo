@@ -12,7 +12,6 @@ export type {
   Repository,
   TrackingEvent,
 } from './contracts'
-export { LocalRepository } from './local-repository'
 export { platformServices } from './services'
 
 /**

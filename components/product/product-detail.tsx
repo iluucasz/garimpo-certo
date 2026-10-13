@@ -8,6 +8,7 @@ import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { formatPrice, formatSoldCount } from '@/lib/format'
 import { generateRecommendations } from '@/lib/recommendation/engine'
+import { rankingFromSettings } from '@/lib/recommendation/settings'
 import type { Product } from '@/lib/types'
 import { ProductGrid } from './product-card'
 import styles from './product-detail.module.css'
@@ -17,7 +18,9 @@ const isGeneratedDescription = (text: string) => /^Vendido por .+ na Shopee\.?$/
 
 export function ProductDetail({ product }: { product: Product }) {
   const { favorites, compare, toggleFavorite, toggleCompare, addRecent } = useVisitorState()
-  const { products, categories, offers: allOffers, metrics, getOffers: getOffersForProduct, getBestOffer, getProvider } = useStoreData()
+  const { products, categories, offers: allOffers, metrics, ranking, slots, getOffers: getOffersForProduct, getBestOffer, getProvider } = useStoreData()
+  const similarEnabled = slots.similarEnabled !== false
+  const similarLimit = Math.min(8, Math.max(1, Number(slots.similarLimit) || 4))
   const [imageIndex, setImageIndex] = useState(0)
   const [showBar, setShowBar] = useState(false)
   const buyButton = useRef<HTMLAnchorElement>(null)
@@ -39,10 +42,12 @@ export function ProductDetail({ product }: { product: Product }) {
   const isFavorite = favorites.includes(product.id)
   const isCompared = compare.includes(product.id)
   const recommendations = useMemo(() => {
-    const ids = generateRecommendations({ productId: product.id, category: product.category, limit: 4, seed: product.slug }, { products, offers: allOffers, metrics }).recommendations.map((item) => item.product.id)
+    if (!similarEnabled) return []
+    const { weights, explorationRate } = rankingFromSettings(ranking)
+    const ids = generateRecommendations({ productId: product.id, category: product.category, limit: similarLimit, seed: product.slug, weights, explorationRate }, { products, offers: allOffers, metrics }).recommendations.map((item) => item.product.id)
     const sameCategory = products.filter((item) => ids.includes(item.id))
-    return [...sameCategory, ...products.filter((item) => item.id !== product.id && !ids.includes(item.id))].slice(0, 4)
-  }, [product.id, product.category, product.slug, products, allOffers, metrics])
+    return [...sameCategory, ...products.filter((item) => item.id !== product.id && !ids.includes(item.id))].slice(0, similarLimit)
+  }, [product.id, product.category, product.slug, products, allOffers, metrics, ranking, similarEnabled, similarLimit])
 
   useEffect(() => addRecent(product.id), [product.id, addRecent])
 
@@ -133,11 +138,11 @@ export function ProductDetail({ product }: { product: Product }) {
       <ol className={styles.history}>{product.priceHistory.map((point) => <li key={point.month}><strong>{formatPrice(point.price)}</strong><span className={styles.bar} style={{ height: `${Math.max(8, Math.round((point.price / (max || 1)) * 120))}px` }} aria-hidden="true"/><span>{point.month}</span></li>)}</ol>
     </section>}
 
-    <section className={`container ${styles.section}`} aria-labelledby="relacionados">
+    {similarEnabled && recommendations.length > 0 && <section className={`container ${styles.section}`} aria-labelledby="relacionados">
       <h2 id="relacionados">Você também pode gostar</h2>
       <p className={styles.sectionLead}>Escolhas próximas em categoria, faixa de preço e interesse.</p>
       <ProductGrid items={recommendations}/>
-    </section>
+    </section>}
 
     {showBar && bestOffer && bestProvider && <div className={styles.stickyBar}>
       <div><strong>{formatPrice(bestOffer.price)}</strong><span>{hasRange ? 'a partir de · ' : ''}na {bestProvider.name}</span></div>

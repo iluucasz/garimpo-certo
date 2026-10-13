@@ -7,14 +7,14 @@ import { useAdminAccess } from './admin-access'
 
 type Result = { created: number; updated: number; priceChanges: number; selected: number; archived: number; prunedSkipped: boolean; durationMs: number }
 
-export function CatalogImportButton() {
+export function CatalogImportButton({ onDone }: { onDone?: () => void }) {
   const router = useRouter()
   const { allowed } = useAdminAccess()
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
   const [error, setError] = useState('')
 
-  if (!allowed('catalogo', true)) return <p role="note">Seu papel não permite importar. Peça a um administrador.</p>
+  if (!allowed('imports-jobs', true)) return <p role="note">Seu papel não permite importar. Peça a um administrador.</p>
 
   async function run() {
     setBusy(true)
@@ -26,6 +26,7 @@ export function CatalogImportButton() {
       if (!response.ok) throw new Error(body?.error?.message ?? 'Falha ao importar.')
       setResult(body.data as Result)
       router.refresh()
+      onDone?.()
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Falha ao importar.')
     } finally {

@@ -10,7 +10,10 @@ import { AccountMenu } from './account-menu'
 import { StoreBrand } from './store-brand'
 import styles from './storefront.module.css'
 
-export function SiteHeader({ googleEnabled = false }: { googleEnabled?: boolean }) {
+type Notice = { text: string; detail: string }
+type Extras = { coupons: boolean; articles: boolean; pages?: { slug: string; title: string }[] }
+
+export function SiteHeader({ googleEnabled = false, notice, extras }: { googleEnabled?: boolean; notice?: Notice; extras?: Extras }) {
   const router = useRouter()
   const { favorites, compare } = useVisitorState()
   const { categories } = useStoreData()
@@ -24,7 +27,7 @@ export function SiteHeader({ googleEnabled = false }: { googleEnabled?: boolean 
   const closeMenu = () => setOpen(false)
 
   return <>
-    <aside className={styles.notice} aria-label="Aviso da vitrine">Preços e avaliações vêm da Shopee. <span>Usamos links de afiliado.</span></aside>
+    {notice?.text && <aside className={styles.notice} aria-label="Aviso da vitrine">{notice.text}{notice.detail && <> <span>{notice.detail}</span></>}</aside>}
     <header className={styles.header}>
       <div className={`${styles.headerMain} container`}>
         <StoreBrand/>
@@ -39,7 +42,7 @@ export function SiteHeader({ googleEnabled = false }: { googleEnabled?: boolean 
       <div id="store-navigation" className={`${styles.navRow} ${open ? styles.navOpen : ''}`} onKeyDown={(event) => { if (event.key === 'Escape') { closeMenu(); menuButton.current?.focus() } }}>
         <div className={`container ${styles.navInner}`}>
           <nav className={styles.mainNav} aria-label="Navegação principal"><Link href="/buscar" onClick={closeMenu}>Todos os achados</Link>{categories.map((category) => <Link href={`/categorias/${category.slug}`} key={category.id} onClick={closeMenu}>{category.name}</Link>)}</nav>
-          <nav className={styles.editorialNav} aria-label="Coleções e guias"><Link href="/colecoes" onClick={closeMenu}>Coleções</Link><Link href="/guias" onClick={closeMenu}>Guias de compra</Link></nav>
+          <nav className={styles.editorialNav} aria-label="Coleções e guias"><Link href="/colecoes" onClick={closeMenu}>Coleções</Link>{extras?.coupons && <Link href="/cupons" onClick={closeMenu}>Cupons</Link>}<Link href="/guias" onClick={closeMenu}>Guias de compra</Link>{extras?.articles && <Link href="/artigos" onClick={closeMenu}>Artigos</Link>}</nav>
         </div>
       </div>
     </header>

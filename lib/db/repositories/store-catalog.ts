@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db } from '../client'
-import { brands, categories, offers, priceHistory, productAttributeValues, productAttributes, productCategories, productImages, productTags, products, providers, tags } from '../schema'
+import { brands, categories, curatedCollections, offers, priceHistory, productAttributeValues, productAttributes, productCategories, productImages, productTags, products, providers, tags } from '../schema'
 import type { Category, Offer, Product, Provider } from '@/lib/types'
 
 const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -19,10 +19,11 @@ const relativeUpdatedAt = (isoDate: string) => {
 }
 
 /** `syncedAt`: última sincronização de oferta com a Shopee (ISO), para a interface dizer a data real. */
-export type StoreCatalog = { products: Product[]; offers: Offer[]; providers: Provider[]; categories: Category[]; syncedAt: string | null }
+export type CuratedInput = { slug: string; title: string; tone: string; description: string; productIds: string[] }
+export type StoreCatalog = { products: Product[]; offers: Offer[]; providers: Provider[]; categories: Category[]; syncedAt: string | null; curated: CuratedInput[] }
 
 async function loadStoreCatalog(): Promise<StoreCatalog> {
-  const [productRows, offerRows, providerRows, categoryRows, brandRows, productCategoryRows, imageRows, tagRows, priceHistoryRows, attributeValueRows] = await Promise.all([
+  const [productRows, offerRows, providerRows, categoryRows, brandRows, productCategoryRows, imageRows, tagRows, priceHistoryRows, attributeValueRows, curatedRows] = await Promise.all([
     db.select().from(products).where(eq(products.status, 'active')),
     db.select().from(offers).where(eq(offers.status, 'active')),
     db.select().from(providers),
@@ -34,6 +35,7 @@ async function loadStoreCatalog(): Promise<StoreCatalog> {
     db.select().from(priceHistory),
     db.select({ productId: productAttributeValues.productId, label: productAttributes.label, valueText: productAttributeValues.valueText })
       .from(productAttributeValues).innerJoin(productAttributes, eq(productAttributeValues.attributeId, productAttributes.id)),
+    db.select().from(curatedCollections).where(eq(curatedCollections.status, 'published')),
   ])
 
   const brandById = new Map(brandRows.map((row) => [row.id, row]))
@@ -87,7 +89,11 @@ async function loadStoreCatalog(): Promise<StoreCatalog> {
     const value = row.lastSyncedAt ? new Date(row.lastSyncedAt).toISOString() : null
     return value && (!latest || value > latest) ? value : latest
   }, null)
-  return { products: storeProducts, offers: storeOffers, providers: storeProviders, categories: storeCategories, syncedAt }
+  const curated: CuratedInput[] = curatedRows.map((row) => ({
+    slug: row.slug, title: row.title, tone: row.tone, description: row.description,
+    productIds: Array.isArray(row.productIds) ? (row.productIds as unknown[]).map(String) : [],
+  }))
+  return { products: storeProducts, offers: storeOffers, providers: storeProviders, categories: storeCategories, syncedAt, curated }
 }
 
 const cachedStoreCatalog = unstable_cache(loadStoreCatalog, ['store-catalog-v1'], { revalidate: 300, tags: ['catalog'] })

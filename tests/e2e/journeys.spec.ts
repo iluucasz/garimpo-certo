@@ -54,15 +54,19 @@ test('admin exige sessão com papel para abrir um módulo', async ({ page }) => 
   let roles: unknown[] = []
   await page.route('**/api/auth/get-session**', (route) => route.fulfill({ json: session }))
   await page.route('**/api/v1/me', (route) => route.fulfill({ json: { data: { roles } } }))
-  await page.goto('/admin/catalogo')
+  await page.goto('/admin/imports-jobs')
   await expect(page).toHaveURL(/\/$/)
 
   roles = [{ code: 'ADMIN', permissions: ['catalog:read', 'catalog:write', 'jobs:run'] }]
-  await page.goto('/admin/catalogo')
-  await expect(page.getByRole('heading', { name: 'Catálogo e importação' })).toBeVisible()
+  await page.goto('/admin/imports-jobs')
+  await expect(page.getByRole('heading', { name: 'Importações', level: 1 })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Importar da Shopee agora' })).toBeVisible()
 
-  // Módulos de demonstração ficam fora do painel (e das rotas) por padrão.
-  await page.goto('/admin/produtos')
+  // Sem a permissão do módulo, o painel mostra o acesso restrito em vez do conteúdo.
+  await page.goto('/admin/usuarios-rbac')
+  await expect(page.getByRole('heading', { name: 'Acesso restrito' })).toBeVisible()
+
+  // Módulo que não existe cai na página de erro, não em tela em branco.
+  await page.goto('/admin/modulo-que-nao-existe')
   await expect(page.getByRole('heading', { name: 'Essa página saiu do mapa.' })).toBeVisible()
 })

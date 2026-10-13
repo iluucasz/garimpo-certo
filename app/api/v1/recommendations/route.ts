@@ -3,6 +3,8 @@ import { mockCache } from '@/lib/server/memory-cache'
 import { generateRecommendations } from '@/lib/recommendation/engine'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { getProductMetrics } from '@/lib/db/repositories/product-metrics'
+import { rankingFromSettings } from '@/lib/recommendation/settings'
+import { getSetting } from '@/lib/settings'
 
 function parseInterests(value: string | null) {
   if (!value) return undefined
@@ -17,12 +19,13 @@ export async function GET(request: Request) {
   const interests = parseInterests(params.get('interests'))
   if (interests === null) return fail('O parâmetro interests deve ser um objeto JSON válido.', 422)
   const limit = Number(params.get('limit') ?? 6)
-  const explorationRate = Number(params.get('explorationRate') ?? .12)
+  const configured = rankingFromSettings(await getSetting('ranking'))
+  const explorationRate = params.has('explorationRate') ? Number(params.get('explorationRate')) : configured.explorationRate
   if (!Number.isFinite(limit) || !Number.isFinite(explorationRate)) return fail('Parâmetros numéricos inválidos.', 422)
   const input = {
     slot: params.get('slot') ?? 'home_for_you', seed: params.get('seed') ?? 'anonymous',
     category: params.get('category') ?? undefined, productId: params.get('productId') ?? undefined,
-    exclude: (params.get('exclude') ?? '').split(',').filter(Boolean), limit, explorationRate, interests,
+    exclude: (params.get('exclude') ?? '').split(',').filter(Boolean), limit, explorationRate, interests, weights: configured.weights,
     favoriteIds: (params.get('favorites') ?? '').split(',').filter(Boolean), historyIds: (params.get('history') ?? '').split(',').filter(Boolean),
   }
   const cacheKey = `recommendation:${JSON.stringify(input)}`

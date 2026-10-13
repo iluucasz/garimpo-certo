@@ -15,7 +15,8 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 ## Produto
 
 - [ ] **Edição humana de coleções e guias.** Hoje são calculados a partir do catálogo (`lib/catalog/collections.ts`, `lib/catalog/guides.ts`) e o texto de "o que observar" está em código. Curadoria manual (escolher produtos, escrever guias) exigiria tabelas e um fluxo de edição.
-- [ ] **Painel admin.** Enxuto por decisão: Visão geral, Catálogo/importação, Analytics e Funil usam dados reais. Os ~26 módulos de demonstração (CRUD em `localStorage`) ficam escondidos por `NEXT_PUBLIC_ADMIN_DEMO_MODULES`. Se algum virar produto real, ele precisa de tabela e API próprias; o admin não recebeu o redesign da vitrine e é onde mora a maior parte do `app/globals.css`.
+- [ ] **Painel admin.** Completo e real (29 módulos, todos com banco; nada em `localStorage`). Lacunas conhecidas: coleções e guias automáticos têm limiares fixos no código (`lib/catalog/collections.ts`); o texto das listas de verificação dos guias por categoria é escrito em código; segmentos servem para análise, ainda sem segmentação na vitrine; feature flags só têm efeito nas chaves que o código lê (hoje `cupons`). O admin não recebeu o redesign da vitrine e é onde mora a maior parte do `app/globals.css`.
+- [ ] **Comissões reais.** `conversionReport`/`validatedReport` da API de afiliados trazem as comissões de fato; ainda não são importadas para `affiliate_conversions`.
 - [ ] **Personalização.** Hoje só alimenta a aba "Para você" da home. Busca e ranking não leem os interesses.
 - [ ] **Fila para pedidos de titulares.** O autoatendimento cobre acesso, portabilidade, correção e exclusão; não há fila para o que ele não resolve.
 - [ ] **Avaliações, frete e crescimento.** A API de afiliados da Shopee não expõe contagem de avaliações, frete nem série de crescimento; a interface não inventa esses dados.

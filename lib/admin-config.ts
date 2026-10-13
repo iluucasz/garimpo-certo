@@ -1,44 +1,60 @@
-export type ModuleKind='table'|'builder'|'analytics'|'settings'|'governance'
-export type ModuleConfig={slug:string;title:string;description:string;group:string;kind:ModuleKind;action:string;columns:string[];rows:string[][]}
-const table=(slug:string,title:string,description:string,group:string,action:string,columns:string[],rows:string[][]):ModuleConfig=>({slug,title,description,group,kind:'table',action,columns,rows})
-const catalogEntry:ModuleConfig={slug:'catalogo',title:'Produtos e importação',description:'Produtos, preços e importação da Shopee.',group:'Catálogo',kind:'table',action:'Importar agora',columns:[],rows:[]}
-const allAdminConfigs:ModuleConfig[]=[
- catalogEntry,
- table('produtos','Produtos','Catálogo mestre separado das ofertas de cada loja.','Catálogo','Novo produto',['Produto','Marca','Categoria','Score','Status'],[['Headphone Quiet Pro','Auralis','Áudio','96','Ativo'],['Luminária Halo','Noma','Casa','93','Ativo'],['Câmera Pocket X','Lumina','Fotografia','98','Revisão'],['Moedor Atlas','Orbe','Cozinha','90','Ativo']]),
- table('ofertas','Ofertas','Preços, estoque e links recebidos dos providers.','Catálogo','Importar ofertas',['Oferta','Provider','Preço','Estoque','Atualização'],[['Headphone Quiet Pro','Amazon','R$ 649','Disponível','há 8 min'],['Headphone Quiet Pro','Mercado Livre','R$ 675','Baixo','há 22 min'],['Luminária Halo','Magalu','R$ 279','Disponível','há 4 min']]),
- table('providers','Providers','Fontes de catálogo e programas de afiliados.','Catálogo','Novo provider',['Provider','Produtos','Saúde','Última sync','Status'],[['Amazon','8.420','99,8%','há 8 min','Conectado'],['Mercado Livre','12.840','98,2%','há 22 min','Conectado'],['Magalu','4.110','91,4%','há 1 h','Alerta']]),
- table('categorias','Categorias','Taxonomia principal de descoberta.','Catálogo','Nova categoria',['Categoria','Produtos','Coleções','SEO','Status'],[['Tecnologia','542','4','Pronto','Ativa'],['Casa','418','7','Pronto','Ativa'],['Áudio','231','3','Revisar','Ativa']]),
- table('marcas','Marcas','Cadastro e normalização de fabricantes.','Catálogo','Nova marca',['Marca','Produtos','Alias','Qualidade','Status'],[['Auralis','84','3','98%','Ativa'],['Noma','62','1','96%','Ativa'],['Lumina','38','2','99%','Ativa']]),
- table('tags','Tags','Sinais editoriais usados no catálogo.','Catálogo','Nova tag',['Tag','Uso','Regra','Atualização','Status'],[['Escolha do editor','124','Manual','Hoje','Ativa'],['Em alta','286','Automática','há 10 min','Ativa'],['Bom custo-benefício','192','Híbrida','há 1 h','Ativa']]),
- table('colecoes','Coleções','Seleções editoriais publicadas na storefront.','Catálogo','Nova coleção',['Coleção','Produtos','Responsável','Atualização','Status'],[['Mesa bem resolvida','18','Marina','Hoje','Publicada'],['Casa calma','14','João','Ontem','Publicada'],['Até R$ 300','32','Sistema','há 1 h','Automática']]),
- table('imports-jobs','Imports e jobs','Execuções, filas e qualidade das sincronizações.','Catálogo','Nova importação',['Job','Provider','Progresso','Última execução','Status'],[['Sincronização de ofertas','Amazon','100%','09:42','Concluído'],['Atualização de estoque','Mercado Livre','68%','Agora','Executando'],['Normalização','Magalu','84%','08:10','Alerta']]),
- {slug:'home-builder',title:'Home Builder',description:'Ordene vitrines e edite a homepage sem código.',group:'Experiência',kind:'builder',action:'Publicar versão',columns:[],rows:[]},
- {slug:'recommendation-slots',title:'Recommendation Slots',description:'Defina estratégia, fallback e limites por posição.',group:'Experiência',kind:'settings',action:'Novo slot',columns:[],rows:[]},
- {slug:'ranking',title:'Ranking',description:'Configure pesos que determinam a ordem dos produtos.',group:'Experiência',kind:'settings',action:'Salvar regra',columns:[],rows:[]},
- {slug:'segmentos',title:'Segment Builder',description:'Combine comportamentos e preferências em audiências.',group:'Experiência',kind:'builder',action:'Novo segmento',columns:[],rows:[]},
- table('campanhas','Campanhas','Regras temporárias de exposição e merchandising.','Experiência','Nova campanha',['Campanha','Período','Segmento','Impacto','Status'],[['Semana do essencial','04–11 Set','Todos','+18% CTR','Ativa'],['Volta ao foco','12–26 Set','Produtividade','—','Agendada']]),
- table('experimentos','Experimentos A/B','Teste hipóteses sem afetar toda a audiência.','Experiência','Novo experimento',['Experimento','Variações','Métrica','Amostra','Status'],[['Ordem da vitrine hero','A / B','CTR','48%','Em execução'],['Badge de preço','Controle / B','Conversão','100%','Concluído']]),
- table('cms','CMS editorial','Artigos, guias e conteúdo de apoio.','Conteúdo','Novo artigo',['Título','Tipo','Autor','Atualização','Status'],[['Como escolher um headphone','Guia','Marina','Hoje','Publicado'],['Uma mesa melhor começa pela luz','Artigo','João','Ontem','Publicado']]),
- table('paginas','Páginas','Conteúdo institucional e landing pages.','Conteúdo','Nova página',['Página','Slug','Responsável','Atualização','Status'],[['Como funciona','/como-funciona','Marina','Hoje','Publicada'],['Privacidade','/privacidade','Legal','02 Set','Publicada']]),
- {slug:'seo',title:'SEO',description:'Metadados, indexação e saúde de conteúdo.',group:'Conteúdo',kind:'settings',action:'Salvar configurações',columns:[],rows:[]},
- {slug:'analytics',title:'Analytics',description:'Cliques e conversões de afiliado registrados na plataforma.',group:'Insights',kind:'analytics',action:'Exportar relatório',columns:[],rows:[]},
- {slug:'funil',title:'Funil',description:'Entenda onde as pessoas avançam ou abandonam.',group:'Insights',kind:'analytics',action:'Criar segmento',columns:[],rows:[]},
- table('eventos','Eventos','Fluxo de eventos coletados pela plataforma.','Insights','Ver schema',['Evento','Volume 24 h','Amostragem','Último evento','Status'],[['product_view','48.281','100%','agora','Saudável'],['affiliate_click','6.492','100%','agora','Saudável'],['search','18.204','100%','há 2 s','Saudável']]),
- table('usuarios-rbac','Usuários e RBAC','Perfis administrativos e permissões.','Governança','Convidar pessoa',['Pessoa','Papel','Escopo','Último acesso','Status'],[['Marina Costa','Admin','Tudo','Agora','Ativa'],['João Rocha','Editor','Conteúdo','Hoje, 09:10','Ativo'],['Ana Freitas','Analista','Insights','Ontem','Ativa']]),
- {slug:'lgpd',title:'LGPD',description:'Consentimento, solicitações e retenção de dados.','group':'Governança',kind:'governance',action:'Nova solicitação',columns:[],rows:[]},
- table('audit-log','Audit Log','Registro imutável simulado de ações administrativas.','Governança','Exportar log',['Ação','Recurso','Ator','Data','ID'],[['Produto atualizado','Headphone Quiet Pro','Marina','Hoje, 10:32','evt_91A'],['Campanha publicada','Semana do essencial','Rafael','Hoje, 09:14','evt_87K']]),
- table('logs','Logs','Erros e avisos operacionais recentes.','Governança','Atualizar',['Nível','Serviço','Mensagem','Horário','Status'],[['Aviso','normalizer','Marca sem alias canônico','10:41','Aberto'],['Info','offers-sync','Lote processado: 450 itens','10:38','Resolvido']]),
- table('integracoes','Integrações','Conexões futuras com canais e serviços.','Sistema','Nova integração',['Integração','Categoria','Ambiente','Último teste','Status'],[['Provider Adapter','Catálogo','Mock','Hoje','Simulado'],['Analytics Sink','Tracking','Mock','Hoje','Simulado'],['Mailer','Comunicação','Mock','Nunca','Desativado']]),
- {slug:'tracking',title:'Tracking',description:'IDs, eventos e políticas de mensuração.',group:'Sistema',kind:'settings',action:'Salvar tracking',columns:[],rows:[]},
- {slug:'ai',title:'AI',description:'Regras simuladas para enriquecimento e classificação.',group:'Sistema',kind:'settings',action:'Salvar configurações',columns:[],rows:[]},
- {slug:'seguranca',title:'Segurança',description:'Sessões, políticas e controles administrativos.',group:'Sistema',kind:'governance',action:'Revisar acessos',columns:[],rows:[]},
- {slug:'tema',title:'Theme Editor',description:'Ajuste a identidade visual com preview local.',group:'Sistema',kind:'builder',action:'Publicar tema',columns:[],rows:[]},
-]
+import type { ResourceSlug } from '@/lib/admin/resource-meta'
+import type { SettingKey } from '@/lib/admin/settings-defs'
+
 /**
- * Só estes módulos têm dados reais por trás. Os demais (CRUD em localStorage, números de exemplo) ficam
- * escondidos; NEXT_PUBLIC_ADMIN_DEMO_MODULES=1 os mostra de volta para demonstração.
+ * Registro dos módulos do painel. Todos têm banco por trás; nenhum guarda dado no navegador.
+ * A tela de cada um é escolhida por `view`; a permissão por módulo está em `permissionForModule` (lib/auth/rbac.ts).
  */
-const realModules=new Set(['catalogo','analytics','funil'])
-const showDemoModules=process.env.NEXT_PUBLIC_ADMIN_DEMO_MODULES==='1'
-export const adminConfigs:ModuleConfig[]=allAdminConfigs.filter(config=>showDemoModules||realModules.has(config.slug))
-export const getAdminConfig=(slug:string)=>adminConfigs.find(x=>x.slug===slug)
+export type ModuleView =
+  | { kind: 'resource'; resource: ResourceSlug }
+  | { kind: 'settings'; key: SettingKey }
+  | { kind: 'analytics'; mode: 'analytics' | 'funil' }
+  | { kind: 'events' }
+  | { kind: 'integrations' }
+  | { kind: 'imports' }
+  | { kind: 'logs' }
+  | { kind: 'coupons' }
+  | { kind: 'users' }
+  | { kind: 'security' }
+
+export type ModuleGroup = 'Catálogo' | 'Experiência' | 'Conteúdo' | 'Insights' | 'Governança' | 'Sistema'
+export type ModuleConfig = { slug: string; title: string; description: string; group: ModuleGroup; view: ModuleView }
+
+export const adminConfigs: ModuleConfig[] = [
+  { slug: 'produtos', title: 'Produtos', description: 'Edite, oculte e classifique os produtos que vieram da Shopee.', group: 'Catálogo', view: { kind: 'resource', resource: 'produtos' } },
+  { slug: 'ofertas', title: 'Ofertas', description: 'Preço e link de cada loja para cada produto.', group: 'Catálogo', view: { kind: 'resource', resource: 'ofertas' } },
+  { slug: 'imports-jobs', title: 'Importações', description: 'Atualize o catálogo agora e acompanhe o histórico de cada execução.', group: 'Catálogo', view: { kind: 'imports' } },
+  { slug: 'providers', title: 'Provedores', description: 'Fontes de produtos e links de afiliado.', group: 'Catálogo', view: { kind: 'resource', resource: 'providers' } },
+  { slug: 'categorias', title: 'Categorias', description: 'Taxonomia da vitrine, menu e guias de compra.', group: 'Catálogo', view: { kind: 'resource', resource: 'categorias' } },
+  { slug: 'marcas', title: 'Lojas e marcas', description: 'Lojas vendedoras cadastradas no catálogo.', group: 'Catálogo', view: { kind: 'resource', resource: 'marcas' } },
+  { slug: 'tags', title: 'Selos', description: 'Selos exibidos nos cartões de produto.', group: 'Catálogo', view: { kind: 'resource', resource: 'tags' } },
+  { slug: 'colecoes', title: 'Coleções manuais', description: 'Seleções montadas por você, na ordem que escolher.', group: 'Catálogo', view: { kind: 'resource', resource: 'colecoes' } },
+
+  { slug: 'home-builder', title: 'Home', description: 'Textos do topo e ordem das seções da página inicial.', group: 'Experiência', view: { kind: 'settings', key: 'home' } },
+  { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
+  { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
+  { slug: 'recommendation-slots', title: 'Slots de recomendação', description: 'Onde as recomendações aparecem e quantas mostram.', group: 'Experiência', view: { kind: 'settings', key: 'slots' } },
+  { slug: 'segmentos', title: 'Segmentos', description: 'Audiências salvas sobre os cliques de compra medidos.', group: 'Experiência', view: { kind: 'resource', resource: 'segmentos' } },
+  { slug: 'experimentos', title: 'Recursos e experimentos', description: 'Liga, desliga e libera por porcentagem partes do site.', group: 'Experiência', view: { kind: 'resource', resource: 'flags' } },
+
+  { slug: 'cupons', title: 'Cupons', description: 'Cupons e campanhas que ajudam a pessoa a economizar na Shopee.', group: 'Conteúdo', view: { kind: 'coupons' } },
+  { slug: 'cms', title: 'Artigos', description: 'Conteúdo editorial publicado em /artigos.', group: 'Conteúdo', view: { kind: 'resource', resource: 'cms' } },
+  { slug: 'paginas', title: 'Páginas', description: 'Páginas institucionais publicadas em /p.', group: 'Conteúdo', view: { kind: 'resource', resource: 'paginas' } },
+  { slug: 'seo', title: 'SEO', description: 'Título, descrição e indexação do site.', group: 'Conteúdo', view: { kind: 'settings', key: 'seo' } },
+
+  { slug: 'analytics', title: 'Analytics', description: 'Cliques e conversões de afiliado registrados na plataforma.', group: 'Insights', view: { kind: 'analytics', mode: 'analytics' } },
+  { slug: 'funil', title: 'Funil', description: 'Onde as pessoas avançam ou abandonam.', group: 'Insights', view: { kind: 'analytics', mode: 'funil' } },
+  { slug: 'eventos', title: 'Eventos', description: 'O que o site mediu: volumes, nomes e retenção.', group: 'Insights', view: { kind: 'events' } },
+
+  { slug: 'usuarios-rbac', title: 'Usuários e papéis', description: 'Quem tem acesso e o que cada papel pode fazer.', group: 'Governança', view: { kind: 'users' } },
+  { slug: 'lgpd', title: 'LGPD', description: 'Pedidos de titulares de dados.', group: 'Governança', view: { kind: 'resource', resource: 'lgpd' } },
+  { slug: 'audit-log', title: 'Auditoria', description: 'Quem alterou o quê, e quando.', group: 'Governança', view: { kind: 'resource', resource: 'audit-log' } },
+  { slug: 'logs', title: 'Logs', description: 'Falhas de importação e de tarefas em segundo plano.', group: 'Governança', view: { kind: 'logs' } },
+
+  { slug: 'integracoes', title: 'Integrações', description: 'Serviços conectados e teste de conexão.', group: 'Sistema', view: { kind: 'integrations' } },
+  { slug: 'tracking', title: 'Medição', description: 'Quais eventos são gravados e por quanto tempo.', group: 'Sistema', view: { kind: 'settings', key: 'tracking' } },
+  { slug: 'tema', title: 'Tema', description: 'Cor de ação, cantos e faixa de aviso do topo.', group: 'Sistema', view: { kind: 'settings', key: 'theme' } },
+  { slug: 'seguranca', title: 'Segurança', description: 'Sessões ativas e matriz de permissões.', group: 'Sistema', view: { kind: 'security' } },
+]
+
+export const getAdminConfig = (slug: string) => adminConfigs.find((item) => item.slug === slug)

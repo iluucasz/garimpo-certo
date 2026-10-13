@@ -4,6 +4,7 @@ import { offers } from '@/lib/db/schema'
 import { createSafeSubId, getAttribution, recordAffiliateClick } from '@/lib/analytics/attribution'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
 import { rateLimit } from '@/lib/server/rate-limit'
+import { getSetting } from '@/lib/settings'
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   if (!quota.allowed) return fail('Limite de cliques excedido.', 429, undefined, { 'retry-after': String(quota.retryAfter) })
   const body = await jsonBody<{ offerId?: string; slot?: string; campaign?: string; experiment?: string; sessionId?: string }>(request)
   if (!body?.offerId || !uuid.test(body.offerId)) return fail('Oferta inválida.', 422)
+  if (((await getSetting('tracking')).disabledEvents as string[]).includes('affiliate_click')) return ok({ clickId: null, recorded: false })
   const [offer] = await db.select({ id: offers.id }).from(offers).where(eq(offers.id, body.offerId))
   if (!offer) return fail('Oferta não encontrada.', 404)
   const subId = createSafeSubId([body.campaign ?? 'organic', body.slot ?? 'unknown', body.experiment ?? 'control'])

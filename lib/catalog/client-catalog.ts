@@ -9,6 +9,8 @@ import type { StoreCatalog } from '@/lib/db/repositories/store-catalog'
 export function toClientCatalog(catalog: StoreCatalog): StoreCatalog {
   return {
     ...catalog,
+    // Coleções manuais só são lidas no servidor.
+    curated: [],
     products: catalog.products.map((product) => ({
       ...product,
       longDescription: '',

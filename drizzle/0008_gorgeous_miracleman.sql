@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "editorial_locked" boolean DEFAULT false NOT NULL;

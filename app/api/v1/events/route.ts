@@ -2,6 +2,7 @@ import { withIdempotency } from '@/lib/db/idempotency'
 import { listEvents, publishEvent, type DomainEventType } from '@/lib/db/repositories/events'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
 import { rateLimit } from '@/lib/server/rate-limit'
+import { getSetting } from '@/lib/settings'
 export async function GET(request: Request) { const { blocked } = await authorize(request, 'analytics:read'); if (blocked) return blocked; return ok(await listEvents()) }
 export async function POST(request: Request) {
   const quota = rateLimit(request, 'events', 60)
@@ -10,6 +11,11 @@ export async function POST(request: Request) {
   if (!body?.type || !body.aggregateId) return fail('type e aggregateId são obrigatórios.', 422)
   const allowedTypes: DomainEventType[] = ['ProductCreated', 'ProductUpdated', 'OfferUpdated', 'PriceChanged', 'AffiliateClicked', 'ConversionReceived', 'FavoriteAdded']
   if (!allowedTypes.includes(body.type)) return fail('Tipo de evento não reconhecido.', 422)
+  // Eventos desligados em Sistema → Medição são aceitos e descartados, para o site não tratar como erro.
+  const tracking = await getSetting('tracking')
+  const disabled = tracking.disabledEvents as string[]
+  const eventName = typeof body.payload?.name === 'string' ? body.payload.name : body.type
+  if (disabled.includes(eventName) || disabled.includes(body.type)) return ok({ dropped: true }, { status: 202 })
   const key = request.headers.get('idempotency-key')
   const publish = () => publishEvent(body.type, body.aggregateId, body.payload ?? {})
   const result = key ? await withIdempotency(`event:${key}`, publish) : { replayed: false, value: await publish() }

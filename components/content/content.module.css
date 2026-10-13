@@ -1,0 +1,39 @@
+/* Artigos, páginas e cupons. Usa os tokens da vitrine (.store). */
+.page { padding-block: 20px 72px; }
+.breadcrumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; font-size: 14px; color: var(--muted-foreground); }
+.breadcrumbs a { display: inline-flex; align-items: center; min-height: 32px; }
+.breadcrumbs a:hover { color: var(--primary-ink); text-decoration: underline; text-underline-offset: 3px; }
+.breadcrumbs [aria-current] { color: var(--foreground); font-weight: 550; }
+.header { max-width: 760px; margin-bottom: 28px; }
+.header h1 { font-family: var(--font-display), sans-serif; font-size: clamp(32px, 4.4vw, 48px); font-weight: 800; letter-spacing: -.04em; line-height: 1.08; margin: 0 0 12px; text-wrap: balance; }
+.lead { margin: 0; font-size: 18px; line-height: 1.6; color: var(--muted-foreground); }
+.empty { padding: 28px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); color: var(--muted-foreground); }
+
+.articleList { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; max-width: 760px; }
+.article a { display: grid; gap: 6px; padding: 20px 22px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+.article a:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+.article h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
+.article p { margin: 0; color: var(--muted-foreground); line-height: 1.55; }
+.article time { font-size: 13px; color: var(--muted-foreground); }
+
+.cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: var(--radius-lg); margin: 0 0 28px; background: var(--surface-sunken); }
+.byline { margin: 0 0 24px; font-size: 14px; color: var(--muted-foreground); }
+
+.couponGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; list-style: none; margin: 0; padding: 0; }
+.coupon { display: grid; gap: 12px; align-content: start; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.couponTop { display: flex; gap: 12px; align-items: flex-start; }
+.couponImage { width: 56px; height: 56px; border-radius: var(--radius-md); object-fit: cover; background: var(--surface-sunken); flex: none; }
+.coupon h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
+.discount { display: inline-flex; width: max-content; padding: 4px 10px; border-radius: 999px; background: var(--success-soft); color: var(--success); font-weight: 700; font-size: 14px; }
+.conditions { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted-foreground); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; font-size: 13px; color: var(--muted-foreground); }
+.codeRow { display: flex; gap: 8px; align-items: stretch; }
+.code { flex: 1; display: inline-flex; align-items: center; padding: 0 14px; min-height: 44px; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--surface-sunken); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; letter-spacing: .04em; overflow-wrap: anywhere; }
+.copy, .go { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--radius-md); font-weight: 650; font-size: 15px; cursor: pointer; }
+.copy { border: 1px solid var(--border-strong); background: var(--surface); color: var(--foreground); }
+.copy:hover { border-color: var(--primary); color: var(--primary-ink); }
+.go { border: 1px solid var(--primary); background: var(--primary); color: var(--primary-foreground); text-decoration: none; }
+.go:hover { background: var(--primary-hover); }
+.disclosure { margin-top: 28px; font-size: 14px; color: var(--muted-foreground); max-width: 70ch; line-height: 1.55; }
+.group { margin-top: 36px; }
+.group h2 { font-family: var(--font-display), sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -.03em; margin: 0 0 14px; }

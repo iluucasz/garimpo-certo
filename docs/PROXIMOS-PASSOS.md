@@ -26,7 +26,7 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 
 | Item | Status | O que foi feito |
 |---|---|---|
-| **Painel admin** | **Decidido e feito** | Admin enxuto: Visão geral com números do banco, módulo Catálogo com importação sob demanda, Analytics e Funil. Os ~26 módulos de demonstração ficam escondidos (`NEXT_PUBLIC_ADMIN_DEMO_MODULES=1` os traz de volta). |
+| **Painel admin** | **Feito** | 29 módulos com dados reais: catálogo (produtos com bloqueio editorial, ofertas, categorias, lojas, selos, coleções manuais), importações com histórico, home, campanhas, ranking, slots, segmentos, recursos, cupons, artigos, páginas, SEO, analytics, funil, eventos, usuários e papéis, LGPD, auditoria, logs, integrações, medição, tema e segurança. |
 | **Coleções e guias reais** | **Feito** | Coleções (`/colecoes`) e guias por categoria (`/guias`) calculados a partir do catálogo, com dados do banco, JSON-LD e sitemap. O texto de "o que observar" é orientação geral escrita em código e deve ser revisado pelo dono. |
 | **RUM (Core Web Vitals de campo)** | **Feito (falta ativar)** | `@vercel/speed-insights`, carregado só com consentimento. Ativar em *Project → Speed Insights* na Vercel. |
 | **Banco de testes isolado** | **Suporte pronto** | `TEST_DATABASE_URL` redireciona o vitest. Falta criar o branch no Neon e usá-lo no CI. |

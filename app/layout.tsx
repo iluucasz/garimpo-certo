@@ -8,10 +8,32 @@ import { toClientCatalog } from '@/lib/catalog/client-catalog'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { getProductMetrics } from '@/lib/db/repositories/product-metrics'
 import { siteUrl } from '@/lib/site'
+import { getSetting } from '@/lib/settings'
+import { googleEnabled } from '@/lib/auth/providers'
+import { getStorefrontNav } from '@/lib/db/repositories/site-content'
+import { StorefrontConfigProvider } from '@/components/storefront/storefront-config'
+import { deriveTheme, isDefaultTheme } from '@/lib/theme'
 import './globals.css'
 
 const bodyFont=DM_Sans({subsets:['latin'],variable:'--font-body'})
 const displayFont=Manrope({subsets:['latin'],variable:'--font-display'})
-export const metadata:Metadata={metadataBase:new URL(siteUrl),title:{default:'Garimpo — Descobertas que valem a pena',template:'%s · Garimpo'},description:'Curadoria inteligente de produtos úteis, bonitos e com preço justo.',applicationName:'Garimpo',authors:[{name:'Garimpo'}],creator:'Garimpo',publisher:'Garimpo',category:'shopping',alternates:{canonical:'/'},openGraph:{type:'website',locale:'pt_BR',siteName:'Garimpo',title:'Garimpo — Descobertas que valem a pena',description:'Curadoria inteligente de produtos úteis, bonitos e com preço justo.',url:'/'},twitter:{card:'summary_large_image',title:'Garimpo — Descobertas que valem a pena',description:'Curadoria inteligente de produtos úteis, bonitos e com preço justo.'},robots:{index:true,follow:true}}
+export async function generateMetadata():Promise<Metadata>{
+  const seo=await getSetting('seo')
+  const title=String(seo.siteTitle)
+  const description=String(seo.description)
+  const image=String(seo.ogImageUrl||'')
+  const verification=String(seo.googleVerification||'')
+  return{
+    metadataBase:new URL(siteUrl),
+    title:{default:title,template:String(seo.titleTemplate)},
+    description,
+    applicationName:'Garimpo',authors:[{name:'Garimpo'}],creator:'Garimpo',publisher:'Garimpo',category:'shopping',
+    alternates:{canonical:'/'},
+    openGraph:{type:'website',locale:'pt_BR',siteName:'Garimpo',title,description,url:'/',...(image?{images:[{url:image}]}:{})},
+    twitter:{card:'summary_large_image',title,description,...(image?{images:[image]}:{})},
+    robots:seo.indexing===false?{index:false,follow:false}:{index:true,follow:true},
+    ...(verification?{verification:{google:verification}}:{}),
+  }
+}
 export const viewport:Viewport={colorScheme:'light',themeColor:'#ffffff',userScalable:true}
-export default async function RootLayout({children}:{children:React.ReactNode}){const [catalog,metrics]=await Promise.all([getStoreCatalog(),getProductMetrics()]);return <html lang="pt-BR" className="bg-background"><body className={`${bodyFont.variable} ${displayFont.variable} font-sans antialiased`}><StoreDataProvider data={toClientCatalog(catalog)} metrics={metrics}><VisitorStateProvider>{children}<AffiliateClickTracker/>{process.env.NODE_ENV==='production'&&<ConsentedAnalytics/>}</VisitorStateProvider></StoreDataProvider></body></html>}
+export default async function RootLayout({children}:{children:React.ReactNode}){const [catalog,metrics,ranking,slots,theme,nav]=await Promise.all([getStoreCatalog(),getProductMetrics(),getSetting('ranking'),getSetting('slots'),getSetting('theme'),getStorefrontNav()]);const primary=String(theme.primary);const radius=String(theme.radius);const config={themeStyle:isDefaultTheme(primary,radius)?{}:deriveTheme(primary,radius),notice:{text:String(theme.noticeText??''),detail:String(theme.noticeDetail??'')},nav,googleEnabled:googleEnabled()};return <html lang="pt-BR" className="bg-background"><body className={`${bodyFont.variable} ${displayFont.variable} font-sans antialiased`}><StoreDataProvider data={toClientCatalog(catalog)} metrics={metrics} ranking={ranking} slots={slots}><StorefrontConfigProvider value={config}><VisitorStateProvider>{children}<AffiliateClickTracker/>{process.env.NODE_ENV==='production'&&<ConsentedAnalytics/>}</VisitorStateProvider></StorefrontConfigProvider></StoreDataProvider></body></html>}

@@ -4,8 +4,13 @@ import { createContext, useContext, useMemo } from 'react'
 import type { StoreCatalog } from '@/lib/db/repositories/store-catalog'
 import type { Offer, Product, ProductMetrics } from '@/lib/types'
 
+/** Pesos e exploração do ranking e configuração dos slots, vindos do painel (Experiência → Ranking e Slots). */
+export type RankingSettings = Record<string, unknown>
+
 interface StoreDataState extends StoreCatalog {
   metrics: Record<string, ProductMetrics>
+  ranking: RankingSettings
+  slots: Record<string, unknown>
   getProduct: (slug: string) => Product | undefined
   getOffers: (productId: string) => Offer[]
   getBestOffer: (productId: string) => Offer | undefined
@@ -14,18 +19,20 @@ interface StoreDataState extends StoreCatalog {
 
 const StoreDataContext = createContext<StoreDataState | null>(null)
 
-export function StoreDataProvider({ data, metrics = {}, children }: { data: StoreCatalog; metrics?: Record<string, ProductMetrics>; children: React.ReactNode }) {
+export function StoreDataProvider({ data, metrics = {}, ranking = {}, slots = {}, children }: { data: StoreCatalog; metrics?: Record<string, ProductMetrics>; ranking?: RankingSettings; slots?: Record<string, unknown>; children: React.ReactNode }) {
   const value = useMemo<StoreDataState>(() => {
     const getOffers = (productId: string) => data.offers.filter((offer) => offer.productId === productId).sort((a, b) => (a.price + a.shipping) - (b.price + b.shipping))
     return {
       ...data,
       metrics,
+      ranking,
+      slots,
       getProduct: (slug) => data.products.find((product) => product.slug === slug),
       getOffers,
       getBestOffer: (productId) => getOffers(productId).find((offer) => offer.stock !== 'indisponível'),
       getProvider: (providerId) => data.providers.find((provider) => provider.id === providerId)!,
     }
-  }, [data, metrics])
+  }, [data, metrics, ranking, slots])
 
   return <StoreDataContext.Provider value={value}>{children}</StoreDataContext.Provider>
 }

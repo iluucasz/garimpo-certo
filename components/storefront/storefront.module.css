@@ -77,6 +77,10 @@
 .mainNav a:first-child { color: var(--primary-ink); font-weight: 650; }
 .mainNav a:hover, .editorialNav a:hover { background: var(--surface-sunken); color: var(--foreground); }
 .editorialNav { padding-left: 16px; border-left: 1px solid var(--border); }
+/* Com Cupons e Artigos no menu, as categorias rolam dentro do próprio espaço e os links editoriais ficam sempre visíveis. */
+.mainNav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.mainNav::-webkit-scrollbar { display: none; }
+.editorialNav { flex-shrink: 0; }
 .menuButton { display: none; border: 0; background: transparent; color: var(--foreground); padding: 0; cursor: pointer; border-radius: var(--radius-md); }
 
 .footer { background: var(--surface-sunken); border-top: 1px solid var(--border); margin-top: 24px; }

@@ -1,4 +1,4 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-const routes=['/','/buscar','/produto/:primeiro','/entrar','/cadastro','/como-funciona','/privacidade','/rota-que-nao-existe','/admin/catalogo','/admin/analytics']
+const routes=['/','/buscar','/produto/:primeiro','/entrar','/cadastro','/como-funciona','/privacidade','/rota-que-nao-existe','/admin/produtos','/admin/analytics','/cupons','/artigos']
 for(const route of routes)test(`sem violações críticas em ${route}`,async({page,request})=>{let path=route;if(route.endsWith(':primeiro')){const response=await request.get('/api/v1/products?limit=1');const first=(await response.json()).data?.[0]?.slug;expect(first,'catálogo precisa ter ao menos um produto').toBeTruthy();path=`/produto/${first}`}await page.goto(path);await page.waitForLoadState('networkidle');const results=await new AxeBuilder({page}).analyze();expect(results.violations.filter((item)=>['critical','serious'].includes(item.impact??''))).toEqual([])})

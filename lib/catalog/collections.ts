@@ -1,8 +1,8 @@
 import type { Category, Offer, Product } from '@/lib/types'
-import { curatedCollections } from './curated'
 import { currentPrice, matchesSignal, offerDiscount } from './signals'
 
-export type CatalogInput = { products: Product[]; offers: Offer[]; categories?: Category[] }
+export type CuratedDefinition = { slug: string; title: string; tone: string; description: string; productIds: string[] }
+export type CatalogInput = { products: Product[]; offers: Offer[]; categories?: Category[]; curated?: CuratedDefinition[] }
 
 export type CollectionGroup = 'Em alta' | 'Preço' | 'Qualidade' | 'Por categoria' | 'Curadoria'
 export const collectionGroups: CollectionGroup[] = ['Em alta', 'Preço', 'Qualidade', 'Por categoria', 'Curadoria']
@@ -160,20 +160,29 @@ const categoryDefinition = (category: Category): Definition => ({
   describe: (count) => `${plural(count, 'produto', 'produtos')} de ${category.name.toLocaleLowerCase('pt-BR')} com mais vendas recentes na Shopee.`,
 })
 
-function curatedDefinitions(): Definition[] {
-  return curatedCollections.map((curated) => ({
-    slug: curated.slug,
-    title: curated.title,
-    tone: curated.tone,
-    group: 'Curadoria' as const,
-    matches: (product: Product) => curated.itemIds.some((itemId) => product.slug.endsWith(`-${itemId}`)),
-    sort: bySold,
-    describe: () => curated.description,
-  }))
+function curatedDefinitions(input: CatalogInput): Definition[] {
+  return (input.curated ?? []).map((curated) => {
+    const position = new Map(curated.productIds.map((id, index) => [id, index]))
+    return {
+      slug: curated.slug,
+      title: curated.title,
+      tone: curated.tone,
+      group: 'Curadoria' as const,
+      matches: (product: Product) => position.has(product.id),
+      // A ordem é a que a equipe definiu no painel.
+      sort: (a: Product, b: Product) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0),
+      describe: () => curated.description,
+    }
+  })
 }
 
+/** Endereços que as coleções automáticas já usam; coleções manuais não podem reutilizá-los. */
+export const isReservedCollectionSlug = (slug: string) => definitions.some((definition) => definition.slug === slug) || slug.startsWith('mais-vendidos-')
+
 function allDefinitions(input: CatalogInput): Definition[] {
-  return [...definitions, ...(input.categories ?? []).map(categoryDefinition), ...curatedDefinitions()]
+  const automatic = [...definitions, ...(input.categories ?? []).map(categoryDefinition)]
+  const taken = new Set(automatic.map((definition) => definition.slug))
+  return [...automatic, ...curatedDefinitions(input).filter((definition) => !taken.has(definition.slug))]
 }
 
 /** Coleções calculadas na hora a partir do catálogo; as que ficam com menos de `minimum` produtos não aparecem. */

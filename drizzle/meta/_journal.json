@@ -50,6 +50,20 @@
       "when": 1789870312690,
       "tag": "0006_huge_lord_hawal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791865259226,
+      "tag": "0007_whole_siren",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791865394911,
+      "tag": "0008_gorgeous_miracleman",
+      "breakpoints": true
     }
   ]
 }
