@@ -19,7 +19,7 @@ function inventory(): Check[] {
     { id: 'blob', name: 'Armazenamento de imagens (Vercel Blob)', description: 'Imagens reenviadas de provedores.', configured: present('BLOB_READ_WRITE_TOKEN'), testable: false, env: ['BLOB_READ_WRITE_TOKEN'] },
     { id: 'auth', name: 'Autenticação (Better Auth)', description: 'Sessões e login.', configured: present('BETTER_AUTH_SECRET'), testable: false, env: ['BETTER_AUTH_SECRET', 'BETTER_AUTH_URL'] },
     { id: 'google', name: 'Login com Google', description: 'Entrar com conta Google.', configured: present('GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'), testable: false, env: ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] },
-    { id: 'cron', name: 'Importação agendada (cron)', description: 'Atualização diária do catálogo pela Vercel.', configured: present('CRON_SECRET'), testable: false, env: ['CRON_SECRET'] },
+    { id: 'cron', name: 'Aviso do worker da VPS (CRON_SECRET)', description: 'Autoriza o worker da VPS, que importa o catálogo todo dia, a avisar o site para atualizar o cache.', configured: present('CRON_SECRET'), testable: false, env: ['CRON_SECRET'] },
   ]
 }
 

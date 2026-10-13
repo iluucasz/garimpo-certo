@@ -7,7 +7,7 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 
 ## 1. O que só o dono do projeto pode fazer
 
-- [ ] **`CRON_SECRET` no Vercel (urgente):** sem ele o cron responde 503 e o catálogo volta a envelhecer. Qualquer valor aleatório longo serve.
+- [ ] **Worker de importação na VPS:** subir a imagem `garimpo-importer` (ver `worker/README.md`) e definir `CRON_SECRET` na Vercel (qualquer valor aleatório longo) e no `.env` do worker. Sem o worker o catálogo volta a envelhecer; a importação manual em Importações continua valendo.
 - [ ] **E-mail (Brevo):** chave e `EMAIL_FROM` já estão no `.env` local (`BREVO_API_KEY`, remetente `Garimpo certo <garimpou.certo@gmail.com>`). O Brevo mandou um e-mail de confirmação para `garimpou.certo@gmail.com`: confirme o remetente lá. Depois leve `BREVO_API_KEY` e `EMAIL_FROM` ao Vercel. Um `@gmail.com` costuma cair em spam por causa do DMARC; para produção, prefira remetente de domínio próprio.
 - [ ] **`BETTER_AUTH_URL` e `NEXT_PUBLIC_BETTER_AUTH_URL` no Vercel** com o domínio real. Se estiverem em `localhost`, os links do e-mail saem quebrados.
 - [ ] **Domínio próprio:** `NEXT_PUBLIC_SITE_URL` (sem ele vale o `*.vercel.app`).

@@ -12,7 +12,7 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 | `DATABASE_URL` (+ variantes Neon) | sim | Banco |
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL` | sim | Sessão e links de e-mail; as URLs devem ser as de produção |
 | `SHOPEE_AFFILIATE_APP_ID`, `SHOPEE_AFFILIATE_APP_SECRET` | sim | Importação do catálogo |
-| `CRON_SECRET` | sim | Autoriza o cron de importação (Vercel envia como Bearer) |
+| `CRON_SECRET` | sim | Autoriza chamadas agendadas como Bearer: o worker da VPS usa em `POST /api/v1/cron/revalidate` (e a rota `GET /api/v1/cron/shopee-import` fica disponível para disparo manual) |
 | `BLOB_READ_WRITE_TOKEN` | sim | Re-hospedagem de imagens |
 | `BREVO_API_KEY`, `EMAIL_FROM` | para e-mail | Redefinição de senha (Brevo; `EMAIL_FROM` = remetente verificado no Brevo) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | opcional | Login com Google (o botão some sem elas) |
@@ -24,7 +24,7 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 
 ## Agendamento
 
-`vercel.json` roda `GET /api/v1/cron/shopee-import` todo dia às 06:00 UTC. A importação leva ~90 s (8 categorias, ~96 produtos), arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
+A importação diária roda na **VPS** (`worker/`, imagem Docker `garimpo-importer`, 06:00 de Brasília): grava direto no banco e depois chama `POST /api/v1/cron/revalidate` no site. Não há cron na Vercel (`vercel.json` sem `crons`). Passo a passo em `worker/README.md`. A importação leva ~90 s (8 categorias, ~96 produtos), arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
 
 ## Imagens
 

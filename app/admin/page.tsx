@@ -57,7 +57,7 @@ export default async function AdminDashboard() {
           <div><dt>Última sincronização</dt><dd>{dateTime(catalog.syncedAt)}{ageDays !== null && ageDays > 0 ? ` · há ${ageDays} ${ageDays === 1 ? 'dia' : 'dias'}` : ''}</dd></div>
           <div><dt>Produtos ativos</dt><dd>{number.format(catalog.active)}</dd></div>
           <div><dt>Ofertas ativas</dt><dd>{number.format(catalog.offers)}</dd></div>
-          <div><dt>Importação automática</dt><dd>Diária, pelo cron da Vercel (exige <code>CRON_SECRET</code>)</dd></div>
+          <div><dt>Importação automática</dt><dd>Diária, às 06:00 (Brasília), pelo worker da VPS</dd></div>
         </dl>
         <div className={styles.cardFooter}><Link href="/admin/imports-jobs">Importar agora <ArrowRight aria-hidden="true"/></Link></div>
       </section>

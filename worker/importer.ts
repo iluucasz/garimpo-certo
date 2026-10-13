@@ -1,0 +1,102 @@
+/**
+ * Worker de importação do catálogo, para rodar na VPS (Docker) em vez do Vercel Cron.
+ *
+ * Uma vez por dia, no horário `IMPORT_AT` (padrão 06:00, fuso do contêiner via `TZ`), executa a mesma
+ * importação do site (`runCatalogImport`: busca na Shopee, grava no banco, arquiva o que saiu, registra a
+ * execução em sync_job_runs) e depois pede ao site para invalidar o cache (`POST /api/v1/cron/revalidate`).
+ *
+ * Variáveis: DATABASE_URL, SHOPEE_AFFILIATE_APP_ID, SHOPEE_AFFILIATE_APP_SECRET (obrigatórias);
+ * SITE_URL e CRON_SECRET (para o aviso ao site; sem elas o cache do site expira sozinho em 5 min);
+ * IMPORT_AT (HH:MM), TZ, RUN_ON_START=1 (roda ao subir).
+ *
+ * Uso: `node importer.mjs` (agenda) · `node importer.mjs --once` (roda e sai) · `--check` (valida a configuração).
+ */
+import { runCatalogImport } from '@/lib/providers/shopee/run'
+
+const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ at: new Date().toISOString(), event, ...data }))
+
+const RETRY_DELAYS_MS = [30 * 60_000, 60 * 60_000]
+
+export function parseTime(value: string) {
+  const match = value.match(/^([01]?\d|2[0-3]):([0-5]\d)$/)
+  return match ? { hours: Number(match[1]), minutes: Number(match[2]) } : null
+}
+
+/** Milissegundos até a próxima ocorrência de HH:MM no horário local. */
+export function msUntilNext(at: { hours: number; minutes: number }, now = new Date()) {
+  const next = new Date(now)
+  next.setHours(at.hours, at.minutes, 0, 0)
+  if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1)
+  return next.getTime() - now.getTime()
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+function missingConfig() {
+  return ['DATABASE_URL', 'SHOPEE_AFFILIATE_APP_ID', 'SHOPEE_AFFILIATE_APP_SECRET'].filter((name) => !(process.env[name] ?? '').trim())
+}
+
+async function notifySite() {
+  const site = (process.env.SITE_URL ?? '').trim().replace(/\/$/, '')
+  const secret = (process.env.CRON_SECRET ?? '').trim()
+  if (!site || !secret) { log('site_notify_skipped', { reason: 'SITE_URL ou CRON_SECRET ausente' }); return }
+  try {
+    const response = await fetch(`${site}/api/v1/cron/revalidate`, { method: 'POST', headers: { authorization: `Bearer ${secret}` }, signal: AbortSignal.timeout(20_000) })
+    log('site_notified', { status: response.status })
+  } catch (error) {
+    log('site_notify_failed', { error: error instanceof Error ? error.message : String(error) })
+  }
+}
+
+async function runOnce() {
+  const startedAt = Date.now()
+  log('import_started')
+  try {
+    const result = await runCatalogImport()
+    log('import_finished', { ...result, wallMs: Date.now() - startedAt })
+    await notifySite()
+    return true
+  } catch (error) {
+    log('import_failed', { error: error instanceof Error ? error.message : String(error), wallMs: Date.now() - startedAt })
+    return false
+  }
+}
+
+async function runWithRetries() {
+  if (await runOnce()) return
+  for (const delay of RETRY_DELAYS_MS) {
+    log('retry_scheduled', { inMinutes: Math.round(delay / 60_000) })
+    await sleep(delay)
+    if (await runOnce()) return
+  }
+  log('gave_up_until_next_day')
+}
+
+async function main() {
+  const args = new Set(process.argv.slice(2))
+  const missing = missingConfig()
+  const at = parseTime(process.env.IMPORT_AT ?? '06:00')
+  if (!at) { log('invalid_config', { IMPORT_AT: process.env.IMPORT_AT }); process.exit(2) }
+  if (missing.length) { log('invalid_config', { missing }); process.exit(2) }
+
+  if (args.has('--check')) {
+    log('config_ok', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', nextRunInMinutes: Math.round(msUntilNext(at) / 60_000), notifySite: Boolean(process.env.SITE_URL && process.env.CRON_SECRET) })
+    process.exit(0)
+  }
+  if (args.has('--once')) process.exit((await runOnce()) ? 0 : 1)
+
+  let stopping = false
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) process.on(signal, () => { stopping = true; log('stopping', { signal }); process.exit(0) })
+
+  log('worker_started', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema' })
+  if (process.env.RUN_ON_START === '1') await runWithRetries()
+  while (!stopping) {
+    const wait = msUntilNext(at)
+    log('waiting', { nextRunInMinutes: Math.round(wait / 60_000) })
+    await sleep(wait)
+    await runWithRetries()
+  }
+}
+
+// Só executa quando chamado como programa (os testes importam as funções de horário).
+if (process.argv[1] && /importer\.(mjs|ts)$/.test(process.argv[1])) void main()

@@ -1,0 +1,12 @@
+{
+  "name": "garimpo-importer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker de importação do catálogo (roda na VPS). O código vem de worker/importer.ts, empacotado no build da imagem.",
+  "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
+    "drizzle-orm": "0.45.2",
+    "ws": "8.21.3"
+  }
+}

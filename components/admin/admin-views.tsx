@@ -18,7 +18,7 @@ export function ImportsView() {
   return <div className={styles.stack}>
     <section className="panel">
       <h2>Importar agora</h2>
-      <p className={styles.lead}>Busca as ofertas atuais na Shopee, atualiza preço e vendas e arquiva o que saiu da seleção (só quando a importação cobre pelo menos 70% do catálogo atual). Produtos que você editou mantêm nome, categoria e selos. A importação automática roda todo dia às 06:00 UTC.</p>
+      <p className={styles.lead}>Busca as ofertas atuais na Shopee, atualiza preço e vendas e arquiva o que saiu da seleção (só quando a importação cobre pelo menos 70% do catálogo atual). Produtos que você editou mantêm nome, categoria e selos. A importação automática roda todo dia às 06:00 (Brasília), no worker da VPS; cada execução aparece na lista abaixo.</p>
       <CatalogImportButton onDone={() => setRefresh((value) => value + 1)}/>
     </section>
     <ResourceManager key={refresh} slug="importacoes"/>

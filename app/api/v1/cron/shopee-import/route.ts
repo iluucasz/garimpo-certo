@@ -1,29 +1,19 @@
-import { timingSafeEqual } from 'node:crypto'
 import { revalidateTag } from 'next/cache'
 import { ShopeeApiError } from '@/lib/providers/shopee/client'
 import { runCatalogImport } from '@/lib/providers/shopee/run'
 import { fail, ok } from '@/lib/server/api'
+import { cronAuthorization } from '@/lib/server/cron-auth'
 
 // A importação faz várias chamadas sequenciais à API da Shopee; o padrão da plataforma é curto demais.
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET
-  if (!secret) return 'missing' as const
-  const received = request.headers.get('authorization') ?? ''
-  const expected = `Bearer ${secret}`
-  const a = Buffer.from(received)
-  const b = Buffer.from(expected)
-  return a.length === b.length && timingSafeEqual(a, b) ? ('ok' as const) : ('denied' as const)
-}
-
 /**
- * Atualiza o catálogo com a API de afiliados da Shopee. Chamado pelo Vercel Cron (vercel.json),
- * que envia `Authorization: Bearer $CRON_SECRET`. Sem CRON_SECRET configurado, a rota fica desligada.
+ * Atualiza o catálogo com a API de afiliados da Shopee. Pode ser chamado por qualquer agendador
+ * (hoje o worker da VPS, em worker/importer.ts) com `Authorization: Bearer $CRON_SECRET`. Sem CRON_SECRET configurado, a rota fica desligada.
  */
 export async function GET(request: Request) {
-  const auth = authorized(request)
+  const auth = cronAuthorization(request)
   if (auth === 'missing') return fail('CRON_SECRET não configurado: importação agendada desativada.', 503)
   if (auth === 'denied') return fail('Não autorizado.', 401)
 
