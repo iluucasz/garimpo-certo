@@ -5,6 +5,9 @@ import { useState } from 'react'
 import { Check, Download, Trash2 } from 'lucide-react'
 import { useVisitorState } from '@/components/visitor-state-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
+import { PrivacyRequestForm } from '@/components/privacy/privacy-request-form'
+import { forgetConsentId } from '@/lib/platform/consent-record'
+import { useSession } from '@/lib/auth/client'
 import styles from '@/components/storefront/content-pages.module.css'
 
 const preferenceItems = [
@@ -17,6 +20,7 @@ const privacyContact = process.env.NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL
 
 export default function PrivacyPage() {
   const state = useVisitorState()
+  const { data: session } = useSession()
   const [message, setMessage] = useState('')
   const preferences = state.cookiePreferences
 
@@ -40,6 +44,7 @@ export default function PrivacyPage() {
     ;['garimpo:favorites', 'garimpo:recent', 'garimpo:compare', 'garimpo:saved-searches', 'garimpo:user-preferences'].forEach((key) => localStorage.removeItem(key))
     state.clearRecent()
     state.setConsent(false)
+    forgetConsentId()
     setMessage('Favoritos, histórico, comparador, buscas e preferências locais foram removidos. Recarregue a página para atualizar os contadores.')
   }
 
@@ -74,7 +79,11 @@ export default function PrivacyPage() {
 
       <h2>Seus direitos (LGPD)</h2>
       <p>Quem tem conta resolve tudo sozinho, na hora, em <Link href="/conta#dados">Minha conta › Seus dados</Link>: baixar uma cópia (acesso e portabilidade), corrigir o nome no perfil e excluir a conta com os favoritos salvos nela. Os botões acima atuam só nos dados deste navegador.</p>
-      {privacyContact && <p>Para qualquer outro pedido sobre seus dados, escreva para <a href={`mailto:${privacyContact}`}>{privacyContact}</a>.</p>}
+
+      <h2 id="pedido">Fazer um pedido sobre seus dados</h2>
+      <p>Não tem conta, ou precisa de algo que o autoatendimento não cobre? Envie o pedido aqui. Ele entra na fila da nossa equipe e respondemos pelo e-mail informado em até 15 dias.</p>
+      <PrivacyRequestForm defaultEmail={session?.user.email ?? ''}/>
+      {privacyContact && <p>Se preferir, escreva para <a href={`mailto:${privacyContact}`}>{privacyContact}</a>.</p>}
     </article>
   </StorefrontShell>
 }

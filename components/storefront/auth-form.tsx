@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { requestPasswordReset, signIn, signUp } from '@/lib/auth/client'
+import { safeRedirect } from '@/lib/auth/redirect'
 import { GoogleIcon } from './google-icon'
 import styles from './content-pages.module.css'
 
@@ -18,6 +19,9 @@ const copy: Record<Mode, { title: string; lead: string; submit: string; busy: st
 
 export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: { mode: Mode; emailEnabled?: boolean; googleEnabled?: boolean }) {
   const router = useRouter()
+  // Destino depois do login (`?next=/convite/…`). Lido no navegador para a página continuar estática; só caminhos do próprio site.
+  const [redirectTo, setRedirectTo] = useState('/conta')
+  useEffect(() => { setRedirectTo(safeRedirect(new URLSearchParams(window.location.search).get('next'))) }, [])
   const [sent, setSent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -46,12 +50,12 @@ export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: 
       : await signIn.email({ email, password })
 
     if (authError) { setError(authError.message ?? 'Não foi possível autenticar. Confira os dados e tente novamente.'); setSubmitting(false); return }
-    router.push('/conta')
+    router.push(redirectTo)
   }
 
   async function withGoogle() {
     setError('')
-    const { error: authError } = await signIn.social({ provider: 'google', callbackURL: '/conta' })
+    const { error: authError } = await signIn.social({ provider: 'google', callbackURL: redirectTo })
     if (authError) setError(authError.message ?? 'Entrar com o Google não está disponível no momento.')
   }
 
@@ -82,8 +86,8 @@ export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: 
           </label>}
           {error && <p className={styles.error} role="alert">{error}</p>}
           <button className={styles.submit} type="submit" disabled={submitting}>{submitting ? text.busy : text.submit}</button>
-          {mode === 'entrar' && <div className={styles.links}><Link href="/recuperar-senha">Esqueci minha senha</Link><span>Ainda não tem conta? <Link className={styles.inlineLink} href="/cadastro">Criar conta</Link></span></div>}
-          {mode === 'cadastro' && <div className={styles.links}><span>Já tem uma conta? <Link className={styles.inlineLink} href="/entrar">Entrar</Link></span></div>}
+          {mode === 'entrar' && <div className={styles.links}><Link href="/recuperar-senha">Esqueci minha senha</Link><span>Ainda não tem conta? <Link className={styles.inlineLink} href={redirectTo === '/conta' ? '/cadastro' : `/cadastro?next=${encodeURIComponent(redirectTo)}`}>Criar conta</Link></span></div>}
+          {mode === 'cadastro' && <div className={styles.links}><span>Já tem uma conta? <Link className={styles.inlineLink} href={redirectTo === '/conta' ? '/entrar' : `/entrar?next=${encodeURIComponent(redirectTo)}`}>Entrar</Link></span></div>}
           {mode === 'recuperar' && <div className={styles.links}><Link href="/entrar">Voltar para entrar</Link></div>}
         </form>}
 

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { platformServices } from '@/lib/platform'
 import { useSession } from '@/lib/auth/client'
+import { recordConsent } from '@/lib/platform/consent-record'
 import { useStoreData } from '@/components/store-data-provider'
 
 export interface CookiePreferences {
@@ -146,6 +147,7 @@ export function VisitorStateProvider({ children }: { children: React.ReactNode }
     setCookiePreferences(next)
     localStorage.setItem('garimpo:consent', String(value))
     persist('garimpo:cookie-preferences', next)
+    recordConsent(next)
   }, [])
   const saveCookiePreferences = useCallback((value: CookiePreferences) => {
     const accepted = value.analytics || value.personalization || value.marketing
@@ -153,6 +155,7 @@ export function VisitorStateProvider({ children }: { children: React.ReactNode }
     setConsentState(accepted)
     persist('garimpo:cookie-preferences', value)
     localStorage.setItem('garimpo:consent', String(accepted))
+    recordConsent(value)
   }, [])
   const savePreferences = useCallback((value: UserPreferences) => {
     setPreferences(value)

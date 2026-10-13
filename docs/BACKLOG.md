@@ -27,10 +27,10 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 - [x] ~~**Regras automáticas editáveis.**~~ Feito em 2026-10-13: Painel → Regras do catálogo e Guias de compra. Continuam no código: os tetos das coleções por faixa (`ate-20/50/100`, que fazem parte do endereço) e a lista de categorias dos guias.
 - [ ] **Teste A/B de verdade.** "Recursos e experimentos" só liga e desliga partes do site (a liberação por porcentagem foi retirada por não haver bucketing estável). Falta variantes, atribuição fixa por visitante e medição por variante.
 - [ ] **Segmentação na vitrine.** Segmentos (`segments`) calculam alcance sobre os cliques medidos, mas não direcionam conteúdo. A personalização real é só a aba "Para você" da home; busca e ranking não leem interesses.
-- [ ] **Convite e proteção de administradores.** A pessoa precisa criar a conta antes de receber um papel; não há convite por e-mail nem MFA para OWNER/ADMIN.
+- [ ] **Proteção de administradores (MFA).** O convite por e-mail/link já existe (2026-10-13: Painel → Usuários e papéis). Falta verificação em duas etapas para OWNER/ADMIN: o plugin `twoFactor` do Better Auth está disponível, mas mexe no fluxo de login em produção (nova coluna em `users`, tabela `two_factor`, tela de desafio, ativação em /conta) e precisa de um modo "só avisar" antes de passar a exigir, para ninguém ficar sem acesso ao painel.
 - [ ] **Cupons automáticos.** Confirmado por introspecção da API em 2026-10-13: as únicas consultas são `shopOfferV2`, `shopeeOfferV2`, `productOfferV2`, `conversionReport`, `validatedReport`, `partnerOrderReport`, `listItemFeeds` e `getItemFeedData`, e as mutações `generateShortLink`/`generateBatchShortLink`; nenhuma traz cupom ou voucher. Hoje: cadastro manual + campanhas de categoria (`shopeeOfferV2`). O relatório de cliques por cupom já existe no painel.
 - [ ] **Outros provedores.** Só a Shopee; a tela de provedores não cria novos e o importador é específico dela.
-- [ ] **Fila para pedidos de titulares (LGPD).** O autoatendimento cobre acesso, portabilidade, correção e exclusão; não há canal humano para o que ele não resolve, e o consentimento não é gravado no banco (só no navegador; `consent_records` sem uso).
+- [x] ~~**Fila para pedidos de titulares (LGPD).**~~ Feito em 2026-10-13: formulário público em `/privacidade#pedido`, fila em Painel → LGPD e consentimento gravado em `consent_records`. Falta aviso ao time quando chega pedido novo e tela do histórico de consentimento de um titular.
 - [ ] **Avaliações, frete e crescimento.** A API de afiliados da Shopee não expõe contagem de avaliações, frete nem série de crescimento; a interface não inventa esses dados.
 
 ## Engenharia
@@ -46,7 +46,7 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 
 ## Tabelas do schema sem código usando
 
-`affiliateLinks`/`affiliatePrograms`, `offerPrices`/`offerAvailability`/`offerCommissions`, `providerAccounts`/`providerCapabilities`, `anonymousIdentities`/`identityMerges`, `dailyProductMetrics`/`hourlyProductMetrics`, `productVariants`, `consentRecords`/`privacyPreferences` (o consentimento ainda é só `localStorage`; exportação e exclusão usam rota própria e o Better Auth).
+`affiliateLinks`/`affiliatePrograms`, `offerPrices`/`offerAvailability`/`offerCommissions`, `providerAccounts`/`providerCapabilities`, `anonymousIdentities`/`identityMerges`, `dailyProductMetrics`/`hourlyProductMetrics`, `productVariants`, `privacyPreferences` (o consentimento agora também é gravado em `consent_records`; exportação e exclusão usam rota própria e o Better Auth).
 
 Já usadas pelo painel: `auditLogs`, `globalSettings`, `featureFlags`, `syncJobs`/`syncJobRuns`/`syncErrors`, `privacyRequests`, `sessions`/`roles`/`userRoles`.
 

@@ -10,7 +10,7 @@ export const matchStatus = pgEnum("match_status", ['auto_merged', 'pending_revie
 export const offerAvailabilityStatus = pgEnum("offer_availability_status", ['in_stock', 'out_of_stock', 'unknown'])
 export const offerStatus = pgEnum("offer_status", ['active', 'inactive', 'removed'])
 export const privacyRequestStatus = pgEnum("privacy_request_status", ['pending', 'processing', 'completed', 'rejected'])
-export const privacyRequestType = pgEnum("privacy_request_type", ['export', 'deletion', 'access'])
+export const privacyRequestType = pgEnum("privacy_request_type", ['export', 'deletion', 'access', 'correction', 'information', 'revocation', 'other'])
 export const productStatus = pgEnum("product_status", ['active', 'unavailable', 'discontinued', 'removed'])
 export const providerAccountStatus = pgEnum("provider_account_status", ['active', 'revoked'])
 export const providerStatus = pgEnum("provider_status", ['active', 'disabled', 'degraded'])
@@ -733,12 +733,20 @@ export const privacyPreferences = pgTable("privacy_preferences", {
 
 export const privacyRequests = pgTable("privacy_requests", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
-	userId: uuid("user_id").notNull(),
+	/** Nulo quando o pedido veio do formulário público, de quem não tem conta. */
+	userId: uuid("user_id"),
 	type: privacyRequestType().notNull(),
 	status: privacyRequestStatus().default('pending').notNull(),
 	requestedAt: timestamp("requested_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
 	resultRef: jsonb("result_ref"),
+	/** E-mail informado no formulário público (para responder a quem não tem conta). */
+	email: text(),
+	message: text(),
+	/** `portal` (formulário em /privacidade) ou `account` (autoatendimento em /conta). */
+	source: text(),
+	/** Anotação interna da equipe sobre o atendimento. */
+	responseNote: text("response_note"),
 }, (table) => [
 	foreignKey({
 			columns: [table.userId],
@@ -921,3 +929,35 @@ export const segments = pgTable("segments", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
+
+/** Convite para a equipe: a pessoa cria a conta (ou entra) e aceita; o papel é concedido ao aceitar. O token só existe em hash. */
+export const adminInvites = pgTable("admin_invites", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	email: text().notNull(),
+	roleId: uuid("role_id").notNull(),
+	tokenHash: text("token_hash").notNull(),
+	invitedBy: uuid("invited_by"),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+	acceptedAt: timestamp("accepted_at", { withTimezone: true, mode: 'string' }),
+	acceptedUserId: uuid("accepted_user_id"),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("admin_invites_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.roleId],
+			foreignColumns: [roles.id],
+			name: "admin_invites_role_id_roles_id_fk"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.invitedBy],
+			foreignColumns: [users.id],
+			name: "admin_invites_invited_by_users_id_fk"
+		}).onDelete("set null"),
+	foreignKey({
+			columns: [table.acceptedUserId],
+			foreignColumns: [users.id],
+			name: "admin_invites_accepted_user_id_users_id_fk"
+		}).onDelete("set null"),
+	unique("admin_invites_token_hash_unique").on(table.tokenHash),
+]);

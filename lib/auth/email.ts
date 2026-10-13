@@ -46,6 +46,24 @@ export function buildPasswordResetEmail({ name, url }: { name?: string | null; u
   }
 }
 
+export function buildInviteEmail({ url, role, days }: { url: string; role: string; days: number }): Omit<OutgoingEmail, 'to'> {
+  const safeUrl = escapeHtml(url)
+  const safeRole = escapeHtml(role)
+  return {
+    subject: 'Convite para a equipe do Garimpo certo',
+    text: `Olá.\n\nVocê foi convidado para a equipe do Garimpo certo com o papel ${role}.\nPara aceitar, abra o link abaixo, entre (ou crie sua conta) com este mesmo e-mail e confirme. O convite vale por ${days} dias:\n\n${url}\n\nSe você não esperava este convite, pode ignorar este e-mail.\n`,
+    html: `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#fbfaf7;font-family:Arial,Helvetica,sans-serif;color:#1c2434">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
+<table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e3e0d7;border-radius:16px">
+<tr><td style="padding:32px">
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3">Você foi convidado para a equipe</h1>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6">Papel: <strong>${safeRole}</strong>. Para aceitar, entre (ou crie sua conta) com este mesmo e-mail e confirme. O convite vale por ${days} dias.</p>
+<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#c3441d;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:10px">Aceitar convite</a></p>
+<p style="margin:0;font-size:14px;line-height:1.6;color:#596273">Se você não esperava este convite, pode ignorar este e-mail.</p>
+</td></tr></table></td></tr></table></body></html>`,
+  }
+}
+
 /** Retorna true quando o provedor aceitou a mensagem. Nunca lança: falha de e-mail não deve quebrar o fluxo de autenticação. */
 export async function sendEmail(email: OutgoingEmail): Promise<boolean> {
   const sender = parseSender(process.env.EMAIL_FROM)

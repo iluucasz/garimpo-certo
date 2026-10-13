@@ -21,10 +21,11 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 |---|---|---|
 | ✅ | Upload de imagens no painel (campanhas, cupons e imagem de compartilhamento do SEO) | Botão “Enviar imagem” ao lado do campo de endereço. Confere o conteúdo real do arquivo; até 4 MB. A gravação no Vercel Blob usa a mesma chamada da re-hospedagem de imagens, mas não foi exercitada ao vivo nesta rodada. |
 | ✅ | Regras automáticas editáveis | Painel → Regras do catálogo (limiares das coleções e filtros) e Guias de compra (checklists por categoria). Os textos acompanham os números. |
-| ⏳ | Convite e proteção de administradores (convite por e-mail + MFA para OWNER/ADMIN) | Depende do e-mail do Brevo funcionando (item 4). |
-| 🚫 | Cupons automáticos | A API de afiliados da Shopee não expõe cupons. Continua manual + campanhas de categoria. |
+| ✅ | Convite de administradores | Painel → Usuários e papéis → "Convidar para a equipe". Gera um link de 7 dias (também enviado por e-mail quando o Brevo estiver ativo); a pessoa entra com o mesmo e-mail e aceita. |
+| ⏳ | MFA (verificação em duas etapas) para OWNER/ADMIN | Deixado de propósito: mexe no login de produção. Plano em `docs/BACKLOG.md`. Recomendo fazermos juntos, com um modo "só avisar" antes de exigir. |
+| 🚫 | Cupons automáticos | Confirmado em 2026-10-13 listando todas as operações da API de afiliados: nenhuma devolve cupom ou voucher. Continua manual + campanhas de categoria. |
 | 🙋 | Outros provedores além da Shopee | Precisa de credenciais e da API do provedor escolhido. |
-| ⏳ | Fila de pedidos de titulares (LGPD) e consentimento gravado no banco | |
+| ✅ | Fila de pedidos de titulares (LGPD) e consentimento gravado no banco | Formulário em `/privacidade#pedido`; fila em Painel → LGPD; escolhas de cookies em `consent_records`. Falta aviso ao time quando chega pedido novo. |
 | ⏳ | Redesign de identidade autoral do site (`docs/PROXIMOS-PASSOS.md`, seção 3) | Precisa de direção visual sua. |
 | ⏳ | CMS visual estilo Shopify (portar do nextrotta) | Próxima grande frente. |
 | ⏳ | Alertas operacionais (importação falhou, catálogo velho) | |

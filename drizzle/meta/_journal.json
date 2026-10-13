@@ -71,6 +71,20 @@
       "when": 1791899594431,
       "tag": "0009_stale_mikhail_rasputin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791900637165,
+      "tag": "0010_public_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791900851449,
+      "tag": "0011_crazy_captain_stacy",
+      "breakpoints": true
     }
   ]
 }

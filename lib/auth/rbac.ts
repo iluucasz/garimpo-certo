@@ -1,4 +1,12 @@
 export type AdminRole = 'OWNER' | 'ADMIN' | 'MARKETING' | 'CATALOG_MANAGER' | 'ANALYST' | 'SUPPORT' | 'READ_ONLY'
+
+export const adminRoles: AdminRole[] = ['OWNER', 'ADMIN', 'MARKETING', 'CATALOG_MANAGER', 'ANALYST', 'SUPPORT', 'READ_ONLY']
+
+/** Nome de cada papel para telas e e-mails. */
+export const roleLabels: Record<AdminRole, string> = {
+  OWNER: 'Proprietário', ADMIN: 'Administrador', MARKETING: 'Marketing', CATALOG_MANAGER: 'Gestor de catálogo',
+  ANALYST: 'Analista', SUPPORT: 'Suporte', READ_ONLY: 'Somente leitura',
+}
 export type Permission = 'catalog:read' | 'catalog:write' | 'content:write' | 'analytics:read' | 'jobs:run' | 'settings:write' | 'users:manage'
 
 // Fonte de verdade dos dados: tabela `roles` (jsonb `permissions`, seedada por lib/db/seed-roles.ts).

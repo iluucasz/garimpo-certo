@@ -7,6 +7,7 @@ import { defaultRolePermissions, type AdminRole, type Permission } from '@/lib/a
 import { AdminApiError, adminFetch, dateTime, swrFetcher } from '@/lib/admin/client'
 import type { CouponClickReport } from '@/lib/db/repositories/coupon-clicks'
 import { CatalogImportButton } from './catalog-import-button'
+import { InvitesPanel } from './invites-panel'
 import { ResourceManager } from './resource-manager'
 import { useAdminAccess } from './admin-access'
 import styles from './resource.module.css'
@@ -280,7 +281,7 @@ function PermissionMatrix() {
 }
 
 export function UsersView() {
-  return <div className={styles.stack}><ResourceManager slug="usuarios"/><PermissionMatrix/></div>
+  return <div className={styles.stack}><InvitesPanel/><ResourceManager slug="usuarios"/><PermissionMatrix/></div>
 }
 
 export function SecurityView() {

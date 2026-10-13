@@ -12,6 +12,7 @@ import {
   sessions, syncJobRuns, syncJobs, tags, userRoles, users,
 } from '@/lib/db/schema'
 import { isReservedCollectionSlug } from '@/lib/catalog/collections'
+import { privacyRequestLabels } from '@/lib/privacy/requests'
 import { formatPrice } from '@/lib/format'
 import { resources, wiredFlags, type ResourceSlug } from './resource-meta'
 import { validatePeriod, type Values } from './validate'
@@ -725,18 +726,34 @@ const usersHandler: Handler = {
 }
 
 // ---------------------------------------------------------------- LGPD
-const privacyTypeLabels: Record<string, string> = { export: 'Exportação de dados', deletion: 'Exclusão de conta', access: 'Acesso aos dados' }
+const privacyTypeLabels: Record<string, string> = privacyRequestLabels
+const privacySourceLabels: Record<string, string> = { portal: 'Formulário público', account: 'Minha conta' }
 
 const privacyHandler: Handler = {
   async list(params) {
     const like = likeOf(params.q)
     const status = (['pending', 'processing', 'completed', 'rejected'] as const).find((value) => value === params.filter)
-    const where = and(like ? ilike(users.email, like) : undefined, status ? eq(privacyRequests.status, status) : undefined)
-    const rows = await db.select({
-      id: privacyRequests.id, email: users.email, type: privacyRequests.type, status: privacyRequests.status,
-      requestedAt: privacyRequests.requestedAt, completedAt: privacyRequests.completedAt,
-    }).from(privacyRequests).innerJoin(users, eq(users.id, privacyRequests.userId)).where(where).orderBy(desc(privacyRequests.requestedAt)).limit(page(params).limit).offset(page(params).offset)
-    return { rows: rows.map((row) => ({ ...row, type: privacyTypeLabels[row.type] ?? row.type })), total: rows.length }
+    const holder = sql<string>`coalesce(${users.email}, ${privacyRequests.email})`
+    const where = and(like ? ilike(holder, like) : undefined, status ? eq(privacyRequests.status, status) : undefined)
+    const [rows, count] = await Promise.all([
+      db.select({
+        id: privacyRequests.id, email: holder, type: privacyRequests.type, status: privacyRequests.status,
+        message: privacyRequests.message, source: privacyRequests.source, responseNote: privacyRequests.responseNote,
+        requestedAt: privacyRequests.requestedAt, completedAt: privacyRequests.completedAt,
+      }).from(privacyRequests).leftJoin(users, eq(users.id, privacyRequests.userId)).where(where)
+        .orderBy(desc(privacyRequests.requestedAt)).limit(page(params).limit).offset(page(params).offset),
+      total(db.select({ n: sql<number>`count(*)::int` }).from(privacyRequests).leftJoin(users, eq(users.id, privacyRequests.userId)).where(where)),
+    ])
+    return {
+      total: count,
+      rows: rows.map((row) => ({
+        id: row.id, email: row.email ?? '—', type: privacyTypeLabels[row.type] ?? row.type, status: row.status,
+        protocol: row.id.slice(0, 8).toUpperCase(),
+        excerpt: row.message ? (row.message.length > 90 ? `${row.message.slice(0, 90)}…` : row.message) : '—',
+        message: row.message ?? '', source: privacySourceLabels[row.source ?? ''] ?? '—', responseNote: row.responseNote ?? '',
+        requestedAt: row.requestedAt, completedAt: row.completedAt,
+      })),
+    }
   },
   async get(id) {
     if (!isUuid(id)) return null
@@ -744,9 +761,15 @@ const privacyHandler: Handler = {
   },
   async update(id, values) {
     if (!isUuid(id)) return null
-    const status = values.status as typeof privacyRequests.$inferInsert.status
-    const done = status === 'completed' || status === 'rejected'
-    const [updated] = await db.update(privacyRequests).set({ status, completedAt: done ? nowIso() : null }).where(eq(privacyRequests.id, id)).returning({ id: privacyRequests.id })
+    const patch: Partial<typeof privacyRequests.$inferInsert> = {}
+    if ('status' in values) {
+      const status = values.status as typeof privacyRequests.$inferInsert.status
+      patch.status = status
+      patch.completedAt = status === 'completed' || status === 'rejected' ? nowIso() : null
+    }
+    if ('responseNote' in values) patch.responseNote = String(values.responseNote ?? '').slice(0, 1000) || null
+    if (!Object.keys(patch).length) return { row: (await this.get(id))! }
+    const [updated] = await db.update(privacyRequests).set(patch).where(eq(privacyRequests.id, id)).returning({ id: privacyRequests.id })
     return updated ? { row: (await this.get(id))! } : null
   },
 }
