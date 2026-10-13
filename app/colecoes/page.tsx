@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
-import { buildCollections, collectionGroups } from '@/lib/catalog/collections'
+import { buildCollections, collectionGroups, pickCovers } from '@/lib/catalog/collections'
 import styles from '@/components/editorial/editorial.module.css'
 
 export const revalidate = 300
@@ -23,6 +23,9 @@ const groupIntro: Record<string, string> = {
 export default async function CollectionsPage() {
   const catalog = await getStoreCatalog()
   const collections = buildCollections(catalog)
+  // A ordem de exibição (grupos) define quem ganha cada capa primeiro.
+  const ordered = collectionGroups.flatMap((group) => collections.filter((collection) => collection.group === group))
+  const covers = pickCovers(ordered)
 
   return <StorefrontShell>
     <div className={`container ${styles.page}`}>
@@ -41,8 +44,8 @@ export default async function CollectionsPage() {
             <h2 id={headingId}>{group}</h2>
             <p className={styles.sectionLead}>{groupIntro[group]}</p>
             <div className={styles.cards}>{items.map((collection) => <Link href={`/colecoes/${collection.slug}`} className={styles.card} key={collection.slug}>
-              <span className={styles.cardText}><small>{collection.tone}</small><strong>{collection.title}</strong><p>{collection.description}</p><span>Ver {collection.products.length} {collection.products.length === 1 ? 'produto' : 'produtos'}</span></span>
-              <span className={styles.mosaic} aria-hidden="true">{collection.products.slice(0, 3).map((product) => <span key={product.id}><Image src={product.image} alt="" fill sizes="96px"/></span>)}</span>
+              <span className={styles.cardText}><small>{collection.tone}</small><strong>{collection.title}</strong><p>{collection.description}</p><span>Ver {collection.total} {collection.total === 1 ? 'produto' : 'produtos'}</span></span>
+              <span className={styles.mosaic} aria-hidden="true">{(covers.get(collection.slug) ?? []).map((product) => <span key={product.id}><Image src={product.image} alt="" fill sizes="96px"/></span>)}</span>
             </Link>)}</div>
           </section>
         })}

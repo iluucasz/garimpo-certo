@@ -32,6 +32,24 @@ export const guideChecklists: Record<string, GuideCheck[]> = {
     { title: 'Limpeza', text: 'Peças removíveis e revestimento fácil de lavar fazem diferença no uso diário.' },
     { title: 'Materiais', text: 'Procure a indicação de materiais próprios para contato com alimentos.' },
   ],
+  pet: [
+    { title: 'Porte e medidas', text: 'Confira o porte indicado (pequeno, médio, grande) e as medidas. Item pequeno demais não serve; grande demais incomoda.' },
+    { title: 'Material seguro', text: 'Prefira materiais resistentes e sem partes pequenas que possam ser engolidas. Em brinquedos, observe a resistência à mordida.' },
+    { title: 'Higiene', text: 'Capas removíveis, laváveis e superfícies fáceis de limpar facilitam a rotina.' },
+    { title: 'Adaptação', text: 'Apresente itens novos aos poucos e observe como o animal reage antes de substituir o que ele já usa.' },
+  ],
+  beleza: [
+    { title: 'Tom e tipo de pele', text: 'Confira se há variações de tom e para qual tipo de pele ou cabelo o produto é indicado.' },
+    { title: 'Validade e identificação', text: 'Veja o prazo de validade e se o anúncio informa registro ou notificação, quando exigido para esse tipo de produto.' },
+    { title: 'Aparelhos', text: 'Em secadores e chapinhas, confira potência, voltagem e se há proteção térmica.' },
+    { title: 'Teste antes de usar', text: 'Em maquiagem e cosméticos, teste em uma área pequena antes do uso completo.' },
+  ],
+  fitness: [
+    { title: 'Para qual treino', text: 'Defina o uso (musculação, corrida, yoga) antes de comprar; os acessórios mudam de um para outro.' },
+    { title: 'Resistência e carga', text: 'Elásticos e pesos informam a resistência ou a carga. Escolha pelo seu nível e evolua aos poucos.' },
+    { title: 'Material e aderência', text: 'Em tapetes, luvas e faixas, veja material, espessura e se a superfície é antiderrapante.' },
+    { title: 'Garrafas e squeezes', text: 'Confira a capacidade, a vedação da tampa e se o anúncio informa que o material é livre de BPA.' },
+  ],
   'bem-estar': [
     { title: 'Ingredientes e finalidade', text: 'Leia a lista de ingredientes e para que tipo de pele ou uso o produto é indicado.' },
     { title: 'Validade e identificação', text: 'Confira o prazo de validade e se o anúncio informa registro ou notificação, quando exigido para esse tipo de produto.' },

@@ -19,12 +19,13 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 | `NEXT_PUBLIC_SITE_URL` | recomendada | Domínio canônico; sem ela vale o domínio de produção da Vercel |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | recomendada | Contato LGPD na página de privacidade |
 | `NEXT_PUBLIC_ADMIN_DEMO_MODULES` | opcional | `1` mostra os módulos de demonstração do painel admin |
+| `NEXT_BUILD_CPUS` | só em build local | Limita os workers do `next build` (ex.: `3`) quando a máquina tem pouca memória/disco livre |
 | `TEST_DATABASE_URL` | só em testes | Banco usado por `pnpm test` (ex.: branch do Neon); sem ele, usa `DATABASE_URL` |
 | `NEXT_IMAGE_UNOPTIMIZED` | opcional | `1` desliga o otimizador de imagens |
 
 ## Agendamento
 
-`vercel.json` roda `GET /api/v1/cron/shopee-import` todo dia às 06:00 UTC. A importação leva ~40 s, arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
+`vercel.json` roda `GET /api/v1/cron/shopee-import` todo dia às 06:00 UTC. A importação leva ~90 s (8 categorias, ~96 produtos), arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
 
 ## Imagens
 

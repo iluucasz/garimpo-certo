@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCollections, collectionSlugsFor } from '@/lib/catalog/collections'
+import { buildCollections, collectionSlugsFor, pickCovers } from '@/lib/catalog/collections'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
 import type { Category, Offer, Product } from '@/lib/types'
 
@@ -96,5 +96,32 @@ describe('guias de compra por categoria', () => {
 
   it('categoria inexistente não gera guia', () => {
     expect(buildGuide({ products, offers, categories }, 'nao-existe')).toBeNull()
+  })
+})
+
+describe('capas e totais das coleções', () => {
+  it('total conta todo o catálogo que atende ao critério, mesmo além do limite exibido', () => {
+    const many = Array.from({ length: 30 }, (_, index) => product(`m${index}`, 'casa', 4.9, 60))
+    const manyOffers = many.map((item, index) => offer(item.id, 20 + index, 2000 + index))
+    const collection = buildCollections({ products: many, offers: manyOffers, categories }, 3, 10).find((item) => item.slug === 'mais-vendidos')!
+    expect(collection.total).toBe(30)
+    expect(collection.products).toHaveLength(10)
+    expect(collection.description).toMatch(/^30 produtos/)
+  })
+
+  it('capas não repetem produto entre coleções quando há alternativa', () => {
+    const many = Array.from({ length: 12 }, (_, index) => product(`c${index}`, 'casa', 4.9, 90 - index))
+    const manyOffers = many.map((item, index) => offer(item.id, 10 + index, 20000 - index * 100, 40 + index))
+    const collections = buildCollections({ products: many, offers: manyOffers, categories })
+    const covers = pickCovers(collections, 3)
+    const firstTwo = [...covers.values()].slice(0, 2)
+    expect(firstTwo[0]).toHaveLength(3)
+    const overlap = firstTwo[0].filter((item) => firstTwo[1].some((other) => other.id === item.id))
+    expect(overlap).toHaveLength(0)
+  })
+
+  it('sem alternativa, completa a capa com produtos da própria coleção', () => {
+    const covers = pickCovers(buildCollections({ products, offers, categories }), 3)
+    for (const cover of covers.values()) expect(cover.length).toBeGreaterThan(0)
   })
 })

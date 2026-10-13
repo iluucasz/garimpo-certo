@@ -24,5 +24,8 @@ const images={
 }
 // Só um booleano (nunca as credenciais) é inlinado no bundle, para o cliente saber se o login com Google existe.
 const env={NEXT_PUBLIC_GOOGLE_LOGIN:process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET?'1':''}
-const nextConfig={images,env,async headers(){return[{source:'/:path*',headers:securityHeaders}]}}
+// Em máquinas com pouca memória livre o build com todos os núcleos pode falhar ("Zone Allocation failed").
+// NEXT_BUILD_CPUS=3 limita os workers; na Vercel a variável não existe e nada muda.
+const experimental=process.env.NEXT_BUILD_CPUS?{cpus:Number(process.env.NEXT_BUILD_CPUS)}:undefined
+const nextConfig={images,env,experimental,async headers(){return[{source:'/:path*',headers:securityHeaders}]}}
 export default nextConfig

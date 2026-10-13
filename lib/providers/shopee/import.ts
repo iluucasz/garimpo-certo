@@ -9,6 +9,9 @@ export const categoryGroups = [
   { slug: 'audio', name: 'Áudio', keywords: ['caixa de som bluetooth', 'headset gamer', 'microfone condensador', 'fone bluetooth esportivo', 'mini caixa de som'] },
   { slug: 'cozinha', name: 'Cozinha', keywords: ['air fryer', 'panela antiaderente', 'liquidificador', 'garrafa termica', 'mini processador', 'copo termico canudo', 'forma de silicone'] },
   { slug: 'bem-estar', name: 'Bem-estar', keywords: ['kit skincare', 'creme hidratante corporal', 'escova de dente eletrica', 'massageador', 'escova secadora', 'lixa eletrica'] },
+  { slug: 'pet', name: 'Pet', keywords: ['cama para cachorro', 'comedouro pet', 'brinquedo para cachorro', 'arranhador para gato', 'caixa de transporte pet'] },
+  { slug: 'beleza', name: 'Beleza', keywords: ['kit maquiagem', 'secador de cabelo', 'prancha alisadora', 'esponja de maquiagem', 'base liquida'] },
+  { slug: 'fitness', name: 'Fitness', keywords: ['garrafa academia', 'elastico de resistencia', 'tapete de yoga', 'corda de pular', 'luva de treino'] },
 ] as const
 
 export type ImportOptions = { perCategory?: number; perKeyword?: number; minRating?: number; minSales?: number; maxPerShop?: number; replaceDemo?: boolean; prune?: boolean }

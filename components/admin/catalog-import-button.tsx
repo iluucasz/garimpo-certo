@@ -34,7 +34,7 @@ export function CatalogImportButton() {
   }
 
   return <div>
-    <button type="button" className="btn primary" onClick={run} disabled={busy} aria-busy={busy}><RefreshCw className={busy ? 'spin' : undefined} aria-hidden="true"/>{busy ? 'Importando (~40 s)…' : 'Importar da Shopee agora'}</button>
+    <button type="button" className="btn primary" onClick={run} disabled={busy} aria-busy={busy}><RefreshCw className={busy ? 'spin' : undefined} aria-hidden="true"/>{busy ? 'Importando (1 a 2 min)…' : 'Importar da Shopee agora'}</button>
     {error && <p role="alert" style={{ marginTop: 12, color: 'var(--primary)' }}>{error}</p>}
     {result && <p role="status" style={{ marginTop: 12 }}><Check aria-hidden="true" style={{ verticalAlign: '-2px' }}/> {result.created} novos, {result.updated} atualizados, {result.priceChanges} com preço novo no histórico
       {result.archived > 0 ? `, ${result.archived} arquivados` : ''}{result.prunedSkipped ? ' (arquivamento ignorado: a importação cobriu pouco do catálogo atual)' : ''}. Levou {Math.round(result.durationMs / 1000)} s.</p>}

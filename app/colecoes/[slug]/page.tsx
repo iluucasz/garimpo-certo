@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ProductGrid } from '@/components/product/product-card'
+import { PagedProductGrid } from '@/components/product/paged-product-grid'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { buildCollections, collectionSlugsFor } from '@/lib/catalog/collections'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
@@ -56,7 +56,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
         {syncedLabel && <p className={styles.meta}>Preços e vendas da Shopee atualizados em {syncedLabel}.</p>}
       </header>
 
-      <ProductGrid items={collection.products} eagerCount={4}/>
+      <PagedProductGrid items={collection.products} eagerCount={4}/>
 
       {others.length > 0 && <section className={styles.section} aria-labelledby="outras-colecoes">
         <h2 id="outras-colecoes">Outras seleções</h2>

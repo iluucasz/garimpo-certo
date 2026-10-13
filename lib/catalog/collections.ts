@@ -14,6 +14,8 @@ export type Collection = {
   tone: string
   description: string
   group: CollectionGroup
+  /** Quantos produtos do catálogo atendem ao critério (pode passar de `products.length`). */
+  total: number
   products: Product[]
 }
 
@@ -175,7 +177,7 @@ function allDefinitions(input: CatalogInput): Definition[] {
 }
 
 /** Coleções calculadas na hora a partir do catálogo; as que ficam com menos de `minimum` produtos não aparecem. */
-export function buildCollections(input: CatalogInput, minimum = 3, limit = 24): Collection[] {
+export function buildCollections(input: CatalogInput, minimum = 3, limit = 120): Collection[] {
   return allDefinitions(input).flatMap((definition) => {
     const matching = input.products.filter((product) => definition.matches(product, input))
     if (matching.length < minimum) return []
@@ -186,6 +188,7 @@ export function buildCollections(input: CatalogInput, minimum = 3, limit = 24): 
       tone: definition.tone,
       group: definition.group,
       description: definition.describe(matching.length),
+      total: matching.length,
       products: sorted.slice(0, limit),
     }]
   })
@@ -198,4 +201,21 @@ export function collectionSlugsFor(input: CatalogInput) {
 
 export function findCollection(input: CatalogInput, slug: string) {
   return buildCollections(input).find((collection) => collection.slug === slug)
+}
+
+/**
+ * Capas para o índice: cada coleção mostra os primeiros produtos que ainda não apareceram como capa de uma
+ * coleção anterior. Várias coleções "em alta" compartilham os mesmos campeões; assim as imagens variam sem
+ * mudar o critério de nenhuma delas. Se faltar produto novo, completa com os da própria coleção.
+ */
+export function pickCovers(collections: Collection[], count = 3): Map<string, Product[]> {
+  const used = new Set<string>()
+  const covers = new Map<string, Product[]>()
+  for (const collection of collections) {
+    const fresh = collection.products.filter((product) => !used.has(product.id))
+    const picked = [...fresh, ...collection.products.filter((product) => used.has(product.id))].slice(0, count)
+    for (const product of picked) used.add(product.id)
+    covers.set(collection.slug, picked)
+  }
+  return covers
 }
