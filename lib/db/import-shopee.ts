@@ -8,7 +8,7 @@ async function main() {
     return Number.isFinite(parsed) ? parsed : fallback
   }
   const options: ImportOptions = {
-    perCategory: flag('per-category', 8),
+    perCategory: flag('per-category', 12),
     minRating: flag('min-rating', 4.5),
     minSales: flag('min-sales', 50),
     maxPerShop: flag('max-per-shop', 2),

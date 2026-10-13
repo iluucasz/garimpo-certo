@@ -1,32 +1,38 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowUpRight, BadgePercent, Flame, Star, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowUpRight, BadgePercent, Flame, Heart, Star, Wallet, type LucideIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { useStoreData } from '@/components/store-data-provider'
-import { currentPrice, matchesSignal } from '@/lib/catalog/signals'
+import { buildCollections } from '@/lib/catalog/collections'
 import styles from './home.module.css'
 
-type Shortcut = { icon: LucideIcon; title: string; hint: string; href: string; test: (price: number, has: (signal: string) => boolean) => boolean }
-const shortcuts: Shortcut[] = [
-  { icon: BadgePercent, title: 'Em promoção', hint: 'Com 20% ou mais abaixo do preço anterior', href: '/colecoes/em-promocao', test: (_, has) => has('Em promoção') },
-  { icon: Flame, title: 'Mais vendidos', hint: 'Mais de mil vendas recentes', href: '/colecoes/mais-vendidos', test: (_, has) => has('Mais vendidos') },
-  { icon: Star, title: 'Bem avaliados', hint: 'Nota 4,8 ou mais', href: '/colecoes/bem-avaliados', test: (_, has) => has('Bem avaliados') },
-  { icon: Wallet, title: 'Até R$ 50', hint: 'Preço atual de até R$ 50', href: '/colecoes/ate-50', test: (price) => price <= 50 },
+/** Quais coleções vão para a home, em ordem, e o ícone de cada uma. Só aparecem as que existem no catálogo. */
+const featured: { slug: string; icon: LucideIcon }[] = [
+  { slug: 'viralizou', icon: Flame },
+  { slug: 'achadinhos', icon: Wallet },
+  { slug: 'em-promocao', icon: BadgePercent },
+  { slug: 'queridinhos', icon: Heart },
+  { slug: 'bem-avaliados', icon: Star },
+  { slug: 'mais-vendidos', icon: Flame },
 ]
 
 export function HomeSelections() {
-  const { products, offers } = useStoreData()
-  const tiles = shortcuts.map((shortcut) => {
-    const items = products.filter((product) => shortcut.test(currentPrice(product, offers), (signal) => matchesSignal(signal, product, offers)))
-    return { ...shortcut, items }
-  }).filter((tile) => tile.items.length > 0)
+  const { products, offers, categories } = useStoreData()
+  const tiles = useMemo(() => {
+    const collections = buildCollections({ products, offers, categories })
+    return featured.flatMap(({ slug, icon }) => {
+      const collection = collections.find((item) => item.slug === slug)
+      return collection ? [{ collection, icon }] : []
+    }).slice(0, 4)
+  }, [products, offers, categories])
   if (!tiles.length) return null
 
   return <section className={`${styles.selections} container`} id="selecoes" aria-labelledby="selections-title">
-    <div className={styles.sectionHeading}><div><h2 id="selections-title">Escolha pelo que importa.</h2><p>Atalhos que filtram o catálogo por preço, nota e promoção.</p></div></div>
-    <div className={styles.selectionGrid}>{tiles.map(({ icon: Icon, ...tile }) => <Link href={tile.href} className={styles.selection} key={tile.title}>
+    <div className={styles.sectionHeading}><div><h2 id="selections-title">Escolha pelo que importa.</h2><p>Seleções que se atualizam sozinhas com os dados da Shopee.</p></div><Link href="/colecoes">Todas as coleções <ArrowUpRight aria-hidden="true"/></Link></div>
+    <div className={styles.selectionGrid}>{tiles.map(({ collection, icon: Icon }) => <Link href={`/colecoes/${collection.slug}`} className={styles.selection} key={collection.slug}>
       <span className={styles.selectionIcon} aria-hidden="true"><Icon/></span>
-      <span className={styles.selectionText}><strong>{tile.title}</strong><span>{tile.hint}</span><small>{tile.items.length} {tile.items.length === 1 ? 'produto' : 'produtos'}</small></span>
+      <span className={styles.selectionText}><strong>{collection.title}</strong><span>{collection.tone}</span><small>{collection.products.length} {collection.products.length === 1 ? 'produto' : 'produtos'}</small></span>
       <ArrowUpRight aria-hidden="true"/>
     </Link>)}</div>
   </section>

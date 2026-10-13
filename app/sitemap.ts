@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { collectionSlugs } from '@/lib/catalog/collections'
+import { collectionSlugsFor } from '@/lib/catalog/collections'
 import { guideSlugs } from '@/lib/catalog/guides'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { siteUrl } from '@/lib/site'
@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/como-funciona', frequency: 'weekly', priority: 0.4 },
     { path: '/privacidade', frequency: 'weekly', priority: 0.3 },
     ...catalog.categories.map((category) => ({ path: `/categorias/${category.slug}`, frequency: 'daily' as const, priority: 0.7 })),
-    ...collectionSlugs.map((slug) => ({ path: `/colecoes/${slug}`, frequency: 'daily' as const, priority: 0.6 })),
+    ...collectionSlugsFor(catalog).map((slug) => ({ path: `/colecoes/${slug}`, frequency: 'daily' as const, priority: 0.6 })),
     ...guideSlugs(catalog).map((slug) => ({ path: `/guias/${slug}`, frequency: 'weekly' as const, priority: 0.6 })),
     ...catalog.products.map((product) => ({ path: `/produto/${product.slug}`, frequency: 'daily' as const, priority: 0.6 })),
   ]

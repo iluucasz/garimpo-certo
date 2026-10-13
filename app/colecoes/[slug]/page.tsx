@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ProductGrid } from '@/components/product/product-card'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
-import { buildCollections, collectionSlugs } from '@/lib/catalog/collections'
+import { buildCollections, collectionSlugsFor } from '@/lib/catalog/collections'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/editorial/editorial.module.css'
@@ -11,7 +11,7 @@ import styles from '@/components/editorial/editorial.module.css'
 export const revalidate = 300
 
 export async function generateStaticParams() {
-  return collectionSlugs.map((slug) => ({ slug }))
+  return collectionSlugsFor(await getStoreCatalog()).map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -33,7 +33,8 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
   const collection = collections.find((item) => item.slug === slug)
   if (!collection) notFound()
 
-  const others = collections.filter((item) => item.slug !== slug)
+  // Sugestões: primeiro as do mesmo grupo, depois o resto, no máximo 8.
+  const others = [...collections.filter((item) => item.slug !== slug && item.group === collection.group), ...collections.filter((item) => item.slug !== slug && item.group !== collection.group)].slice(0, 8)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',

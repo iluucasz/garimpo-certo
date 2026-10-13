@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCollections, collectionSlugs } from '@/lib/catalog/collections'
+import { buildCollections, collectionSlugsFor } from '@/lib/catalog/collections'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
 import type { Category, Offer, Product } from '@/lib/types'
 
@@ -41,8 +41,29 @@ describe('coleções derivadas do catálogo', () => {
     expect(collection.description).toMatch(/^3 produtos/)
   })
 
-  it('expõe os slugs para geração estática', () => {
-    expect(collectionSlugs).toEqual(['mais-vendidos', 'em-promocao', 'bem-avaliados', 'ate-50'])
+  it('expõe só os slugs que existem hoje, incluindo as coleções por categoria', () => {
+    const slugs = collectionSlugsFor({ products, offers, categories })
+    expect(slugs).toContain('mais-vendidos')
+    expect(slugs).toContain('mais-vendidos-casa')
+    expect(slugs).not.toContain('virais-do-tiktok')
+  })
+
+  it('coleção de curadoria só aparece com pelo menos 3 itens ativos no catálogo', () => {
+    const base = { products, offers, categories }
+    expect(buildCollections(base).some((collection) => collection.slug === 'virais-do-tiktok')).toBe(false)
+  })
+
+  it('"Viralizou" usa o limiar de 10 mil vendas e "Achadinhos" combina preço, nota e vendas', () => {
+    const many = [
+      ...products,
+      product('7', 'casa', 4.9, 70), product('8', 'casa', 4.8, 70), product('9', 'casa', 4.7, 70),
+    ]
+    const manyOffers = [...offers, offer('7', 25, 15000), offer('8', 29, 12000), offer('9', 10, 11000)]
+    const collections = buildCollections({ products: many, offers: manyOffers, categories })
+    const viral = collections.find((collection) => collection.slug === 'viralizou')!
+    expect(viral.products.map((item) => item.id)).toEqual(['7', '8', '9'])
+    const finds = collections.find((collection) => collection.slug === 'achadinhos')!
+    expect(finds.products.every((item) => item.rating >= 4.7)).toBe(true)
   })
 })
 

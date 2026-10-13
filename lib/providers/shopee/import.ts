@@ -4,17 +4,17 @@ import { archiveProductsOutsideSelection, archiveProductsWithoutAffiliateOffer, 
 
 /** Cada categoria da vitrine é alimentada por buscas reais na Shopee. */
 export const categoryGroups = [
-  { slug: 'tecnologia', name: 'Tecnologia', keywords: ['fone de ouvido bluetooth', 'smartwatch', 'carregador usb c', 'mouse sem fio'] },
-  { slug: 'casa', name: 'Casa', keywords: ['organizador armario', 'luminaria led', 'jogo de cama casal', 'aspirador portatil'] },
-  { slug: 'audio', name: 'Áudio', keywords: ['caixa de som bluetooth', 'headset gamer', 'microfone condensador'] },
-  { slug: 'cozinha', name: 'Cozinha', keywords: ['air fryer', 'panela antiaderente', 'liquidificador', 'garrafa termica'] },
-  { slug: 'bem-estar', name: 'Bem-estar', keywords: ['kit skincare', 'creme hidratante corporal', 'escova de dente eletrica'] },
+  { slug: 'tecnologia', name: 'Tecnologia', keywords: ['fone de ouvido bluetooth', 'smartwatch', 'carregador usb c', 'mouse sem fio', 'suporte de celular', 'ring light', 'power bank'] },
+  { slug: 'casa', name: 'Casa', keywords: ['organizador armario', 'luminaria led', 'jogo de cama casal', 'aspirador portatil', 'umidificador de ar', 'tapete antiderrapante', 'dispenser de sabonete'] },
+  { slug: 'audio', name: 'Áudio', keywords: ['caixa de som bluetooth', 'headset gamer', 'microfone condensador', 'fone bluetooth esportivo', 'mini caixa de som'] },
+  { slug: 'cozinha', name: 'Cozinha', keywords: ['air fryer', 'panela antiaderente', 'liquidificador', 'garrafa termica', 'mini processador', 'copo termico canudo', 'forma de silicone'] },
+  { slug: 'bem-estar', name: 'Bem-estar', keywords: ['kit skincare', 'creme hidratante corporal', 'escova de dente eletrica', 'massageador', 'escova secadora', 'lixa eletrica'] },
 ] as const
 
 export type ImportOptions = { perCategory?: number; perKeyword?: number; minRating?: number; minSales?: number; maxPerShop?: number; replaceDemo?: boolean; prune?: boolean }
 
 export async function importShopeeCatalog(options: ImportOptions = {}) {
-  const { perCategory = 8, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false } = options
+  const { perCategory = 12, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false } = options
   const providerId = await getOrCreateProvider('shopee', 'Shopee')
   const categoryNames = Object.fromEntries(categoryGroups.map((group) => [group.slug, group.name]))
   const seen = new Set<string>()
