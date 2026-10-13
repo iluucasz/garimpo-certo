@@ -40,3 +40,19 @@ test('metadados usam o endereço do próprio site, não um domínio fixo', async
   const jsonLd = await page.locator('script[type="application/ld+json"]').first().textContent()
   expect(jsonLd).not.toContain('garimpo.example')
 })
+
+test('busca e categoria já entregam a grade de produtos no HTML', async ({ request }) => {
+  for (const path of ['/buscar', '/buscar?q=fone', '/categorias/cozinha']) {
+    const html = await (await request.get(path)).text()
+    expect(html, path).toContain('product-card')
+  }
+})
+
+test('parâmetros da URL valem na busca (servidor) e na categoria (estática)', async ({ page }) => {
+  await page.goto('/buscar?ordem=menor-preco&sinais=Bem%20avaliados')
+  await expect(page.getByLabel('Ordenar por')).toHaveValue('menor-preco')
+  await expect(page.getByRole('button', { name: 'Remover filtro Bem avaliados' })).toBeVisible()
+
+  await page.goto('/categorias/cozinha?ordem=avaliacao')
+  await expect(page.getByLabel('Ordenar por')).toHaveValue('avaliacao')
+})

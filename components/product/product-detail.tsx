@@ -71,8 +71,8 @@ export function ProductDetail({ product }: { product: Product }) {
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><Link href={`/categorias/${product.category}`}>{categoryName}</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span></nav>
       <div className={styles.layout}>
         <div className={styles.gallery}>
-          <div className={styles.mainImage}><Image src={gallery[imageIndex]} alt={`${product.name}, imagem ${imageIndex + 1} de ${gallery.length}`} fill preload sizes="(max-width: 900px) 100vw, 50vw"/>{discount > 0 && <span className={styles.discount}>−{discount}%<span className="sr-only"> de desconto</span></span>}</div>
-          {gallery.length > 1 && <div className={styles.thumbs} role="group" aria-label="Galeria de imagens">{gallery.map((image, index) => <button type="button" key={`${image}-${index}`} className={imageIndex === index ? styles.thumbActive : ''} onClick={() => setImageIndex(index)} aria-label={`Mostrar imagem ${index + 1}`} aria-pressed={imageIndex === index}><Image src={image} alt="" fill sizes="72px"/></button>)}</div>}
+          <div className={styles.mainImage}><Image src={gallery[imageIndex]} alt={`${product.name}, imagem ${imageIndex + 1} de ${gallery.length}`} fill preload quality={60} sizes="(max-width: 900px) 100vw, 50vw"/>{discount > 0 && <span className={styles.discount}>−{discount}%<span className="sr-only"> de desconto</span></span>}</div>
+          {gallery.length > 1 && <div className={styles.thumbs} role="group" aria-label="Galeria de imagens">{gallery.map((image, index) => <button type="button" key={`${image}-${index}`} className={imageIndex === index ? styles.thumbActive : ''} onClick={() => setImageIndex(index)} aria-label={`Mostrar imagem ${index + 1}`} aria-pressed={imageIndex === index}><Image src={image} alt="" fill sizes="72px" fetchPriority="low"/></button>)}</div>}
         </div>
 
         <div className={styles.summary}>

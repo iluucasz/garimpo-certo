@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Check, ChevronLeft, ChevronRight, History, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVisitorState } from '@/components/visitor-state-provider'
@@ -20,8 +20,15 @@ const sortOptions = [
   { value: 'mais-vendidos', label: 'Mais vendidos' },
 ]
 
-export function SearchExperience({ initialCategory }: { initialCategory?: string }) {
-  const params = useSearchParams()
+export type SearchParams = Partial<Record<'q' | 'categoria' | 'ordem' | 'precoMax' | 'sinais' | 'pagina', string>>
+
+/**
+ * `initialParams` vem do servidor (`/buscar` lê os searchParams), então a grade já sai no HTML e as primeiras
+ * imagens começam a baixar antes da hidratação. Em páginas estáticas (categorias) não há parâmetros no servidor;
+ * eles são aplicados uma vez depois da montagem.
+ */
+export function SearchExperience({ initialCategory, initialParams }: { initialCategory?: string; initialParams?: SearchParams }) {
+  const params = { get: (name: keyof SearchParams) => initialParams?.[name] ?? null }
   const pathname = usePathname()
   const router = useRouter()
   const { savedSearches, saveSearch, removeSavedSearch } = useVisitorState()
@@ -68,6 +75,19 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const visible = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const priceActive = max < priceCeiling
   const activeFilterCount = (category !== (initialCategory ?? 'todos') ? 1 : 0) + (priceActive ? 1 : 0) + signals.length
+
+  // Páginas estáticas (ex.: /categorias/cozinha?ordem=menor-preco) só conhecem os parâmetros no navegador.
+  useEffect(() => {
+    if (initialParams) return
+    const search = new URLSearchParams(window.location.search)
+    if (![...search.keys()].length) return
+    const q = search.get('q'); if (q) setQuery(q)
+    const ordem = search.get('ordem'); if (ordem && sortOptions.some((option) => option.value === ordem)) setSort(ordem)
+    const precoMax = search.get('precoMax'); if (precoMax && Number.isFinite(Number(precoMax))) setMax(Number(precoMax))
+    const sinais = search.get('sinais'); if (sinais) setSignals(sinais.split(',').filter(Boolean))
+    const pagina = Number(search.get('pagina') ?? 1); if (pagina > 1) setPage(pagina)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Mantém o campo em sincronia quando a busca do cabeçalho muda a URL com esta página já aberta.
   useEffect(() => {
@@ -231,7 +251,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
         <p className="sr-only" role="status">{statusText}</p>
         {chips.length > 0 && <ul className={styles.chips} aria-label="Filtros ativos">{chips.map((chip) => <li key={chip.key}><button type="button" onClick={chip.remove} aria-label={`Remover filtro ${chip.label}`}>{chip.label}<X aria-hidden="true"/></button></li>)}</ul>}
         {visible.length
-          ? <ProductGrid items={visible}/>
+          ? <ProductGrid items={visible} eagerCount={4}/>
           : <div className={styles.empty}>
             <SearchX aria-hidden="true"/>
             <h2>Nenhum produto encontrado</h2>

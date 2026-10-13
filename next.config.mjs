@@ -14,7 +14,7 @@ const images={
   unoptimized:process.env.NEXT_IMAGE_UNOPTIMIZED==='1',
   deviceSizes:[640,828,1080,1200],
   minimumCacheTTL:60*60*24*7,
-  qualities:[75],
+  qualities:[60,75],
   remotePatterns:[
     {protocol:'https',hostname:'cf.shopee.com.br',search:''},
     {protocol:'https',hostname:'**.susercontent.com',search:''},

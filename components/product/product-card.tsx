@@ -8,7 +8,7 @@ import { useStoreData } from '@/components/store-data-provider'
 import { formatPrice, formatSoldCount } from '@/lib/format'
 import type { Product } from '@/lib/types'
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, eager = false }: { product: Product; eager?: boolean }) {
   const { favorites, compare, toggleFavorite, toggleCompare } = useVisitorState()
   const { getBestOffer, getProvider } = useStoreData()
   const offer = getBestOffer(product.id)
@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
   return <article className="product-card">
     <Link className="product-card-link" href={`/produto/${product.slug}`} aria-label={`Ver detalhes de ${product.name}`}/>
     <div className="product-image">
-      <Image src={product.image} alt={product.name} fill sizes="(max-width: 700px) 50vw, (max-width: 1000px) 33vw, 25vw"/>
+      <Image src={product.image} alt={product.name} fill sizes="(max-width: 700px) 50vw, (max-width: 1000px) 33vw, 25vw" loading={eager ? 'eager' : undefined} fetchPriority={eager ? 'high' : undefined}/>
       <button type="button" onClick={() => toggleFavorite(product.id)} className={isFavorite ? 'icon-btn active product-card-action' : 'icon-btn product-card-action'} aria-pressed={isFavorite} aria-label={isFavorite ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}><Heart fill={isFavorite ? 'currentColor' : 'none'}/></button>
       {discount > 0 && <span className="discount-badge">−{discount}%<span className="sr-only"> de desconto</span></span>}
     </div>
@@ -41,6 +41,7 @@ export function ProductCard({ product }: { product: Product }) {
   </article>
 }
 
-export function ProductGrid({ items }: { items: Product[] }) {
-  return <div className="product-grid">{items.map((product) => <ProductCard key={product.id} product={product}/>)}</div>
+/** `eagerCount`: quantos cards do início carregam a imagem já (os que aparecem sem rolar). */
+export function ProductGrid({ items, eagerCount = 0 }: { items: Product[]; eagerCount?: number }) {
+  return <div className="product-grid">{items.map((product, index) => <ProductCard key={product.id} product={product} eager={index < eagerCount}/>)}</div>
 }
