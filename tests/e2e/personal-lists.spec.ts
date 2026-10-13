@@ -20,6 +20,21 @@ test('favoritos permite salvar, retomar e remover uma escolha', async ({ page })
   await expect(page.getByRole('heading', { name: 'Sua seleção começa aqui.' })).toBeVisible()
 })
 
+test('favorito que ficou mais barato desde que foi salvo aparece em destaque', async ({ page }) => {
+  await page.goto('/')
+  const card = page.locator('.product-card').first()
+  await card.getByRole('button', { name: /aos favoritos/ }).click()
+  await expect(card.getByRole('button', { name: /dos favoritos/ })).toBeVisible()
+  // Simula que o produto foi salvo quando custava muito mais.
+  await page.evaluate(() => {
+    const [id] = JSON.parse(localStorage.getItem('garimpo:favorites') ?? '[]') as string[]
+    localStorage.setItem('garimpo:favorite-prices', JSON.stringify({ [id]: { price: 99999, at: '2026-01-01T00:00:00.000Z' } }))
+  })
+  await page.goto('/favoritos')
+  await expect(page.getByRole('heading', { name: /favorito ficou mais barato/ })).toBeVisible()
+  await expect(page.getByText('Comparado ao preço de quando você salvou')).toBeVisible()
+})
+
 test('comparador mantém a seleção e limita a adição a quatro produtos', async ({ page }) => {
   await page.goto('/comparar')
   const picker = page.getByRole('combobox', { name: 'Adicionar produto' })

@@ -120,3 +120,13 @@
 .tabs a { min-height: 44px; }
 
 .rating svg { color: #b7791f; }
+
+/* Favoritos que ficaram mais baratos */
+.drops { margin: 0 0 22px; padding: 16px 18px; border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: var(--radius-md); background: var(--surface); }
+.drops h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 18px; letter-spacing: -.02em; }
+.drops h2 svg { width: 20px; height: 20px; color: var(--success); }
+.drops ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.drops li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 15px; }
+.drops li a { font-weight: 650; }
+.drops li strong { color: var(--success); }
+.drops p { margin: 12px 0 0; font-size: 13px; color: var(--muted-foreground); }

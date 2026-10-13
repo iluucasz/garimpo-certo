@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { platformServices } from '@/lib/platform'
 import { useSession } from '@/lib/auth/client'
 import { recordConsent } from '@/lib/platform/consent-record'
+import { currentPrice } from '@/lib/catalog/signals'
+import { computeDrops, FAVORITE_PRICES_KEY, onlyFavorites, withBaselines, type Baselines, type PriceDrop } from '@/lib/favorites/price-drops'
 import { useStoreData } from '@/components/store-data-provider'
 
 export interface CookiePreferences {
@@ -31,6 +33,8 @@ interface VisitorState {
   /** true só depois de a pessoa salvar interesses; os valores padrão não contam como escolha. */
   preferencesSaved: boolean
   savedSearches: string[]
+  /** Favoritos que ficaram mais baratos desde que foram salvos (referência guardada neste navegador). */
+  priceDrops: PriceDrop[]
   toggleFavorite: (id: string) => void
   toggleCompare: (id: string) => void
   addRecent: (id: string) => void
@@ -57,7 +61,7 @@ function persist(key: string, value: unknown) { localStorage.setItem(key, JSON.s
 
 export function VisitorStateProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
-  const { products } = useStoreData()
+  const { products, offers } = useStoreData()
   const syncedUserId = useRef<string | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [favorites, setFavorites] = useState<string[]>([])
@@ -68,6 +72,17 @@ export function VisitorStateProvider({ children }: { children: React.ReactNode }
   const [preferences, setPreferences] = useState(defaultPreferences)
   const [preferencesSaved, setPreferencesSaved] = useState(false)
   const [savedSearches, setSavedSearches] = useState<string[]>([])
+  const [priceDrops, setPriceDrops] = useState<PriceDrop[]>([])
+
+  // Guarda o preço de quando cada favorito foi salvo e compara com o de hoje. Sem e-mail e sem conta.
+  useEffect(() => {
+    if (!hydrated) return
+    const priceOf = (id: string) => { const product = products.find((item) => item.id === id); return product ? currentPrice(product, offers) : 0 }
+    const stored = readObject<Baselines>(FAVORITE_PRICES_KEY, {})
+    const next = onlyFavorites(withBaselines(stored, favorites, priceOf), favorites)
+    if (JSON.stringify(next) !== JSON.stringify(stored)) persist(FAVORITE_PRICES_KEY, next)
+    setPriceDrops(computeDrops(next, favorites, priceOf))
+  }, [hydrated, favorites, products, offers])
 
   useEffect(() => {
     const validIds = new Set(products.map((product) => product.id))
@@ -180,10 +195,10 @@ export function VisitorStateProvider({ children }: { children: React.ReactNode }
   }, [])
 
   const value = useMemo<VisitorState>(() => ({
-    hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches,
+    hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches, priceDrops,
     toggleFavorite, toggleCompare, addRecent, clearRecent, clearHistory: clearRecent, setConsent, saveCookiePreferences,
     savePreferences, saveSearch, removeSavedSearch,
-  }), [hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches, toggleFavorite, toggleCompare, addRecent, clearRecent, setConsent, saveCookiePreferences, savePreferences, saveSearch, removeSavedSearch])
+  }), [hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches, priceDrops, toggleFavorite, toggleCompare, addRecent, clearRecent, setConsent, saveCookiePreferences, savePreferences, saveSearch, removeSavedSearch])
 
   return <VisitorStateContext.Provider value={value}>{children}</VisitorStateContext.Provider>
 }
