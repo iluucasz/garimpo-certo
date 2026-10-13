@@ -35,3 +35,18 @@ test('comparador mantém a seleção e limita a adição a quatro produtos', asy
   await expect(picker).toBeEnabled()
   await expect(page.getByRole('button', { name: /do comparador/ })).toHaveCount(3)
 })
+
+test('histórico guarda o produto aberto e permite limpar', async ({ page }) => {
+  await page.goto('/historico')
+  await expect(page.getByRole('heading', { name: 'Nada visto por enquanto.' })).toBeVisible()
+  await page.goto('/')
+  const name = await page.locator('.product-card h3').first().innerText()
+  await page.locator('.product-card-link').first().click()
+  await expect(page).toHaveURL(/\/produto\//)
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('garimpo:recent') ?? '[]').length > 0)
+  await page.goto('/historico')
+  await expect(page.getByRole('button', { name: 'Limpar histórico' })).toBeVisible()
+  await expect(page.locator('.product-card').getByRole('heading', { name, exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Limpar histórico' }).click()
+  await expect(page.getByRole('heading', { name: 'Nada visto por enquanto.' })).toBeVisible()
+})

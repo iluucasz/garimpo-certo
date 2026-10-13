@@ -9,12 +9,14 @@ import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
 import { signOut, updateUser, useSession } from '@/lib/auth/client'
+import { currentPrice } from '@/lib/catalog/signals'
 import { formatPrice } from '@/lib/mock-data'
 import styles from './account.module.css'
 
 export default function AccountPage() {
   const state = useMock()
-  const { categories } = useStoreData()
+  const { categories, products, offers } = useStoreData()
+  const priceCeiling = Math.max(50, Math.ceil(Math.max(0, ...products.map((product) => currentPrice(product, offers))) / 10) * 10)
   const router = useRouter()
   const { data: session, isPending } = useSession()
   const [name, setName] = useState('')
@@ -98,7 +100,7 @@ export default function AccountPage() {
           <nav className={styles.shortcuts} aria-label="Suas descobertas">{shortcuts.map(({ href, label, count, caption, icon: Icon }) => <Link href={href} className={styles.shortcut} key={href}><div><span className={styles.shortcutLabel}><Icon aria-hidden="true"/>{label}</span><strong>{count.toLocaleString('pt-BR')}</strong><small>{caption}</small></div><ArrowUpRight aria-hidden="true"/></Link>)}</nav>
 
           <section className={styles.panel} id="perfil" aria-labelledby="profile-title">
-            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>SEUS DADOS</span><h2 id="profile-title">Um pouco sobre você</h2><p>Como vamos chamar você por aqui.</p></div><UserRound aria-hidden="true"/></div>
+            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Seus dados</span><h2 id="profile-title">Um pouco sobre você</h2><p>Como vamos chamar você por aqui.</p></div><UserRound aria-hidden="true"/></div>
             <form className={styles.profileForm} onSubmit={saveProfile} aria-busy={saving}>
               <div className={styles.fields}><label className={styles.field}>Seu nome<input name="name" autoComplete="name" value={name} onChange={(event) => { setName(event.target.value); setFeedback(null) }} required disabled={saving}/></label><label className={styles.field}>E-mail<input name="email" type="email" autoComplete="email" value={session.user.email} readOnly aria-describedby="email-help"/><small id="email-help">O e-mail de acesso não pode ser alterado por aqui.</small></label></div>
               <div className={styles.formFooter}><span>As alterações serão salvas na sua conta.</span><button className={styles.saveButton} type="submit" disabled={saving || name.trim() === session.user.name}>{saving ? 'Salvando…' : 'Salvar alterações'}<Check aria-hidden="true"/></button></div>
@@ -107,12 +109,12 @@ export default function AccountPage() {
           </section>
 
           <section className={styles.panel} id="preferencias" aria-labelledby="preferences-title">
-            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>DO SEU JEITO</span><h2 id="preferences-title">O que chama sua atenção?</h2><p>Ajuste seus interesses e a faixa de preço que você prefere.</p></div><SlidersHorizontal aria-hidden="true"/></div>
+            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Do seu jeito</span><h2 id="preferences-title">O que chama sua atenção?</h2><p>Ajuste seus interesses e a faixa de preço que você prefere.</p></div><SlidersHorizontal aria-hidden="true"/></div>
             <div className={styles.preferences}>
               <fieldset className={styles.categories}><legend>Seus interesses</legend><div className={styles.categoryOptions}>{categories.map((category) => { const selected = state.preferences.categories.includes(category.name); return <button className={styles.category} key={category.id} type="button" aria-pressed={selected} onClick={() => toggleCategory(category.name)}><span aria-hidden="true">{selected && <Check/>}</span>{category.name}</button> })}</div></fieldset>
-              <div className={styles.pricePreference}><div className={styles.priceHeading}><label htmlFor="preferred-price">Quanto você pretende gastar?</label><output htmlFor="preferred-price">Até {formatPrice(state.preferences.maxPrice)}</output></div><input id="preferred-price" type="range" min="250" max="4000" step="50" value={state.preferences.maxPrice} aria-valuetext={`Até ${formatPrice(state.preferences.maxPrice)}`} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/><div className={styles.rangeLabels}><span>R$ 250</span><span>R$ 4.000</span></div></div>
+              <div className={styles.pricePreference}><div className={styles.priceHeading}><label htmlFor="preferred-price">Quanto você pretende gastar?</label><output htmlFor="preferred-price">Até {formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}</output></div><input id="preferred-price" type="range" min="10" max={priceCeiling} step="10" value={Math.min(state.preferences.maxPrice, priceCeiling)} aria-valuetext={`Até ${formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}`} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/><div className={styles.rangeLabels}><span>R$ 10</span><span>{formatPrice(priceCeiling)}</span></div></div>
             </div>
-            <div className={styles.communication}><h3>Alertas e novidades</h3><p>Preferências demonstrativas. Nenhum alerta ou e-mail será enviado.</p><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong><small>Interesse em alertas sobre produtos mais baratos.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong><small>Interesse em novidades e seleções editoriais.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
+            <div className={styles.communication}><h3>Alertas e novidades</h3><p>Ainda não enviamos alertas nem e-mails. Sua escolha fica registrada para quando isso existir.</p><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong><small>Interesse em alertas sobre produtos mais baratos.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong><small>Interesse em novidades e seleções editoriais.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
             <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
           </section>
 
