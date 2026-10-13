@@ -5,12 +5,17 @@
  * importação do site (`runCatalogImport`: busca na Shopee, grava no banco, arquiva o que saiu, registra a
  * execução em sync_job_runs) e depois pede ao site para invalidar o cache (`POST /api/v1/cron/revalidate`).
  *
+ * Também traz as comissões reais da Shopee (`conversionReport`) para o banco: logo depois de cada importação e
+ * a cada `CONVERSIONS_EVERY_MIN` minutos (padrão 180; 0 desliga). É o que alimenta os números de comissão do painel.
+ *
  * Variáveis: DATABASE_URL, SHOPEE_AFFILIATE_APP_ID, SHOPEE_AFFILIATE_APP_SECRET (obrigatórias);
  * SITE_URL e CRON_SECRET (para o aviso ao site; sem elas o cache do site expira sozinho em 5 min);
- * IMPORT_AT (HH:MM), TZ, RUN_ON_START=1 (roda ao subir).
+ * IMPORT_AT (HH:MM), TZ, RUN_ON_START=1 (roda ao subir), CONVERSIONS_EVERY_MIN.
  *
- * Uso: `node importer.mjs` (agenda) · `node importer.mjs --once` (roda e sai) · `--check` (valida a configuração).
+ * Uso: `node importer.mjs` (agenda) · `node importer.mjs --once` (roda e sai) · `--conversions` (só as comissões, uma vez)
+ * · `--check` (valida a configuração).
  */
+import { runConversionSync } from '@/lib/providers/shopee/conversions-run'
 import { runCatalogImport } from '@/lib/providers/shopee/run'
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ at: new Date().toISOString(), event, ...data }))
@@ -48,12 +53,33 @@ async function notifySite() {
   }
 }
 
+/** Comissões reais da Shopee. Falhar aqui nunca derruba a importação do catálogo. */
+async function syncConversions(trigger: string) {
+  const startedAt = Date.now()
+  try {
+    const result = await runConversionSync()
+    log('conversions_synced', { trigger, ...result, wallMs: Date.now() - startedAt })
+    return result.created + result.updated > 0
+  } catch (error) {
+    log('conversions_failed', { trigger, error: error instanceof Error ? error.message : String(error), wallMs: Date.now() - startedAt })
+    return false
+  }
+}
+
+async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
+  while (!isStopping()) {
+    await sleep(everyMinutes * 60_000)
+    if (await syncConversions('interval')) await notifySite()
+  }
+}
+
 async function runOnce() {
   const startedAt = Date.now()
   log('import_started')
   try {
     const result = await runCatalogImport()
     log('import_finished', { ...result, wallMs: Date.now() - startedAt })
+    await syncConversions('after_import')
     await notifySite()
     return true
   } catch (error) {
@@ -80,15 +106,18 @@ async function main() {
   if (missing.length) { log('invalid_config', { missing }); process.exit(2) }
 
   if (args.has('--check')) {
-    log('config_ok', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', nextRunInMinutes: Math.round(msUntilNext(at) / 60_000), notifySite: Boolean(process.env.SITE_URL && process.env.CRON_SECRET) })
+    log('config_ok', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', nextRunInMinutes: Math.round(msUntilNext(at) / 60_000), notifySite: Boolean(process.env.SITE_URL && process.env.CRON_SECRET), conversionsEveryMin: Number(process.env.CONVERSIONS_EVERY_MIN ?? 180) })
     process.exit(0)
   }
+  if (args.has('--conversions')) { await syncConversions('manual'); process.exit(0) }
   if (args.has('--once')) process.exit((await runOnce()) ? 0 : 1)
 
   let stopping = false
   for (const signal of ['SIGTERM', 'SIGINT'] as const) process.on(signal, () => { stopping = true; log('stopping', { signal }); process.exit(0) })
 
-  log('worker_started', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema' })
+  const everyMinutes = Number(process.env.CONVERSIONS_EVERY_MIN ?? 180)
+  log('worker_started', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', conversionsEveryMin: everyMinutes > 0 ? everyMinutes : 'desligado' })
+  if (Number.isFinite(everyMinutes) && everyMinutes > 0) void conversionLoop(everyMinutes, () => stopping)
   if (process.env.RUN_ON_START === '1') await runWithRetries()
   while (!stopping) {
     const wait = msUntilNext(at)

@@ -5,6 +5,7 @@
  */
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
+import { getCouponClickStats, type CouponClickStats } from '@/lib/db/repositories/coupon-clicks'
 import {
   analyticsEvents, auditLogs, brands, campaigns, categories, contentPages, coupons, curatedCollections,
   featureFlags, offers, privacyRequests, productCategories, productTags, products, providers, roles, segments,
@@ -491,12 +492,14 @@ function couponSituation(row: typeof coupons.$inferSelect, now = Date.now()) {
   return 'No ar'
 }
 
-const couponRow = (row: typeof coupons.$inferSelect): AdminRow => ({
+const couponRow = (row: typeof coupons.$inferSelect, stats?: CouponClickStats): AdminRow => ({
   ...row,
   minSpend: row.minSpend === null ? null : Number(row.minSpend),
   source: row.source === 'manual' ? 'Cadastrado à mão' : 'Campanha da Shopee',
   rawSource: row.source,
   situation: couponSituation(row),
+  clicks7d: stats?.clicks7d ?? 0,
+  clicks30d: stats?.clicks30d ?? 0,
 })
 
 const couponsHandler: Handler = {
@@ -507,13 +510,16 @@ const couponsHandler: Handler = {
       like ? or(ilike(coupons.title, like), ilike(coupons.code, like)) : undefined,
       params.filter ? eq(coupons.source, params.filter) : undefined,
     )
-    const rows = await db.select().from(coupons).where(where).orderBy(desc(coupons.isActive), sql`${coupons.endsAt} asc nulls last`, desc(coupons.createdAt))
-    return { rows: rows.map(couponRow), total: rows.length }
+    const [rows, stats] = await Promise.all([
+      db.select().from(coupons).where(where).orderBy(desc(coupons.isActive), sql`${coupons.endsAt} asc nulls last`, desc(coupons.createdAt)),
+      getCouponClickStats(),
+    ])
+    return { rows: rows.map((row) => couponRow(row, stats.get(row.id))), total: rows.length }
   },
   async get(id) {
     if (!isUuid(id)) return null
     const [row] = await db.select().from(coupons).where(eq(coupons.id, id))
-    return row ? couponRow(row) : null
+    return row ? couponRow(row, (await getCouponClickStats()).get(row.id)) : null
   },
   async create(values) {
     const period = validatePeriod(values)
@@ -819,7 +825,7 @@ const importsHandler: Handler = {
   async list(params) {
     const [rows, count] = await Promise.all([
       db.select({
-        id: syncJobRuns.id, startedAt: syncJobRuns.startedAt, finishedAt: syncJobRuns.finishedAt, status: syncJobRuns.status,
+        id: syncJobRuns.id, jobType: syncJobs.jobType, startedAt: syncJobRuns.startedAt, finishedAt: syncJobRuns.finishedAt, status: syncJobRuns.status,
         processed: syncJobRuns.processedCount, created: syncJobRuns.createdCount, updated: syncJobRuns.updatedCount, rejected: syncJobRuns.rejectedCount,
         error: sql<string | null>`(select e.error_message from sync_errors e where e.sync_job_run_id = ${syncJobRuns.id} order by e.created_at desc limit 1)`,
       }).from(syncJobRuns).innerJoin(syncJobs, eq(syncJobs.id, syncJobRuns.syncJobId)).orderBy(desc(syncJobRuns.startedAt)).limit(page(params).limit).offset(page(params).offset),
@@ -828,7 +834,8 @@ const importsHandler: Handler = {
     return {
       total: count,
       rows: rows.map((row) => ({
-        id: row.id, startedAt: row.startedAt, duration: duration(row.startedAt, row.finishedAt), status: runStatus[row.status] ?? row.status,
+        id: row.id, startedAt: row.startedAt, kind: row.jobType === 'conversion_sync' ? 'Comissões' : 'Catálogo',
+        duration: duration(row.startedAt, row.finishedAt), status: runStatus[row.status] ?? row.status,
         processed: row.processed, created: row.created, updated: row.updated, rejected: row.rejected, error: row.error ?? '—',
       })),
     }

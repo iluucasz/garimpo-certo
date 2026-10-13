@@ -251,6 +251,8 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
       { key: 'isActive', label: 'Exibir no site', type: 'boolean' },
       { key: 'source', label: 'Origem', type: 'text', readOnly: true, listOnly: true },
       { key: 'situation', label: 'Situação', type: 'text', readOnly: true, listOnly: true },
+      { key: 'clicks7d', label: 'Cliques (7 dias)', type: 'number', readOnly: true, listOnly: true },
+      { key: 'clicks30d', label: 'Cliques (30 dias)', type: 'number', readOnly: true, listOnly: true },
     ],
   },
   segmentos: {
@@ -332,14 +334,15 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
   },
   importacoes: {
     slug: 'importacoes', title: 'Execuções de importação', singular: 'execução',
-    description: 'Histórico de cada importação do catálogo, agendada ou manual.',
+    description: 'Histórico de cada importação do catálogo e de cada sincronização de comissões, agendada ou manual.',
     read: 'catalog:read', write: 'jobs:run', create: false, remove: false,
     createLabel: '', searchPlaceholder: '', emptyText: 'Nenhuma importação registrada ainda.',
     fields: [
       { key: 'startedAt', label: 'Início', type: 'datetime', readOnly: true },
+      { key: 'kind', label: 'Tipo', type: 'text', readOnly: true },
       { key: 'duration', label: 'Duração', type: 'text', readOnly: true },
       { key: 'status', label: 'Resultado', type: 'text', readOnly: true },
-      { key: 'processed', label: 'Selecionados', type: 'text', readOnly: true },
+      { key: 'processed', label: 'Lidos / selecionados', type: 'text', readOnly: true },
       { key: 'created', label: 'Novos', type: 'text', readOnly: true },
       { key: 'updated', label: 'Atualizados', type: 'text', readOnly: true },
       { key: 'rejected', label: 'Arquivados', type: 'text', readOnly: true },

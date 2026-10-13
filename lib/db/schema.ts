@@ -262,6 +262,8 @@ export const offers = pgTable("offers", {
 	externalId: text("external_id").notNull(),
 	externalUrl: text("external_url").notNull(),
 	affiliateUrl: text("affiliate_url"),
+	/** Etiquetas (sub ids) embutidas em `affiliate_url`, ex.: "site-tecnologia". Nulo quando o link é o `offerLink` bruto da API. */
+	affiliateSubIds: text("affiliate_sub_ids"),
 	currency: text().default('BRL').notNull(),
 	price: numeric({ precision: 12, scale:  2 }).notNull(),
 	priceMax: numeric("price_max", { precision: 12, scale:  2 }),
@@ -453,6 +455,11 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
 	clickedAt: timestamp("clicked_at", { withTimezone: true, mode: 'string' }),
 	convertedAt: timestamp("converted_at", { withTimezone: true, mode: 'string' }),
 	validatedAt: timestamp("validated_at", { withTimezone: true, mode: 'string' }),
+	/** Origem do clique, vinda do relatório da Shopee (`utmContent`), ex.: "site-tecnologia" ou "telegram-ofertasdodia". */
+	subIds: text("sub_ids"),
+	/** `new` ou `existing`: a Shopee paga comissões diferentes para comprador novo e recorrente. */
+	buyerType: text("buyer_type"),
+	syncedAt: timestamp("synced_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
 	foreignKey({
 			columns: [table.clickId],
@@ -464,7 +471,36 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
 			foreignColumns: [providers.id],
 			name: "affiliate_conversions_provider_id_providers_id_fk"
 		}).onDelete("cascade"),
+	index("affiliate_conversions_converted_idx").using("btree", table.convertedAt.desc().nullsLast().op("timestamptz_ops")),
 	unique("affiliate_conversions_provider_uq").on(table.providerConversionId, table.providerId),
+]);
+
+/** Itens de cada conversão importada da Shopee: ligam a comissão ao produto (via `offers.external_id`). */
+export const affiliateConversionItems = pgTable("affiliate_conversion_items", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	conversionId: uuid("conversion_id").notNull(),
+	offerId: uuid("offer_id"),
+	externalItemId: text("external_item_id").notNull(),
+	itemName: text("item_name").notNull(),
+	quantity: integer().default(1).notNull(),
+	amount: numeric({ precision: 12, scale:  2 }).default('0').notNull(),
+	refundAmount: numeric("refund_amount", { precision: 12, scale:  2 }).default('0').notNull(),
+	commission: numeric({ precision: 12, scale:  2 }).default('0').notNull(),
+	itemStatus: text("item_status"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("affiliate_conversion_items_conversion_idx").using("btree", table.conversionId.asc().nullsLast().op("uuid_ops")),
+	index("affiliate_conversion_items_offer_idx").using("btree", table.offerId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.conversionId],
+			foreignColumns: [affiliateConversions.id],
+			name: "affiliate_conversion_items_conversion_id_affiliate_conversions_"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.offerId],
+			foreignColumns: [offers.id],
+			name: "affiliate_conversion_items_offer_id_offers_id_fk"
+		}).onDelete("set null"),
 ]);
 
 export const affiliatePrograms = pgTable("affiliate_programs", {

@@ -20,7 +20,8 @@
     "db:seed-roles": "tsx --env-file=.env lib/db/seed-roles.ts",
     "db:grant-role": "tsx --env-file=.env lib/db/grant-role.ts",
     "db:seed-catalog": "tsx --env-file=.env lib/db/seed-catalog-enrichment.ts",
-    "db:import-shopee": "tsx --env-file=.env lib/db/import-shopee.ts"
+    "db:import-shopee": "tsx --env-file=.env lib/db/import-shopee.ts",
+    "db:sync-conversions": "tsx --env-file=.env lib/db/sync-conversions.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

@@ -71,7 +71,9 @@ export async function getAttribution(filter: AttributionFilter = {}) {
     quality: {
       highRisk: [] as (typeof filteredClicks),
       mediumRisk: [] as (typeof filteredClicks),
-      unattributed: filteredConversions.filter((c) => !c.clickId || !clickIds.has(c.clickId)).length,
+      // Sem clique nosso e sem etiqueta de origem: não dá para saber de onde veio. Conversão importada da Shopee
+      // não traz o clique, mas traz a etiqueta (`sub_ids`), e isso basta para atribuí-la.
+      unattributed: filteredConversions.filter((c) => !c.subIds && (!c.clickId || !clickIds.has(c.clickId))).length,
     },
   }
 }

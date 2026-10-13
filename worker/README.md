@@ -19,6 +19,7 @@ atualizar o cache (`POST /api/v1/cron/revalidate`). Substitui o cron da Vercel.
 | `CRON_SECRET` | recomendada | O **mesmo** valor definido na Vercel; autoriza o aviso ao site |
 | `IMPORT_AT` | não | `HH:MM` no fuso do contêiner (padrão `06:00`) |
 | `RUN_ON_START` | não | `1` roda uma importação ao subir o contêiner |
+| `CONVERSIONS_EVERY_MIN` | não | Intervalo, em minutos, da sincronização de comissões (`conversionReport`); padrão `180`, `0` desliga |
 
 Sem `SITE_URL`/`CRON_SECRET` o worker funciona igual; só que o site demora até 5 min para enxergar o catálogo novo.
 
@@ -40,11 +41,12 @@ Conferir sem importar nada: `docker run --rm --env-file ... garimpo-importer:<ta
 (valida variáveis e mostra em quantos minutos é a próxima execução).
 
 Rodar uma importação agora e sair: `docker exec garimpo-importer node importer.mjs --once`.
+Só as comissões, uma vez: `docker exec garimpo-importer node importer.mjs --conversions`.
 
 ## Logs e acompanhamento
 
 `docker logs --tail 50 garimpo-importer` (uma linha JSON por evento: `worker_started`, `waiting`,
-`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`).
+`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`, `conversions_synced`, `conversions_failed`).
 Se uma execução falha, o worker tenta de novo em 30 min e em 1 h; depois espera o dia seguinte.
 
 ## Reverter

@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import { CheckCircle2, Eraser, PlugZap, RefreshCw, XCircle } from 'lucide-react'
 import { defaultRolePermissions, type AdminRole, type Permission } from '@/lib/auth/rbac'
 import { AdminApiError, adminFetch, dateTime, swrFetcher } from '@/lib/admin/client'
+import type { CouponClickReport } from '@/lib/db/repositories/coupon-clicks'
 import { CatalogImportButton } from './catalog-import-button'
 import { ResourceManager } from './resource-manager'
 import { useAdminAccess } from './admin-access'
@@ -55,9 +56,43 @@ export function CouponsView() {
       <strong>Como funciona.</strong> A API de afiliados da Shopee não informa cupons nem códigos. Aqui você cadastra os que encontra (com validade e link de afiliado) e eles aparecem em <a href="/cupons" target="_blank" rel="noreferrer noopener">/cupons</a> para quem visita o site.
       O botão “Buscar campanhas da Shopee” traz as páginas oficiais de categoria que a Shopee disponibiliza para afiliados; elas entram <em>ocultas</em> para você escolher quais exibir e renomear (os nomes vêm em inglês).
     </div></div>
+    <CouponClicks refresh={version}/>
     <ResourceManager key={version} slug="cupons" toolbar={canWrite && <button className="btn secondary" onClick={sync} disabled={busy} aria-busy={busy}><RefreshCw className={busy ? 'spin' : undefined} aria-hidden="true"/> {busy ? 'Buscando…' : 'Buscar campanhas da Shopee'}</button>}
       intro={message ? <p className={`${styles.note} ${failed ? styles.warn : ''}`} role={failed ? 'alert' : 'status'}>{message}</p> : null}/>
   </div>
+}
+
+/** Resumo de cliques por cupom. Só conta visitantes que permitiram a medição, então é um piso, não o total real. */
+function CouponClicks({ refresh }: { refresh: number }) {
+  const { data, error } = useSWR<CouponClickReport>(['/api/v1/admin/coupons/report', refresh], ([url]: [string, number]) => swrFetcher<CouponClickReport>(url), { revalidateOnFocus: false })
+  if (error) return <p className={styles.error} role="alert">Não foi possível carregar os cliques dos cupons.</p>
+  if (!data) return null
+  const peak = Math.max(1, ...data.byDay.map((row) => row.count))
+  return <section className="panel" aria-label="Cliques nos cupons">
+    <h2>Cliques nos cupons</h2>
+    <div className="stat-grid" style={{ marginBottom: 16 }}>
+      <div className="stat-card"><span>Hoje</span><strong>{number.format(data.totals.today)}</strong><small>cliques medidos</small></div>
+      <div className="stat-card"><span>7 dias</span><strong>{number.format(data.totals.last7d)}</strong><small>cliques medidos</small></div>
+      <div className="stat-card"><span>30 dias</span><strong>{number.format(data.totals.last30d)}</strong><small>{number.format(data.totals.sessions30d)} visitas diferentes</small></div>
+      <div className="stat-card"><span>Sem clique em 30 dias</span><strong>{number.format(data.neverClicked)}</strong><small>cupons no ar que ninguém abriu</small></div>
+    </div>
+    {data.totals.last30d === 0
+      ? <p className={styles.help}>Nenhum clique medido ainda. O clique só é gravado para quem aceitou a medição nos cookies.</p>
+      : <>
+        <div className={styles.bars} role="img" aria-label={`Cliques por dia: ${data.byDay.map((row) => `${row.day}: ${row.count}`).join('; ')}`}>
+          {data.byDay.map((row) => <div className={styles.bar} key={row.day} style={{ height: `${Math.max(4, (row.count / peak) * 100)}%` }} title={`${row.day}: ${row.count}`}/>)}
+        </div>
+        <div className={styles.barLabels} aria-hidden="true">{data.byDay.map((row) => <span key={row.day}>{row.day.slice(8)}</span>)}</div>
+        <div className="table-scroll" style={{ marginTop: 16 }}><table className="data-table" aria-label="Cupons mais clicados">
+          <thead><tr><th scope="col">Cupom</th><th scope="col">7 dias</th><th scope="col">30 dias</th><th scope="col">Visitas (30 dias)</th><th scope="col">Último clique</th></tr></thead>
+          <tbody>{data.top.map((row) => <tr key={row.couponId}>
+            <td>{row.title}{row.code ? <> <code>{row.code}</code></> : null}{row.isActive ? '' : ' (oculto)'}</td>
+            <td>{number.format(row.clicks7d)}</td><td>{number.format(row.clicks30d)}</td><td>{number.format(row.sessions30d)}</td><td>{dateTime(row.lastClickAt)}</td>
+          </tr>)}</tbody>
+        </table></div>
+      </>}
+    <p className={styles.help} style={{ marginTop: 12 }}>Os cliques ficam guardados pelo mesmo prazo dos demais eventos (Sistema → Medição). A Shopee não informa quanto cada cupom vendeu; o clique mede só o interesse.</p>
+  </section>
 }
 
 // ---------------------------------------------------------------- eventos

@@ -2,6 +2,8 @@ import { and, eq, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../client'
 import { brands, categories, offers, priceHistory, productCategories, productImages, productTags, products, providers, tags } from '../schema'
 import { slugify, type CatalogItem } from '@/lib/providers/shopee/mapping'
+import { generateShortLink } from '@/lib/providers/shopee/client'
+import { siteSubIds, subIdsKey } from '@/lib/providers/shopee/links'
 
 export type ImportSummary = { created: number; updated: number; priceChanges: number }
 
@@ -39,13 +41,37 @@ export async function getOrCreateProvider(code: string, displayName: string) {
   return created.id
 }
 
+/**
+ * Link de afiliado do botão de compra, com a etiqueta de origem (`site-<categoria>`) para a Shopee atribuir a
+ * comissão ao site e à categoria. O link só é gerado uma vez por oferta: enquanto a etiqueta não mudar, reaproveita.
+ * Se a API falhar, cai no `offerLink` da própria API (vale comissão, só não tem etiqueta) e tenta de novo na próxima importação.
+ */
+export async function resolveAffiliateLink(
+  item: Pick<CatalogItem, 'externalUrl' | 'affiliateUrl' | 'categorySlug'>,
+  existing?: { affiliateUrl: string | null; affiliateSubIds: string | null },
+) {
+  if (process.env.SHOPEE_TAGGED_LINKS === '0') return { url: item.affiliateUrl, subIds: null as string | null }
+  const subIds = siteSubIds(item.categorySlug)
+  const key = subIdsKey(subIds)
+  if (existing?.affiliateUrl && existing.affiliateSubIds === key) return { url: existing.affiliateUrl, subIds: key as string | null }
+  try {
+    return { url: await generateShortLink(item.externalUrl, subIds), subIds: key as string | null }
+  } catch (error) {
+    console.error('[import] não foi possível gerar o link com etiqueta', item.externalUrl, error instanceof Error ? error.message : error)
+    if (existing?.affiliateUrl && existing.affiliateSubIds) return { url: existing.affiliateUrl, subIds: existing.affiliateSubIds as string | null }
+    return { url: item.affiliateUrl, subIds: null as string | null }
+  }
+}
+
 /** Grava (ou atualiza) um produto real e a oferta do parceiro, mantendo o histórico de preço. */
 export async function importCatalogItem(item: CatalogItem, providerId: string, categoryName: string) {
   const brandId = await getOrCreateBrand(item.brandName)
   const categoryId = await getOrCreateCategory(item.categorySlug, categoryName)
 
-  const [existingOffer] = await db.select({ id: offers.id, productId: offers.productId, price: offers.price, soldCount: offers.soldCount })
-    .from(offers).where(and(eq(offers.providerId, providerId), eq(offers.externalId, item.externalId)))
+  const [existingOffer] = await db.select({
+    id: offers.id, productId: offers.productId, price: offers.price, soldCount: offers.soldCount,
+    affiliateUrl: offers.affiliateUrl, affiliateSubIds: offers.affiliateSubIds,
+  }).from(offers).where(and(eq(offers.providerId, providerId), eq(offers.externalId, item.externalId)))
   const [existingBySlug] = existingOffer ? [] : await db.select({ id: products.id }).from(products).where(eq(products.slug, item.slug))
   const knownProductId = existingOffer?.productId ?? existingBySlug?.id
   const [lockRow] = knownProductId ? await db.select({ locked: products.editorialLocked }).from(products).where(eq(products.id, knownProductId)) : []
@@ -84,8 +110,10 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
     }
   }
 
+  const link = await resolveAffiliateLink(item, existingOffer)
   const offerValues = {
-    productId, providerId, externalId: item.externalId, externalUrl: item.externalUrl, affiliateUrl: item.affiliateUrl,
+    productId, providerId, externalId: item.externalId, externalUrl: item.externalUrl,
+    affiliateUrl: link.url, affiliateSubIds: link.subIds,
     price: item.price.toFixed(2), priceMax: item.priceMax?.toFixed(2) ?? null, originalPrice: item.originalPrice?.toFixed(2) ?? null,
     discountPercentage: item.discountPercentage.toFixed(2), commissionRate: item.commissionRate.toFixed(4),
     estimatedCommission: item.estimatedCommission.toFixed(2), availability: 'in_stock' as const,
