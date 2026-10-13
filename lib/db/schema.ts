@@ -982,3 +982,24 @@ export const adminInvites = pgTable("admin_invites", {
 		}).onDelete("set null"),
 	unique("admin_invites_token_hash_unique").on(table.tokenHash),
 ]);
+
+/**
+ * Páginas montadas por seções e blocos no editor visual do painel. Uma linha por página (`key`, hoje só `home`).
+ * `draft` é o que a equipe edita; `published` é o que o site mostra; `history` guarda as últimas publicações.
+ * Sem linha (ou sem `published`), o site usa o documento padrão derivado das configurações da home.
+ */
+export const siteDocuments = pgTable("site_documents", {
+	key: text().primaryKey().notNull(),
+	draft: jsonb(),
+	published: jsonb(),
+	history: jsonb().default([]).notNull(),
+	draftUpdatedAt: timestamp("draft_updated_at", { withTimezone: true, mode: 'string' }),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	updatedBy: uuid("updated_by"),
+}, (table) => [
+	foreignKey({
+			columns: [table.updatedBy],
+			foreignColumns: [users.id],
+			name: "site_documents_updated_by_users_id_fk"
+		}).onDelete("set null"),
+]);

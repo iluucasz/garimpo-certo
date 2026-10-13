@@ -1,0 +1,54 @@
+/* Blocos livres do editor visual da home. Usa só os tokens da vitrine (--primary, --surface, --foreground...). */
+.banner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 40px; margin-block: 32px; padding: 40px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.banner:not(:has(.bannerImage)) { grid-template-columns: minmax(0, 1fr); }
+.copy h2 { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: clamp(26px, 3vw, 38px); letter-spacing: -.04em; line-height: 1.12; margin: 0 0 12px; text-wrap: balance; }
+.copy p { margin: 0 0 20px; font-size: 17px; line-height: 1.65; color: var(--muted-foreground); max-width: 56ch; }
+.eyebrow { display: inline-block; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--primary-ink); }
+.bannerImage { width: 100%; max-height: 320px; object-fit: cover; border-radius: var(--radius-md); }
+
+.button { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: var(--radius-md); background: var(--primary); color: #fff; font-size: 16px; font-weight: 700; transition: background-color .18s var(--ease); }
+.button:hover { background: var(--primary-hover); }
+.button svg { width: 18px; height: 18px; }
+
+.soft { background: var(--surface-sunken); }
+.dark { background: var(--foreground); border-color: var(--foreground); color: #fff; }
+.dark .copy p, .dark.cta span { color: rgba(255, 255, 255, .78); }
+.dark .eyebrow { color: #fed7aa; }
+
+.center { text-align: center; }
+.center.banner { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.center .copy p { margin-inline: auto; }
+
+.text { margin-block: 32px; max-width: 760px; }
+.text h2 { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -.035em; line-height: 1.2; margin: 0 0 14px; }
+.prose { font-size: 17px; line-height: 1.75; }
+.center.text { margin-inline: auto; }
+
+.cards { margin-block: 40px; }
+.cards header { margin-bottom: 20px; }
+.cards h2 { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -.035em; line-height: 1.2; margin: 0 0 8px; }
+.cards header p { margin: 0; color: var(--muted-foreground); font-size: 16px; line-height: 1.6; max-width: 60ch; }
+.cards ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+a.card:hover { border-color: var(--primary); }
+.card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-sm, 10px); background: var(--surface-sunken); }
+.cardCopy { display: flex; flex-direction: column; gap: 4px; }
+.cardCopy strong { font-size: 17px; line-height: 1.3; }
+.cardCopy span { font-size: 15px; line-height: 1.55; color: var(--muted-foreground); }
+
+.image { margin-block: 32px; }
+.image img { width: 100%; height: auto; border-radius: var(--radius-lg); }
+
+.cta { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-block: 32px; padding: 26px 32px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-sunken); }
+.cta > div { display: flex; flex-direction: column; gap: 4px; }
+.cta strong { font-family: var(--font-display), sans-serif; font-size: clamp(20px, 2.2vw, 26px); letter-spacing: -.03em; }
+.cta span { font-size: 16px; color: var(--muted-foreground); }
+
+@media (max-width: 720px) {
+  .banner { grid-template-columns: minmax(0, 1fr); padding: 24px; gap: 20px; }
+  .cta { flex-direction: column; align-items: flex-start; padding: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
+}

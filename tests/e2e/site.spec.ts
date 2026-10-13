@@ -13,6 +13,20 @@ test('coleções e guias reais aparecem no menu, na home e no rodapé', async ({
   await expect(page.locator('a[href^="/colecoes/"]').first()).toBeVisible()
 })
 
+test('home montada pelo editor mostra o topo, a vitrine e as seções internas', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(page.locator('#ofertas')).toBeAttached()
+  await expect(page.getByRole('heading', { name: 'Escolha pelo que importa.' })).toBeVisible()
+})
+
+test('prévia do rascunho (?preview=1) é ignorada para quem não está no painel', async ({ page }) => {
+  await page.goto('/?preview=1')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(page.getByText('Prévia do rascunho')).toHaveCount(0)
+  await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0)
+})
+
 test('coleção abre com produtos reais e critério explicado', async ({ page }) => {
   await page.goto('/colecoes')
   await expect(page.getByRole('heading', { name: 'Coleções', exact: true })).toBeVisible()

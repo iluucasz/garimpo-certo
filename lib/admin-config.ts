@@ -8,6 +8,7 @@ import type { SettingKey } from '@/lib/admin/settings-defs'
 export type ModuleView =
   | { kind: 'resource'; resource: ResourceSlug }
   | { kind: 'settings'; key: SettingKey }
+  | { kind: 'builder'; page: 'home' }
   | { kind: 'analytics'; mode: 'analytics' | 'funil' }
   | { kind: 'events' }
   | { kind: 'integrations' }
@@ -30,7 +31,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'tags', title: 'Selos', description: 'Selos exibidos nos cartões de produto.', group: 'Catálogo', view: { kind: 'resource', resource: 'tags' } },
   { slug: 'colecoes', title: 'Coleções manuais', description: 'Seleções montadas por você, na ordem que escolher.', group: 'Catálogo', view: { kind: 'resource', resource: 'colecoes' } },
 
-  { slug: 'home-builder', title: 'Home', description: 'Textos do topo e ordem das seções da página inicial.', group: 'Experiência', view: { kind: 'settings', key: 'home' } },
+  { slug: 'home-builder', title: 'Home', description: 'Monte a página inicial por seções, com prévia, rascunho e publicação.', group: 'Experiência', view: { kind: 'builder', page: 'home' } },
   { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
   { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
   { slug: 'regras-catalogo', title: 'Regras do catálogo', description: 'Os limiares de “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e dos filtros da busca.', group: 'Experiência', view: { kind: 'settings', key: 'rules' } },
