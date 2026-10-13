@@ -8,6 +8,7 @@ import { deepseekConfig } from '@/lib/ai/deepseek'
 import { composePost, type PostFacts } from './compose'
 import { rewriteWithAi } from './rewrite'
 import { defaultPickOptions, rankCandidates, type PostCandidate, type Ranked } from './picker'
+import { recheckOffer, type OfferNow } from './recheck'
 import { brasiliaDay, missingSlots } from './schedule'
 import { sendTelegramPost, telegramConfig, TelegramError } from './telegram'
 
@@ -217,18 +218,54 @@ export async function cancelPost(id: string) {
 
 // ---------------------------------------------------------------- envio
 
+/** Estado da oferta agora (preço, desconto, nota, vendas e situação da oferta e do produto). */
+async function loadOfferNow(offerId: string): Promise<OfferNow> {
+  const result = await db.execute(sql`
+    select o.status as offer_status, p.status as product_status, o.price::text as price, o.original_price::text as original_price,
+           o.discount_percentage::text as discount, o.rating::text as rating, o.sold_count
+    from offers o join products p on p.id = o.product_id where o.id = ${offerId}`)
+  const row = result.rows[0] as Record<string, string | number | null> | undefined
+  if (!row) return null
+  return {
+    offerStatus: String(row.offer_status), productStatus: String(row.product_status), price: Number(row.price),
+    originalPrice: row.original_price ? Number(row.original_price) : null, discountPercent: row.discount ? Number(row.discount) : null,
+    rating: Number(row.rating ?? 0), soldCount: Number(row.sold_count ?? 0),
+  }
+}
+
 export type DeliverResult = { ok: true; messageId: string } | { ok: false; error: string; retry: boolean }
 
 /** Envia uma postagem aprovada. Marca como enviada ou registra a falha; só tenta de novo erro passageiro. */
 export async function deliverPost(row: PostRow, fetchImpl: typeof fetch = fetch): Promise<DeliverResult> {
   const config = telegramConfig()
   if (!config) return { ok: false, error: 'O bot do Telegram não está configurado (TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID).', retry: false }
+  // Confere a oferta de agora contra o que o texto afirma. Só lê: nada é reservado nem enviado se a leitura falhar.
+  let current = row
+  if (row.offerId) {
+    let now: OfferNow
+    try { now = await loadOfferNow(row.offerId) } catch { return { ok: false, error: 'Não foi possível conferir a oferta antes do envio; tentaremos de novo.', retry: true } }
+    const check = recheckOffer(row.facts as StoredFacts, now)
+    if (check.action === 'cancel') {
+      await db.update(socialPosts).set({ status: 'cancelled', error: check.reason.slice(0, 300), updatedAt: new Date().toISOString() }).where(and(eq(socialPosts.id, row.id), eq(socialPosts.status, 'approved')))
+      return { ok: false, error: check.reason, retry: false }
+    }
+    if (check.action === 'refresh') {
+      // Texto refeito no modelo fixo com os números de agora; o que a IA tinha escrito não vale mais.
+      const { text } = composePost(check.facts, row.linkUrl, row.productId ?? row.id, { caption: Boolean(row.imageUrl) })
+      const stored = row.facts as StoredFacts
+      const facts: StoredFacts = { ...check.facts, originalText: stored.originalText ?? row.text, ai: { rewritten: false, reason: check.reason } }
+      const [updated] = await db.update(socialPosts).set({ text, facts, updatedAt: new Date().toISOString() })
+        .where(and(eq(socialPosts.id, row.id), eq(socialPosts.status, 'approved'), eq(socialPosts.attempts, row.attempts))).returning()
+      if (!updated) return { ok: false, error: 'Esta postagem já está sendo enviada.', retry: false }
+      current = updated
+    }
+  }
   // Reserva a postagem antes de enviar: dois processos (worker e botão do painel) não mandam a mesma duas vezes.
   const [claimed] = await db.update(socialPosts).set({ attempts: sql`${socialPosts.attempts} + 1`, updatedAt: new Date().toISOString() })
     .where(and(eq(socialPosts.id, row.id), eq(socialPosts.status, 'approved'), eq(socialPosts.attempts, row.attempts))).returning()
   if (!claimed) return { ok: false, error: 'Esta postagem já está sendo enviada.', retry: false }
   try {
-    const sent = await sendTelegramPost(config, { text: row.text, imageUrl: row.imageUrl }, fetchImpl)
+    const sent = await sendTelegramPost(config, { text: current.text, imageUrl: current.imageUrl }, fetchImpl)
     await db.update(socialPosts).set({ status: 'sent', sentAt: new Date().toISOString(), externalMessageId: sent.messageId, error: null, updatedAt: new Date().toISOString() }).where(eq(socialPosts.id, row.id))
     return { ok: true, messageId: sent.messageId }
   } catch (error) {

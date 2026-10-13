@@ -329,3 +329,55 @@ Só hoje!`)
     expect(await rewritePost(created.id)).toMatchObject({ ok: false, status: 409 })
   })
 })
+
+describe('conferência da oferta antes do envio', () => {
+  async function approvedPost() {
+    stubShopee()
+    const candidate = await fixtureCandidate()
+    const created = await createPost({ candidate, campaign: `${tag}recheck`, source: 'manual', status: 'approved', scheduledFor: Date.now() - 1000, userId: null })
+    return { candidate, created }
+  }
+  const reload = async (id: string) => (await db.select().from(socialPosts).where(eq(socialPosts.id, id)))[0]
+
+  it('preço igual: envia o texto como está', async () => {
+    const { created } = await approvedPost()
+    const fetchMock = vi.fn().mockResolvedValue(telegramOk(1))
+    expect(await deliverPost(created, fetchMock as unknown as typeof fetch)).toMatchObject({ ok: true })
+    expect((await reload(created.id)).text).toBe(created.text)
+  })
+
+  it('preço mudou um pouco: refaz o texto com o preço de agora antes de enviar', async () => {
+    const { candidate, created } = await approvedPost()
+    expect(created.text).toContain('39,90')
+    await db.update(offers).set({ price: '36.90' }).where(eq(offers.id, candidate.offerId))
+    const fetchMock = vi.fn().mockResolvedValue(telegramOk(2))
+    expect(await deliverPost(created, fetchMock as unknown as typeof fetch)).toMatchObject({ ok: true })
+    const saved = await reload(created.id)
+    expect(saved.status).toBe('sent')
+    expect(saved.text).toContain('36,90')
+    expect(saved.text).not.toContain('39,90')
+    expect(saved.facts).toMatchObject({ price: 36.9, originalText: created.text })
+    // O que foi ao Telegram é o texto novo.
+    expect(JSON.stringify(fetchMock.mock.calls[0][1])).toContain('36,90')
+  })
+
+  it('preço subiu muito: cancela e não envia', async () => {
+    const { candidate, created } = await approvedPost()
+    await db.update(offers).set({ price: '59.90' }).where(eq(offers.id, candidate.offerId))
+    const fetchMock = vi.fn()
+    const result = await deliverPost(created, fetchMock as unknown as typeof fetch)
+    expect(result).toMatchObject({ ok: false, retry: false })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(await reload(created.id)).toMatchObject({ status: 'cancelled' })
+    expect((await reload(created.id)).error).toMatch(/subiu/)
+  })
+
+  it('oferta que saiu do ar: cancela e não envia', async () => {
+    const { candidate, created } = await approvedPost()
+    await db.update(offers).set({ status: 'removed' }).where(eq(offers.id, candidate.offerId))
+    const fetchMock = vi.fn()
+    expect(await deliverPost(created, fetchMock as unknown as typeof fetch)).toMatchObject({ ok: false, retry: false })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect((await reload(created.id)).error).toMatch(/saiu do ar/)
+  })
+})
