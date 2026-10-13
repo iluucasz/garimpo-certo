@@ -32,6 +32,8 @@ export type ResourceField = {
   listOnly?: boolean
   /** Só pode ser definido na criação. */
   createOnly?: boolean
+  /** Campo de URL de imagem: mostra o botão de enviar arquivo ao lado. */
+  upload?: boolean
 }
 
 export type ResourceMeta = {
@@ -187,7 +189,7 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
       { key: 'description', label: 'Texto de apoio', type: 'textarea', maxLength: 240, formOnly: true },
       { key: 'ctaLabel', label: 'Texto do botão', type: 'text', required: true, maxLength: 24 },
       { key: 'ctaUrl', label: 'Destino do botão', type: 'text', required: true, maxLength: 500, help: 'Um caminho do site (ex.: /colecoes/viralizou) ou um endereço https://.' },
-      { key: 'imageUrl', label: 'Imagem (URL)', type: 'url', formOnly: true },
+      { key: 'imageUrl', label: 'Imagem (URL)', type: 'url', formOnly: true, upload: true },
       { key: 'status', label: 'Situação', type: 'select', required: true, options: campaignStatuses },
       { key: 'startsAt', label: 'Começa em', type: 'datetime' },
       { key: 'endsAt', label: 'Termina em', type: 'datetime' },
@@ -245,7 +247,7 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
       { key: 'minSpend', label: 'Compra mínima (R$)', type: 'number', min: 0, max: 100000, formOnly: true },
       { key: 'description', label: 'Condições', type: 'textarea', maxLength: 300, formOnly: true, help: 'Regras da Shopee: categorias válidas, limite de uso, etc.' },
       { key: 'url', label: 'Link (afiliado)', type: 'url', required: true, help: 'Cole um link s.shopee.com.br gerado pelo seu painel de afiliados.' },
-      { key: 'imageUrl', label: 'Imagem (URL)', type: 'url', formOnly: true },
+      { key: 'imageUrl', label: 'Imagem (URL)', type: 'url', formOnly: true, upload: true },
       { key: 'startsAt', label: 'Válido a partir de', type: 'datetime', formOnly: true },
       { key: 'endsAt', label: 'Válido até', type: 'datetime' },
       { key: 'isActive', label: 'Exibir no site', type: 'boolean' },

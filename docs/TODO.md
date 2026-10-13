@@ -19,8 +19,8 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 
 | | Item | Situação |
 |---|---|---|
-| ⏳ | Upload de imagens no painel (campanhas, cupons, artigos) | |
-| ⏳ | Regras automáticas editáveis (limiares das coleções e checklists dos guias) | |
+| ✅ | Upload de imagens no painel (campanhas, cupons e imagem de compartilhamento do SEO) | Botão “Enviar imagem” ao lado do campo de endereço. Confere o conteúdo real do arquivo; até 4 MB. A gravação no Vercel Blob usa a mesma chamada da re-hospedagem de imagens, mas não foi exercitada ao vivo nesta rodada. |
+| ✅ | Regras automáticas editáveis | Painel → Regras do catálogo (limiares das coleções e filtros) e Guias de compra (checklists por categoria). Os textos acompanham os números. |
 | ⏳ | Convite e proteção de administradores (convite por e-mail + MFA para OWNER/ADMIN) | Depende do e-mail do Brevo funcionando (item 4). |
 | 🚫 | Cupons automáticos | A API de afiliados da Shopee não expõe cupons. Continua manual + campanhas de categoria. |
 | 🙋 | Outros provedores além da Shopee | Precisa de credenciais e da API do provedor escolhido. |
@@ -63,7 +63,7 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 | 🙋 | Brevo: confirmar remetente, conferir `EMAIL_FROM` na Vercel, levar `BREVO_API_KEY`, domínio próprio com DKIM/DMARC |
 | 🙋 | Ativar o Speed Insights na Vercel |
 | 🙋 | Preencher a coleção "Virais do TikTok" em Painel → Coleções manuais (o arquivo `lib/catalog/curated.ts` citado em `PROXIMOS-PASSOS.md` não existe mais) |
-| 🙋 | Revisar o texto dos guias (depois do item "Regras automáticas editáveis" isso passa a ser pelo painel) |
+| 🙋 | Revisar o texto dos guias em Painel → Guias de compra (já editável; os textos originais continuam valendo até você mudar) |
 | 🙋 | (Opcional) Branch do Neon para testes + `TEST_DATABASE_URL` no CI |
 
 ## 5. Engenharia

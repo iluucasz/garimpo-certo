@@ -6,17 +6,20 @@
  * por baixo, então uma chave nunca gravada devolve o comportamento original.
  */
 import type { Permission } from '@/lib/auth/rbac'
+import { defaultCatalogRules } from '@/lib/catalog/rules'
+import { guideCategoryLabels, guideChecklists, parseChecklist, serializeChecklist } from '@/lib/catalog/guides'
 
 export type SettingField =
-  | { key: string; label: string; type: 'text' | 'textarea' | 'url'; help?: string; maxLength?: number; placeholder?: string; optional?: boolean }
+  | { key: string; label: string; type: 'text' | 'textarea' | 'url'; help?: string; maxLength?: number; placeholder?: string; optional?: boolean; upload?: boolean }
   | { key: string; label: string; type: 'number'; help?: string; min: number; max: number; step?: number; unit?: string }
   | { key: string; label: string; type: 'boolean'; help?: string }
   | { key: string; label: string; type: 'color'; help?: string }
   | { key: string; label: string; type: 'select'; help?: string; options: { value: string; label: string }[] }
   | { key: string; label: string; type: 'list'; help?: string; placeholder?: string }
   | { key: string; label: string; type: 'order'; help?: string; items: { id: string; label: string }[] }
+  | { key: string; label: string; type: 'checklist'; help?: string }
 
-export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking'
+export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides'
 
 export type SettingDefinition = {
   key: SettingKey
@@ -47,7 +50,7 @@ export const rankingFactors = [
   ['similarity', 'Similaridade', 'Parecido com o produto que a pessoa está olhando.'],
 ] as const
 
-const numberField = (key: string, label: string, min: number, max: number, help?: string, unit?: string): SettingField => ({ key, label, type: 'number', min, max, help, unit })
+const numberField = (key: string, label: string, min: number, max: number, help?: string, unit?: string, step?: number): SettingField => ({ key, label, type: 'number', min, max, help, unit, ...(step ? { step } : {}) })
 
 export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
   seo: {
@@ -59,7 +62,7 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       { key: 'siteTitle', label: 'Título padrão', type: 'text', maxLength: 70, help: 'Aparece na aba do navegador e nos resultados de busca quando a página não define o seu.' },
       { key: 'titleTemplate', label: 'Modelo do título das páginas', type: 'text', maxLength: 70, help: 'Use %s onde entra o título da página. Exemplo: %s · Garimpo' },
       { key: 'description', label: 'Descrição padrão', type: 'textarea', maxLength: 170, help: 'Até 160 caracteres rende melhor nos buscadores.' },
-      { key: 'ogImageUrl', label: 'Imagem de compartilhamento (URL)', type: 'url', optional: true, help: 'Usada quando o link é compartilhado em redes sociais e mensageiros.' },
+      { key: 'ogImageUrl', label: 'Imagem de compartilhamento (URL)', type: 'url', optional: true, upload: true, help: 'Usada quando o link é compartilhado em redes sociais e mensageiros.' },
       { key: 'googleVerification', label: 'Código de verificação do Google Search Console', type: 'text', optional: true, maxLength: 120, help: 'Só o valor do atributo content da meta tag.' },
       { key: 'indexing', label: 'Permitir indexação por buscadores', type: 'boolean', help: 'Desligado, o site inteiro pede aos buscadores para não aparecer nos resultados. Use só antes do lançamento.' },
     ],
@@ -145,6 +148,42 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     ],
     defaults: { disabledEvents: [] as string[], retentionDays: 180 },
   },
+  rules: {
+    key: 'rules',
+    title: 'Regras do catálogo',
+    description: 'Os limiares que decidem o que entra em “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e nos filtros da busca. O texto de cada coleção acompanha o valor escolhido. Mudanças valem para o site inteiro em até 5 minutos.',
+    permission: 'catalog:write',
+    fields: [
+      numberField('viralSales', 'Viralizou: vendas mínimas', 1000, 200000, 'Vendas recentes informadas pela Shopee para entrar em “Viralizou na Shopee”.', 'vendas', 500),
+      numberField('topSales', 'Mais vendidos: vendas mínimas', 100, 50000, 'Vale para a coleção e para o filtro “Mais vendidos” da busca e da home.', 'vendas', 100),
+      numberField('lovedSales', 'Queridinhos: vendas mínimas', 100, 50000, undefined, 'vendas', 100),
+      numberField('lovedRating', 'Queridinhos: nota mínima', 4, 5, undefined, 'estrelas', 0.1),
+      numberField('findsPrice', 'Achadinhos: preço máximo', 5, 200, undefined, 'R$', 5),
+      numberField('findsRating', 'Achadinhos: nota mínima', 4, 5, undefined, 'estrelas', 0.1),
+      numberField('findsSales', 'Achadinhos e Nota máxima: vendas mínimas', 50, 20000, 'Evita que nota 5 com poucas vendas entre.', 'vendas', 50),
+      numberField('promoDiscount', 'Em promoção: desconto mínimo', 5, 90, 'Em relação ao preço anterior informado pela Shopee.', '%'),
+      numberField('heavyDiscount', 'Desconto pesado: desconto mínimo', 10, 90, 'Precisa ser igual ou maior que o de “Em promoção”.', '%'),
+      numberField('premiumPrice', 'Acima de R$ 500: preço mínimo', 100, 5000, 'O nome da coleção continua “Acima de R$ 500”; ajuste só se mudar o valor de propósito.', 'R$', 50),
+      numberField('topRating', 'Bem avaliados: nota mínima', 4, 5, 'Vale para a coleção e para o filtro “Bem avaliados”.', 'estrelas', 0.1),
+      numberField('perfectRating', 'Nota máxima: nota mínima', 4, 5, undefined, 'estrelas', 0.1),
+      numberField('valueScore', 'Bom custo-benefício: Índice Garimpo mínimo', 50, 100, 'Vale para a coleção e para o filtro da busca.'),
+      numberField('valuePriceMax', 'Bom custo-benefício: preço máximo', 100, 10000, undefined, 'R$', 50),
+    ],
+    defaults: { ...defaultCatalogRules },
+  },
+  guides: {
+    key: 'guides',
+    title: 'Guias de compra',
+    description: 'O bloco “O que observar antes de comprar” de cada guia. Escreva uma verificação por linha, no formato Título | Texto, com até 6 por categoria. Deixe a categoria em branco para usar o texto original. É orientação geral de compra: não prometa preço, desconto nem resultado.',
+    permission: 'content:write',
+    fields: Object.keys(guideChecklists).map((slug): SettingField => ({
+      key: slug,
+      label: `${guideCategoryLabels[slug] ?? slug}`,
+      type: 'checklist',
+      help: 'Uma verificação por linha: Título | Texto',
+    })),
+    defaults: Object.fromEntries(Object.entries(guideChecklists).map(([slug, checks]) => [slug, serializeChecklist(checks)])),
+  },
 }
 
 export const settingKeys = Object.keys(settingDefinitions) as SettingKey[]
@@ -207,6 +246,14 @@ export function normalizeSetting(key: SettingKey, input: unknown): { value: Sett
         value[field.key] = [...new Set(items)].slice(0, 100)
         break
       }
+      case 'checklist': {
+        const text = typeof raw === 'string' ? raw.trim() : ''
+        if (!text) { value[field.key] = ''; break }
+        const parsed = parseChecklist(text)
+        if (parsed.error) { errors[field.key] = parsed.error; break }
+        value[field.key] = serializeChecklist(parsed.checks)
+        break
+      }
       case 'order': {
         const valid = field.items.map((item) => item.id)
         const given = (Array.isArray(raw) ? raw : []).map(String).filter((id) => valid.includes(id))
@@ -220,6 +267,7 @@ export function normalizeSetting(key: SettingKey, input: unknown): { value: Sett
   if (key === 'theme' && typeof value.primary === 'string' && hexPattern.test(value.primary) && contrastWithWhite(value.primary) < 4.5) {
     errors.primary = `Contraste de ${contrastWithWhite(value.primary).toFixed(1)}:1 com branco é baixo demais (mínimo 4,5:1). Escolha uma cor mais escura.`
   }
+  if (key === 'rules' && Number(value.heavyDiscount) < Number(value.promoDiscount)) errors.heavyDiscount = '“Desconto pesado” não pode ser menor que “Em promoção”.'
   if (key === 'ranking' && rankingFactors.every(([factor]) => Number(value[factor]) === 0)) errors.relevance = 'Pelo menos um fator precisa ter peso maior que zero.'
 
   return Object.keys(errors).length ? { errors } : { value }

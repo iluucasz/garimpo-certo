@@ -11,7 +11,8 @@ type Envelope<T> = { data: T; error?: { message: string; details?: Record<string
 export async function adminFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
-    headers: { ...(init?.body ? { 'content-type': 'application/json' } : {}), ...(init?.headers ?? {}) },
+    // FormData define o próprio content-type (com o boundary); só texto vai como JSON.
+    headers: { ...(typeof init?.body === 'string' ? { 'content-type': 'application/json' } : {}), ...(init?.headers ?? {}) },
   })
   const body = await response.json().catch(() => null) as (Envelope<T> & { error?: Envelope<T>['error'] }) | null
   if (!response.ok) {

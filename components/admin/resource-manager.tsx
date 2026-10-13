@@ -7,6 +7,7 @@ import { resources, segmentRuleTypes, type Option, type ResourceField, type Reso
 import { AdminApiError, adminFetch, dateTime, fromLocalInput, swrFetcher, toLocalInput } from '@/lib/admin/client'
 import { slugify } from '@/lib/admin/validate'
 import { useAdminAccess } from './admin-access'
+import { ImageUpload } from './image-upload'
 import styles from './resource.module.css'
 
 type Row = Record<string, unknown> & { id: string }
@@ -259,6 +260,15 @@ function FieldControl({ field, value, error, disabled, onChange, segment }: { fi
   if (field.type === 'multi') return <div className={styles.field}><span id={id}>{field.label}</span><MultiSelect lookup={field.lookup!} value={(value as string[]) ?? []} disabled={disabled} onChange={onChange} labelledBy={id}/>{help}{err}</div>
   if (field.type === 'products') return <div className={styles.field}><span id={id}>{field.label}</span><ProductPicker value={(value as string[]) ?? []} disabled={disabled} onChange={onChange}/>{help}{err}</div>
   if (field.type === 'rules') return <div className={styles.field}><span id={id}>{field.label}</span><RulesEditor value={value} disabled={disabled} onChange={onChange} match={segment?.match ?? 'all'}/>{help}{err}</div>
+
+  if (field.type === 'url' && field.upload) {
+    return <div className={styles.field}>
+      <label htmlFor={id}><span>{field.label}{field.required && <span aria-hidden="true"> *</span>}</span></label>
+      <input id={id} aria-describedby={describedBy} aria-invalid={error ? true : undefined} className={`input ${error ? styles.inputError : ''}`} type="url" value={String(value ?? '')} maxLength={field.maxLength} placeholder={field.placeholder ?? 'Cole um endereço ou envie um arquivo'} onChange={(event) => onChange(event.target.value)}/>
+      <ImageUpload value={String(value ?? '')} disabled={disabled} onChange={onChange}/>
+      {help}{err}
+    </div>
+  }
 
   const common = { id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined, disabled, className: `${field.type === 'textarea' || field.type === 'markdown' ? 'textarea' : 'input'} ${error ? styles.inputError : ''}` }
   return <label className={styles.field} htmlFor={id}>

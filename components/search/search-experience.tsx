@@ -32,7 +32,7 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
   const pathname = usePathname()
   const router = useRouter()
   const { savedSearches, saveSearch, removeSavedSearch } = useVisitorState()
-  const { products, categories, offers } = useStoreData()
+  const { products, categories, offers, rules } = useStoreData()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
   const [category, setCategory] = useState(initialCategory ?? params.get('categoria') ?? 'todos')
@@ -63,13 +63,13 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
   }, [query, products])
 
   const results = useMemo(() => {
-    const filtered = searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers)))
+    const filtered = searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers, rules)))
     if (sort === 'mais-vendidos') {
       const sold = (id: string) => Math.max(0, ...offers.filter((offer) => offer.productId === id).map((offer) => offer.soldCount ?? 0))
       return [...filtered].sort((a, b) => sold(b.id) - sold(a.id))
     }
     return rankProducts(filtered, sort, offers)
-  }, [products, offers, query, category, max, signals, sort])
+  }, [products, offers, query, category, max, signals, sort, rules])
 
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
   const visible = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)

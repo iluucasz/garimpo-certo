@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { formatPrice } from '@/lib/format'
 import styles from '@/components/editorial/editorial.module.css'
 
@@ -14,7 +15,8 @@ export const metadata = {
 }
 
 export default async function GuidesPage() {
-  const catalog = await getStoreCatalog()
+  const [base, checklists] = await Promise.all([getStoreCatalog(), getGuideChecklists()])
+  const catalog = { ...base, checklists }
   const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] })
 
   return <StorefrontShell>

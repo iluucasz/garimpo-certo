@@ -33,6 +33,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'home-builder', title: 'Home', description: 'Textos do topo e ordem das seções da página inicial.', group: 'Experiência', view: { kind: 'settings', key: 'home' } },
   { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
   { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
+  { slug: 'regras-catalogo', title: 'Regras do catálogo', description: 'Os limiares de “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e dos filtros da busca.', group: 'Experiência', view: { kind: 'settings', key: 'rules' } },
   { slug: 'recommendation-slots', title: 'Slots de recomendação', description: 'Onde as recomendações aparecem e quantas mostram.', group: 'Experiência', view: { kind: 'settings', key: 'slots' } },
   { slug: 'segmentos', title: 'Segmentos', description: 'Audiências salvas sobre os cliques de compra medidos.', group: 'Experiência', view: { kind: 'resource', resource: 'segmentos' } },
   { slug: 'experimentos', title: 'Recursos e experimentos', description: 'Liga, desliga e libera por porcentagem partes do site.', group: 'Experiência', view: { kind: 'resource', resource: 'flags' } },
@@ -40,6 +41,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'cupons', title: 'Cupons', description: 'Cupons e campanhas que ajudam a pessoa a economizar na Shopee.', group: 'Conteúdo', view: { kind: 'coupons' } },
   { slug: 'cms', title: 'Artigos', description: 'Conteúdo editorial publicado em /artigos.', group: 'Conteúdo', view: { kind: 'resource', resource: 'cms' } },
   { slug: 'paginas', title: 'Páginas', description: 'Páginas institucionais publicadas em /p.', group: 'Conteúdo', view: { kind: 'resource', resource: 'paginas' } },
+  { slug: 'guias-compra', title: 'Guias de compra', description: 'O texto de “O que observar antes de comprar” de cada categoria.', group: 'Conteúdo', view: { kind: 'settings', key: 'guides' } },
   { slug: 'seo', title: 'SEO', description: 'Título, descrição e indexação do site.', group: 'Conteúdo', view: { kind: 'settings', key: 'seo' } },
 
   { slug: 'analytics', title: 'Analytics', description: 'Cliques e conversões de afiliado registrados na plataforma.', group: 'Insights', view: { kind: 'analytics', mode: 'analytics' } },

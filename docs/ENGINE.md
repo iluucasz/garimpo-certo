@@ -149,6 +149,17 @@ Resumo da documentação consultada pelo dono; **conferir os números no program
 
 Recurso do aplicativo da Shopee para montar uma página de recomendações dentro da própria Shopee, com categorias próprias (ex.: Achadinhos para Casa, Tecnologia, Ofertas do Dia). Serve como **segunda vitrine** para quem prefere continuar no app. A documentação consultada confirma inclusão manual e por link, **mas não uma API pública** para a Engine atualizá-la; portanto, a Engine só pode gerar a lista a ser colada manualmente.
 
+## O que a API da Shopee oferece de fato (verificado em 2026-10-13)
+
+Consultas: `shopOfferV2`, `shopeeOfferV2`, `productOfferV2`, `conversionReport`, `validatedReport`, `partnerOrderReport`, `listItemFeeds`, `getItemFeedData`. Mutações: `generateShortLink` e `generateBatchShortLink`.
+
+- **Sem cupom/voucher**: nada na API traz cupons; por isso a Engine não pode "descobrir cupons".
+- **`generateBatchShortLink`** gera vários links por chamada: é o caminho certo quando a Engine precisar gerar links para uma leva de postagens (hoje o importador usa o unitário, porque só gera links para produtos novos).
+- **`listItemFeeds`/`getItemFeedData`** são feeds de produtos em lote: candidatos para a Engine varrer um catálogo grande sem paginar `productOfferV2`.
+- **`conversionReport`** só enxerga os **últimos 3 meses** e devolve a etiqueta (`utmContent`) junto de cada comissão. É isso que permite medir canal por canal.
+- **Etiquetas (sub ids)** só aceitam letras e números, até 5 por link. Convenção do projeto: 1º nível = canal (`site`, `telegram`...), 2º = categoria ou campanha.
+- **Programa de afiliados**: não localizei os termos completos nem regra sobre extensões de navegador. O blog oficial lista como práticas que podem derrubar comissões ou a conta: compra de palavras-chave em anúncios, anúncios em sites impróprios, fraude de cliques e e-mail publicitário sem consentimento prévio. Confirme o texto vigente antes de lançar a extensão e o Telegram.
+
 ## Cuidados que valem para tudo
 
 - **Fonte de dados autorizada.** Os termos da Shopee proíbem extração automatizada fora dos meios oficiais. A importação do Garimpo já usa a **API oficial de afiliados**; a Engine (e a extensão) devem continuar nela, sem raspagem.

@@ -88,7 +88,48 @@ export type Guide = {
   picks: GuidePick[]
 }
 
-type Input = { products: Product[]; offers: Offer[]; categories: Category[] }
+type Input = { products: Product[]; offers: Offer[]; categories: Category[]; checklists?: Record<string, GuideCheck[]> }
+
+/** Nome de cada categoria no editor do painel (o site usa o nome que vem do banco). */
+export const guideCategoryLabels: Record<string, string> = {
+  games: 'Games', eletronicos: 'Eletrônicos', eletrodomesticos: 'Eletrodomésticos', tecnologia: 'Tecnologia', casa: 'Casa',
+  audio: 'Áudio', cozinha: 'Cozinha', pet: 'Pet', beleza: 'Beleza', fitness: 'Fitness', 'bem-estar': 'Bem-estar',
+}
+
+export const MAX_CHECKS = 6
+export const MAX_CHECK_TITLE = 60
+export const MAX_CHECK_TEXT = 280
+
+/** Uma verificação por linha, no formato `Título | Texto`. É o formato do editor do painel. */
+export const serializeChecklist = (checks: GuideCheck[]) => checks.map((check) => `${check.title} | ${check.text}`).join('\n')
+
+export function parseChecklist(text: string): { checks: GuideCheck[]; error?: string } {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+  const checks: GuideCheck[] = []
+  for (const [index, line] of lines.entries()) {
+    const separator = line.indexOf('|')
+    const title = separator < 0 ? '' : line.slice(0, separator).trim()
+    const body = separator < 0 ? '' : line.slice(separator + 1).trim()
+    if (!title || !body) return { checks: [], error: `Linha ${index + 1}: use o formato "Título | Texto".` }
+    if (title.length > MAX_CHECK_TITLE) return { checks: [], error: `Linha ${index + 1}: o título passa de ${MAX_CHECK_TITLE} caracteres.` }
+    if (body.length > MAX_CHECK_TEXT) return { checks: [], error: `Linha ${index + 1}: o texto passa de ${MAX_CHECK_TEXT} caracteres.` }
+    checks.push({ title, text: body })
+  }
+  if (checks.length > MAX_CHECKS) return { checks: [], error: `No máximo ${MAX_CHECKS} verificações por categoria.` }
+  return { checks }
+}
+
+/** Lê a configuração `guides` do painel. Categoria em branco ou inválida mantém o texto original do código. */
+export function resolveChecklists(value?: Record<string, unknown> | null): Record<string, GuideCheck[]> {
+  const result: Record<string, GuideCheck[]> = {}
+  if (!value || typeof value !== 'object') return result
+  for (const [slug, raw] of Object.entries(value)) {
+    if (typeof raw !== 'string' || !raw.trim()) continue
+    const parsed = parseChecklist(raw)
+    if (!parsed.error && parsed.checks.length) result[slug] = parsed.checks
+  }
+  return result
+}
 
 const median = (values: number[]) => {
   if (!values.length) return 0
@@ -147,7 +188,7 @@ export function buildGuide(input: Input, slug: string): Guide | null {
       averageRating: rated.length ? rated.reduce((sum, product) => sum + product.rating, 0) / rated.length : null,
       topSeller: top && top.sold > 0 ? { product: top.product, sold: top.sold } : null,
     },
-    checks: guideChecklists[slug] ?? [],
+    checks: input.checklists?.[slug] ?? guideChecklists[slug] ?? [],
     picks,
   }
 }

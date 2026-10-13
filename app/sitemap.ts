@@ -1,12 +1,13 @@
 import type { MetadataRoute } from 'next'
 import { collectionSlugsFor } from '@/lib/catalog/collections'
 import { guideSlugs } from '@/lib/catalog/guides'
+import { getCatalogRules } from '@/lib/catalog/server-rules'
 import { getPublishedContent, getStorefrontNav } from '@/lib/db/repositories/site-content'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { siteUrl } from '@/lib/site'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [catalog, articles, pages, nav] = await Promise.all([getStoreCatalog(), getPublishedContent('article'), getPublishedContent('page'), getStorefrontNav()])
+  const [catalog, articles, pages, nav, rules] = await Promise.all([getStoreCatalog(), getPublishedContent('article'), getPublishedContent('page'), getStorefrontNav(), getCatalogRules()])
   const lastModified = new Date(new Date().toISOString().slice(0, 10))
   const entries: { path: string; frequency: 'daily' | 'weekly'; priority: number }[] = [
     { path: '', frequency: 'daily', priority: 1 },
@@ -20,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...articles.map((article) => ({ path: `/artigos/${article.slug}`, frequency: 'weekly' as const, priority: 0.5 })),
     ...pages.map((page) => ({ path: `/p/${page.slug}`, frequency: 'weekly' as const, priority: 0.3 })),
     ...catalog.categories.map((category) => ({ path: `/categorias/${category.slug}`, frequency: 'daily' as const, priority: 0.7 })),
-    ...collectionSlugsFor(catalog).map((slug) => ({ path: `/colecoes/${slug}`, frequency: 'daily' as const, priority: 0.6 })),
+    ...collectionSlugsFor({ ...catalog, rules }).map((slug) => ({ path: `/colecoes/${slug}`, frequency: 'daily' as const, priority: 0.6 })),
     ...guideSlugs(catalog).map((slug) => ({ path: `/guias/${slug}`, frequency: 'weekly' as const, priority: 0.6 })),
     ...catalog.products.map((product) => ({ path: `/produto/${product.slug}`, frequency: 'daily' as const, priority: 0.6 })),
   ]

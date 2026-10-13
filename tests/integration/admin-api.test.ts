@@ -5,6 +5,7 @@ import { DELETE as deleteRecord, GET as getRecord, PATCH as patchRecord } from '
 import { DELETE as resetSetting, GET as getSettingRoute, PUT as putSetting } from '@/app/api/v1/admin/settings/[key]/route'
 import { POST as previewSegment } from '@/app/api/v1/admin/segments/preview/route'
 import { POST as engagement } from '@/app/api/v1/engagement/route'
+import { POST as uploadImage } from '@/app/api/v1/admin/uploads/route'
 import { db } from '@/lib/db/client'
 import { auditLogs, campaigns, categories, coupons, curatedCollections, globalSettings, productCategories, products, segments, tags } from '@/lib/db/schema'
 import { resetRateLimits } from '@/lib/server/rate-limit'
@@ -43,6 +44,20 @@ describe('API do painel', () => {
     // Auditoria e usuários exigem users:manage.
     expect((await listResource(plain(reader.cookie), resource('audit-log'))).status).toBe(403)
     expect((await listResource(plain(reader.cookie), resource('usuarios'))).status).toBe(403)
+  })
+
+  it('upload de imagem exige sessão e permissão e recusa o que não é imagem', async () => {
+    resetRateLimits()
+    const form = (content: BlobPart, name = 'arquivo.png', type = 'image/png') => { const data = new FormData(); data.append('file', new File([content], name, { type })); return data }
+    const send = (body: FormData, cookie?: string) => uploadImage(new Request('http://localhost/api/v1/admin/uploads', { method: 'POST', headers: cookie ? { cookie } : {}, body }))
+    expect((await send(form('x'))).status).toBe(401)
+    const reader = await createAuthenticatedUser('READ_ONLY')
+    expect((await send(form('x'), reader.cookie)).status).toBe(403)
+    const editor = await createAuthenticatedUser('MARKETING')
+    // Declara PNG, mas o conteúdo é HTML: tem de ser recusado antes de chegar ao armazenamento.
+    const fake = await send(form('<html><script>alert(1)</script></html>'), editor.cookie)
+    expect([422, 503]).toContain(fake.status)
+    if (fake.status === 422) expect((await fake.json()).error.details.file).toBeTruthy()
   })
 
   it('recurso desconhecido responde 404', async () => {

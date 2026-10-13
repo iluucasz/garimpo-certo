@@ -22,8 +22,8 @@ Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/public
 - [ ] **Contato LGPD:** `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL`.
 - [ ] **Conferir no Vercel** se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` existem em produção; o `.env` local tem, mas o de produção eu não consigo ver.
 - [ ] **Ativar o Speed Insights** em *Project → Speed Insights* na Vercel (o componente já é carregado, com consentimento; sem ativar não chegam dados).
-- [ ] **Preencher a coleção "Virais do TikTok"**: a Shopee não informa o que viralizou no TikTok, então a lista é manual. Em `lib/catalog/curated.ts`, coloque em `itemIds` os IDs dos produtos (o número no fim do link/slug do produto). Ela só aparece com 3 ou mais itens ativos.
-- [ ] **Revisar o texto dos guias** em `lib/catalog/guides.ts` ("o que observar antes de comprar"): é orientação geral escrita no código e sai com a marca do Garimpo.
+- [ ] **Preencher a coleção "Virais do TikTok"**: a Shopee não informa o que viralizou no TikTok, então a lista é manual. Crie-a em Painel → Coleções manuais e escolha os produtos (ela só aparece com 3 ou mais itens ativos). O arquivo `lib/catalog/curated.ts` que este item citava não existe mais.
+- [ ] **Revisar o texto dos guias** em Painel → Guias de compra ("o que observar antes de comprar"): é orientação geral e sai com a marca do Garimpo. Os textos originais seguem valendo até você editar.
 - [ ] **(opcional) Criar um branch do Neon para testes** e definir `TEST_DATABASE_URL` no CI.
 
 ---

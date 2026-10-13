@@ -5,6 +5,7 @@ import { ProductCard } from '@/components/product/product-card'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { formatPrice } from '@/lib/format'
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/editorial/editorial.module.css'
@@ -17,7 +18,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const guide = buildGuide(await getStoreCatalog(), slug)
+  const [base, checklists] = await Promise.all([getStoreCatalog(), getGuideChecklists()])
+  const guide = buildGuide({ ...base, checklists }, slug)
   if (!guide) notFound()
   const description = `O que conferir antes de comprar em ${guide.category.name.toLocaleLowerCase('pt-BR')}, com ${guide.count} produtos de ${formatPrice(guide.stats.minPrice)} a ${formatPrice(guide.stats.maxPrice)}.`
   return {
@@ -30,8 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const catalog = await getStoreCatalog()
-  const guide = buildGuide(catalog, slug)
+  const [catalog, checklists] = await Promise.all([getStoreCatalog(), getGuideChecklists()])
+  const guide = buildGuide({ ...catalog, checklists }, slug)
   if (!guide) notFound()
 
   const others = guideSlugs(catalog).filter((item) => item !== slug).flatMap((item) => { const found = catalog.categories.find((category) => category.slug === item); return found ? [found] : [] })

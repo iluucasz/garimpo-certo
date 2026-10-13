@@ -23,7 +23,7 @@ export function permissionForModule(slug: string, mutation = false): Permission 
   if (slug === 'imports-jobs') return mutation ? 'jobs:run' : 'catalog:read'
   if (['usuarios-rbac', 'seguranca', 'lgpd', 'audit-log'].includes(slug)) return 'users:manage'
   if (['tracking', 'tema', 'integracoes', 'providers', 'experimentos'].includes(slug)) return mutation ? 'settings:write' : 'catalog:read'
-  if (['cms', 'paginas', 'seo', 'cupons', 'campanhas', 'colecoes', 'home-builder'].includes(slug)) return mutation ? 'content:write' : 'catalog:read'
+  if (['cms', 'paginas', 'seo', 'cupons', 'campanhas', 'colecoes', 'home-builder', 'guias-compra'].includes(slug)) return mutation ? 'content:write' : 'catalog:read'
   if (slug === 'segmentos') return mutation ? 'catalog:write' : 'analytics:read'
   return mutation ? 'catalog:write' : 'catalog:read'
 }

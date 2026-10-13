@@ -9,6 +9,7 @@ import { HeroStat } from '@/components/home/hero-stat'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
+import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { getActiveCampaigns } from '@/lib/db/repositories/site-content'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { getSetting } from '@/lib/settings'
@@ -31,7 +32,8 @@ const siteJsonLd = {
 export default async function Home({ searchParams }: { searchParams: Promise<{ filtro?: string }> }) {
   const params = await searchParams
   const activeFilter = validFilters.includes(params.filtro as HomeFilter) ? params.filtro as HomeFilter : 'trending'
-  const [catalog, home, campaigns] = await Promise.all([getStoreCatalog(), getSetting('home'), getActiveCampaigns()])
+  const [baseCatalog, home, campaigns, checklists] = await Promise.all([getStoreCatalog(), getSetting('home'), getActiveCampaigns(), getGuideChecklists()])
+  const catalog = { ...baseCatalog, checklists }
   const visible = (id: string) => home[`show_${id}`] !== false
   const order = (Array.isArray(home.sectionOrder) ? home.sectionOrder : []).map(String).filter(visible)
   const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] }).slice(0, 3)

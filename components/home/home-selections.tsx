@@ -18,14 +18,14 @@ const featured: { slug: string; icon: LucideIcon }[] = [
 ]
 
 export function HomeSelections() {
-  const { products, offers, categories } = useStoreData()
+  const { products, offers, categories, rules } = useStoreData()
   const tiles = useMemo(() => {
-    const collections = buildCollections({ products, offers, categories })
+    const collections = buildCollections({ products, offers, categories, rules })
     return featured.flatMap(({ slug, icon }) => {
       const collection = collections.find((item) => item.slug === slug)
       return collection ? [{ collection, icon }] : []
     }).slice(0, 4)
-  }, [products, offers, categories])
+  }, [products, offers, categories, rules])
   if (!tiles.length) return null
 
   return <section className={`${styles.selections} container`} id="selecoes" aria-labelledby="selections-title">

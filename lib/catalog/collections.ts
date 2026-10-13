@@ -1,8 +1,9 @@
 import type { Category, Offer, Product } from '@/lib/types'
+import { defaultCatalogRules, moneyLabel, ratingLabel, salesLabel, type CatalogRules } from './rules'
 import { currentPrice, matchesSignal, offerDiscount } from './signals'
 
 export type CuratedDefinition = { slug: string; title: string; tone: string; description: string; productIds: string[] }
-export type CatalogInput = { products: Product[]; offers: Offer[]; categories?: Category[]; curated?: CuratedDefinition[] }
+export type CatalogInput = { products: Product[]; offers: Offer[]; categories?: Category[]; curated?: CuratedDefinition[]; rules?: CatalogRules }
 
 export type CollectionGroup = 'Em alta' | 'Preço' | 'Qualidade' | 'Por categoria' | 'Curadoria'
 export const collectionGroups: CollectionGroup[] = ['Em alta', 'Preço', 'Qualidade', 'Por categoria', 'Curadoria']
@@ -37,137 +38,134 @@ const byScore = (a: Product, b: Product) => b.score - a.score
 const byDiscount = (a: Product, b: Product, { offers }: CatalogInput) => offerDiscount(bestOffer(b, offers)) - offerDiscount(bestOffer(a, offers))
 const byRating = (a: Product, b: Product, input: CatalogInput) => b.rating - a.rating || bySold(a, b, input)
 
-/** Limiares usados nas descrições, para o texto nunca divergir da regra. */
+/** Teto do filtro "Até R$ 50" (o valor também aparece no slug da coleção, por isso não é editável). */
 export const MAX_BUDGET = 50
-const VIRAL_SALES = 10_000
-const LOVED_SALES = 1_000
-const FINDS_PRICE = 30
-const FINDS_SALES = 500
-const HEAVY_DISCOUNT = 0.4
-const PREMIUM_PRICE = 500
 
-const definitions: Definition[] = [
-  // ---- Em alta: tudo medido em vendas recentes informadas pela Shopee ----
-  {
-    slug: 'viralizou',
-    title: 'Viralizou na Shopee',
-    tone: 'Todo mundo comprando',
-    group: 'Em alta',
-    matches: (product, { offers }) => soldOf(product, offers) >= VIRAL_SALES,
-    sort: bySold,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} mais de 10 mil vendas recentes informadas pela Shopee: o que está saindo em maior volume.`,
-  },
-  {
-    slug: 'mais-vendidos',
-    title: 'Mais vendidos',
-    tone: 'O que mais sai na Shopee',
-    group: 'Em alta',
-    matches: (product, { offers }) => matchesSignal('Mais vendidos', product, offers),
-    sort: bySold,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} mais de mil vendas recentes informadas pela Shopee, dos mais vendidos para os menos.`,
-  },
-  {
-    slug: 'queridinhos',
-    title: 'Queridinhos',
-    tone: 'Muito vendido e muito bem avaliado',
-    group: 'Em alta',
-    matches: (product, { offers }) => product.rating >= 4.8 && soldOf(product, offers) >= LOVED_SALES,
-    sort: bySold,
-    describe: (count) => `${plural(count, 'produto que une', 'produtos que unem')} nota 4,8 ou mais a pelo menos mil vendas recentes.`,
-  },
-  {
-    slug: 'achadinhos',
-    title: 'Achadinhos até R$ 30',
-    tone: 'Barato e aprovado',
-    group: 'Em alta',
-    matches: (product, { offers }) => currentPrice(product, offers) <= FINDS_PRICE && product.rating >= 4.7 && soldOf(product, offers) >= FINDS_SALES,
-    sort: bySold,
-    describe: (count) => `${plural(count, 'produto de', 'produtos de')} até R$ ${FINDS_PRICE}, com nota 4,7 ou mais e pelo menos ${FINDS_SALES} vendas recentes.`,
-  },
-  // ---- Preço ----
-  {
-    slug: 'em-promocao',
-    title: 'Em promoção',
-    tone: 'O preço caiu',
-    group: 'Preço',
-    matches: (product, { offers }) => matchesSignal('Em promoção', product, offers),
-    sort: byDiscount,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} 20% ou mais abaixo do preço anterior informado pela Shopee, do maior para o menor desconto.`,
-  },
-  {
-    slug: 'desconto-pesado',
-    title: 'Desconto pesado',
-    tone: 'Metade do preço, ou quase',
-    group: 'Preço',
-    matches: (product, { offers }) => offerDiscount(bestOffer(product, offers)) >= HEAVY_DISCOUNT,
-    sort: byDiscount,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} 40% ou mais abaixo do preço anterior informado pela Shopee.`,
-  },
-  {
-    slug: 'ate-20',
-    title: 'Até R$ 20',
-    tone: 'Para gastar quase nada',
-    group: 'Preço',
-    matches: (product, { offers }) => currentPrice(product, offers) <= 20,
-    sort: byScore,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ 20, ordenados pelo Índice Garimpo.`,
-  },
-  {
-    slug: 'ate-50',
-    title: 'Até R$ 50',
-    tone: 'Cabe no bolso',
-    group: 'Preço',
-    matches: (product, { offers }) => currentPrice(product, offers) <= MAX_BUDGET,
-    sort: byScore,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ ${MAX_BUDGET}, ordenados pelo Índice Garimpo (avaliação, vendas e desconto).`,
-  },
-  {
-    slug: 'ate-100',
-    title: 'Até R$ 100',
-    tone: 'Bom e ainda em conta',
-    group: 'Preço',
-    matches: (product, { offers }) => currentPrice(product, offers) <= 100,
-    sort: byScore,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ 100, ordenados pelo Índice Garimpo.`,
-  },
-  {
-    slug: 'acima-de-500',
-    title: 'Acima de R$ 500',
-    tone: 'Para quem quer o produto principal',
-    group: 'Preço',
-    matches: (product, { offers }) => currentPrice(product, offers) >= PREMIUM_PRICE,
-    sort: bySold,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual a partir de R$ ${PREMIUM_PRICE}, dos mais vendidos para os menos: consoles, TVs, eletrodomésticos e outros itens de maior valor.`,
-  },
-  // ---- Qualidade ----
-  {
-    slug: 'bem-avaliados',
-    title: 'Bem avaliados',
-    tone: 'Nota 4,8 ou mais',
-    group: 'Qualidade',
-    matches: (product, { offers }) => matchesSignal('Bem avaliados', product, offers),
-    sort: byRating,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} nota média 4,8 ou mais, desempatados pelo volume de vendas.`,
-  },
-  {
-    slug: 'custo-beneficio',
-    title: 'Bom custo-benefício',
-    tone: 'Nota alta, vendas e preço coerentes',
-    group: 'Qualidade',
-    matches: (product, { offers }) => matchesSignal('Bom custo-benefício', product, offers),
-    sort: byScore,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} Índice Garimpo 85 ou mais e preço de até R$ 1.500, o mesmo critério do filtro “Bom custo-benefício” da busca.`,
-  },
-  {
-    slug: 'nota-maxima',
-    title: 'Nota 4,9 ou mais',
-    tone: 'Quase sem defeito',
-    group: 'Qualidade',
-    matches: (product, { offers }) => product.rating >= 4.9 && soldOf(product, offers) >= FINDS_SALES,
-    sort: byRating,
-    describe: (count) => `${plural(count, 'produto com', 'produtos com')} nota média 4,9 ou mais e pelo menos ${FINDS_SALES} vendas recentes, para a nota ter peso.`,
-  },
-]
+/** Definições das coleções automáticas para um conjunto de regras; os textos acompanham os números das regras. */
+function buildDefinitions(rules: CatalogRules): Definition[] {
+  return [
+    // ---- Em alta: tudo medido em vendas recentes informadas pela Shopee ----
+    {
+      slug: 'viralizou',
+      title: 'Viralizou na Shopee',
+      tone: 'Todo mundo comprando',
+      group: 'Em alta',
+      matches: (product, { offers }) => soldOf(product, offers) >= rules.viralSales,
+      sort: bySold,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} mais de ${salesLabel(rules.viralSales)} vendas recentes informadas pela Shopee: o que está saindo em maior volume.`,
+    },
+    {
+      slug: 'mais-vendidos',
+      title: 'Mais vendidos',
+      tone: 'O que mais sai na Shopee',
+      group: 'Em alta',
+      matches: (product, { offers }) => matchesSignal('Mais vendidos', product, offers, rules),
+      sort: bySold,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} mais de ${salesLabel(rules.topSales)} vendas recentes informadas pela Shopee, dos mais vendidos para os menos.`,
+    },
+    {
+      slug: 'queridinhos',
+      title: 'Queridinhos',
+      tone: 'Muito vendido e muito bem avaliado',
+      group: 'Em alta',
+      matches: (product, { offers }) => product.rating >= rules.lovedRating && soldOf(product, offers) >= rules.lovedSales,
+      sort: bySold,
+      describe: (count) => `${plural(count, 'produto que une', 'produtos que unem')} nota ${ratingLabel(rules.lovedRating)} ou mais a pelo menos ${salesLabel(rules.lovedSales)} vendas recentes.`,
+    },
+    {
+      slug: 'achadinhos',
+      title: `Achadinhos até ${moneyLabel(rules.findsPrice)}`,
+      tone: 'Barato e aprovado',
+      group: 'Em alta',
+      matches: (product, { offers }) => currentPrice(product, offers) <= rules.findsPrice && product.rating >= rules.findsRating && soldOf(product, offers) >= rules.findsSales,
+      sort: bySold,
+      describe: (count) => `${plural(count, 'produto de', 'produtos de')} até ${moneyLabel(rules.findsPrice)}, com nota ${ratingLabel(rules.findsRating)} ou mais e pelo menos ${salesLabel(rules.findsSales)} vendas recentes.`,
+    },
+    // ---- Preço ----
+    {
+      slug: 'em-promocao',
+      title: 'Em promoção',
+      tone: 'O preço caiu',
+      group: 'Preço',
+      matches: (product, { offers }) => matchesSignal('Em promoção', product, offers, rules),
+      sort: byDiscount,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} ${rules.promoDiscount}% ou mais abaixo do preço anterior informado pela Shopee, do maior para o menor desconto.`,
+    },
+    {
+      slug: 'desconto-pesado',
+      title: 'Desconto pesado',
+      tone: 'Metade do preço, ou quase',
+      group: 'Preço',
+      matches: (product, { offers }) => offerDiscount(bestOffer(product, offers)) >= rules.heavyDiscount / 100,
+      sort: byDiscount,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} ${rules.heavyDiscount}% ou mais abaixo do preço anterior informado pela Shopee.`,
+    },
+    {
+      slug: 'ate-20',
+      title: 'Até R$ 20',
+      tone: 'Para gastar quase nada',
+      group: 'Preço',
+      matches: (product, { offers }) => currentPrice(product, offers) <= 20,
+      sort: byScore,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ 20, ordenados pelo Índice Garimpo.`,
+    },
+    {
+      slug: 'ate-50',
+      title: 'Até R$ 50',
+      tone: 'Cabe no bolso',
+      group: 'Preço',
+      matches: (product, { offers }) => currentPrice(product, offers) <= MAX_BUDGET,
+      sort: byScore,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ ${MAX_BUDGET}, ordenados pelo Índice Garimpo (avaliação, vendas e desconto).`,
+    },
+    {
+      slug: 'ate-100',
+      title: 'Até R$ 100',
+      tone: 'Bom e ainda em conta',
+      group: 'Preço',
+      matches: (product, { offers }) => currentPrice(product, offers) <= 100,
+      sort: byScore,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ 100, ordenados pelo Índice Garimpo.`,
+    },
+    {
+      slug: 'acima-de-500',
+      title: 'Acima de R$ 500',
+      tone: 'Para quem quer o produto principal',
+      group: 'Preço',
+      matches: (product, { offers }) => currentPrice(product, offers) >= rules.premiumPrice,
+      sort: bySold,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual a partir de ${moneyLabel(rules.premiumPrice)}, dos mais vendidos para os menos: consoles, TVs, eletrodomésticos e outros itens de maior valor.`,
+    },
+    // ---- Qualidade ----
+    {
+      slug: 'bem-avaliados',
+      title: 'Bem avaliados',
+      tone: `Nota ${ratingLabel(rules.topRating)} ou mais`,
+      group: 'Qualidade',
+      matches: (product, { offers }) => matchesSignal('Bem avaliados', product, offers, rules),
+      sort: byRating,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} nota média ${ratingLabel(rules.topRating)} ou mais, desempatados pelo volume de vendas.`,
+    },
+    {
+      slug: 'custo-beneficio',
+      title: 'Bom custo-benefício',
+      tone: 'Nota alta, vendas e preço coerentes',
+      group: 'Qualidade',
+      matches: (product, { offers }) => matchesSignal('Bom custo-benefício', product, offers, rules),
+      sort: byScore,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} Índice Garimpo ${rules.valueScore} ou mais e preço de até ${moneyLabel(rules.valuePriceMax)}, o mesmo critério do filtro “Bom custo-benefício” da busca.`,
+    },
+    {
+      slug: 'nota-maxima',
+      title: `Nota ${ratingLabel(rules.perfectRating)} ou mais`,
+      tone: 'Quase sem defeito',
+      group: 'Qualidade',
+      matches: (product, { offers }) => product.rating >= rules.perfectRating && soldOf(product, offers) >= rules.findsSales,
+      sort: byRating,
+      describe: (count) => `${plural(count, 'produto com', 'produtos com')} nota média ${ratingLabel(rules.perfectRating)} ou mais e pelo menos ${salesLabel(rules.findsSales)} vendas recentes, para a nota ter peso.`,
+    },
+  ]
+}
 
 const categoryDefinition = (category: Category): Definition => ({
   slug: `mais-vendidos-${category.slug}`,
@@ -196,10 +194,10 @@ function curatedDefinitions(input: CatalogInput): Definition[] {
 }
 
 /** Endereços que as coleções automáticas já usam; coleções manuais não podem reutilizá-los. */
-export const isReservedCollectionSlug = (slug: string) => definitions.some((definition) => definition.slug === slug) || slug.startsWith('mais-vendidos-')
+export const isReservedCollectionSlug = (slug: string) => buildDefinitions(defaultCatalogRules).some((definition) => definition.slug === slug) || slug.startsWith('mais-vendidos-')
 
 function allDefinitions(input: CatalogInput): Definition[] {
-  const automatic = [...definitions, ...(input.categories ?? []).map(categoryDefinition)]
+  const automatic = [...buildDefinitions(input.rules ?? defaultCatalogRules), ...(input.categories ?? []).map(categoryDefinition)]
   const taken = new Set(automatic.map((definition) => definition.slug))
   return [...automatic, ...curatedDefinitions(input).filter((definition) => !taken.has(definition.slug))]
 }

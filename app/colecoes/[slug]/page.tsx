@@ -5,18 +5,21 @@ import { PagedProductGrid } from '@/components/product/paged-product-grid'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { buildCollections, collectionSlugsFor } from '@/lib/catalog/collections'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/editorial/editorial.module.css'
 
 export const revalidate = 300
 
 export async function generateStaticParams() {
-  return collectionSlugsFor(await getStoreCatalog()).map((slug) => ({ slug }))
+  const [catalog, rules] = await Promise.all([getStoreCatalog(), getCatalogRules()])
+  return collectionSlugsFor({ ...catalog, rules }).map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const collection = buildCollections(await getStoreCatalog()).find((item) => item.slug === slug)
+  const [catalog, rules] = await Promise.all([getStoreCatalog(), getCatalogRules()])
+  const collection = buildCollections({ ...catalog, rules }).find((item) => item.slug === slug)
   if (!collection) notFound()
   return {
     title: collection.title,
@@ -28,8 +31,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const catalog = await getStoreCatalog()
-  const collections = buildCollections(catalog)
+  const [catalog, rules] = await Promise.all([getStoreCatalog(), getCatalogRules()])
+  const collections = buildCollections({ ...catalog, rules })
   const collection = collections.find((item) => item.slug === slug)
   if (!collection) notFound()
 

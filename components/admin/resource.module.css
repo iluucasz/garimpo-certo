@@ -85,3 +85,6 @@
 @media (max-width: 700px) {
   .rule { grid-template-columns: 1fr; }
 }
+
+.upload { display: grid; gap: 8px; margin-top: 4px; }
+.uploadPreview { max-width: 220px; max-height: 140px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: var(--muted); }

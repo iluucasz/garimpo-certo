@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { buildCollections, collectionGroups, pickCovers } from '@/lib/catalog/collections'
 import styles from '@/components/editorial/editorial.module.css'
 
@@ -21,8 +22,8 @@ const groupIntro: Record<string, string> = {
 }
 
 export default async function CollectionsPage() {
-  const catalog = await getStoreCatalog()
-  const collections = buildCollections(catalog)
+  const [catalog, rules] = await Promise.all([getStoreCatalog(), getCatalogRules()])
+  const collections = buildCollections({ ...catalog, rules })
   // A ordem de exibição (grupos) define quem ganha cada capa primeiro.
   const ordered = collectionGroups.flatMap((group) => collections.filter((collection) => collection.group === group))
   const covers = pickCovers(ordered)

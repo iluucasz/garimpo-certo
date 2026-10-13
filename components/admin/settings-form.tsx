@@ -8,6 +8,7 @@ import { AdminApiError, adminFetch, dateTime, swrFetcher } from '@/lib/admin/cli
 import { generateRecommendations, type ScoringWeights } from '@/lib/recommendation/engine'
 import { useStoreData } from '@/components/store-data-provider'
 import { useAdminAccess } from './admin-access'
+import { ImageUpload } from './image-upload'
 import styles from './resource.module.css'
 
 type SettingResponse = { key: SettingKey; value: Record<string, unknown>; updatedAt: string | null; isDefault: boolean }
@@ -145,6 +146,11 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
         {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>{help}{err}</label>
   }
+  if (field.type === 'checklist') {
+    return <label className={styles.field} htmlFor={id}>{field.label}
+      <textarea id={id} className={`textarea ${error ? styles.inputError : ''}`} rows={6} value={String(value ?? '')} placeholder="Título | Texto" disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
+      {help}{err}</label>
+  }
   if (field.type === 'list') {
     const text = Array.isArray(value) ? value.join('\n') : String(value ?? '')
     return <label className={styles.field} htmlFor={id}>{field.label}
@@ -152,6 +158,14 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
       {help}{err}</label>
   }
   const textual = field as Extract<SettingField, { type: 'text' | 'textarea' | 'url' }>
+  if (textual.type === 'url' && textual.upload) {
+    return <div className={styles.field}>
+      <label htmlFor={id}>{field.label}</label>
+      <input id={id} className={`input ${error ? styles.inputError : ''}`} type="url" maxLength={textual.maxLength} placeholder={textual.placeholder ?? 'Cole um endereço ou envie um arquivo'} value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
+      <ImageUpload value={String(value ?? '')} disabled={disabled} onChange={onChange}/>
+      {help}{err}
+    </div>
+  }
   return <label className={styles.field} htmlFor={id}>{field.label}
     {textual.type === 'textarea'
       ? <textarea id={id} className={`textarea ${error ? styles.inputError : ''}`} rows={3} maxLength={textual.maxLength} value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
