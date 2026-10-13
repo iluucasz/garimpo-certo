@@ -205,9 +205,10 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('endHour', 'Última postagem até', 10, 23, 'Horário de Brasília.', 'h'),
       { key: 'requireApproval', label: 'Exigir a minha aprovação antes de publicar', type: 'boolean', help: 'Recomendado. Desligado, o que a Engine escolher é publicado no horário.' },
       { key: 'autoPlan', label: 'A Engine sugere as ofertas do dia sozinha', type: 'boolean', help: 'Cria as postagens de hoje a partir das melhores ofertas ainda não divulgadas. Você pode criar à mão também.' },
+      { key: 'useAi', label: 'Usar IA para variar o texto das postagens novas', type: 'boolean', help: 'A IA só muda o tom e a estrutura. Preço, nota, vendas e link vêm dos dados; qualquer texto que invente número, desconto ou urgência é descartado e vale o modelo fixo.' },
       { key: 'campaign', label: 'Nome da campanha (etiqueta do link)', type: 'text', maxLength: 24, help: 'Só letras e números. Aparece em Analytics como telegram › campanha, para separar o que rende.' },
     ],
-    defaults: { mode: 'off', dailyLimit: 4, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, campaign: 'ofertas' },
+    defaults: { mode: 'off', dailyLimit: 4, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, useAi: false, campaign: 'ofertas' },
   },
   guides: {
     key: 'guides',

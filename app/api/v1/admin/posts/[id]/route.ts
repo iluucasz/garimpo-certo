@@ -3,7 +3,8 @@ import { recordAudit } from '@/lib/admin/audit'
 import { db } from '@/lib/db/client'
 import { socialPosts } from '@/lib/db/schema'
 import { MESSAGE_LIMIT } from '@/lib/social/compose'
-import { approvePost, cancelPost, deliverPost, updatePost } from '@/lib/social/store'
+import { approvePost, cancelPost, deliverPost, restoreOriginalText, rewritePost, updatePost } from '@/lib/social/store'
+import { rateLimit } from '@/lib/server/rate-limit'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const parsed = isoOrNull(body.scheduledFor)
     if (parsed === undefined) return fail('Horário inválido.', 422, { scheduledFor: 'Use uma data e hora válidas.' })
     patch.scheduledFor = parsed
+  }
+
+  if (body.action === 'rewrite') {
+    const quota = rateLimit(request, 'post-rewrite', 12)
+    if (!quota.allowed) return fail('Muitas reescritas seguidas. Aguarde um instante.', 429, undefined, { 'retry-after': String(quota.retryAfter) })
+    const rewritten = await rewritePost(id)
+    if (!rewritten.ok) return fail(rewritten.reason, rewritten.status)
+    await recordAudit({ actorUserId: userId, action: 'posts.rewrite', entityType: 'postagem', entityId: id })
+    return ok({ id, status: rewritten.row.status, text: rewritten.row.text })
+  }
+  if (body.action === 'restore_text') {
+    const restored = await restoreOriginalText(id)
+    if (!restored) return fail('Não há texto original guardado para esta postagem.', 409)
+    return ok({ id, status: restored.status, text: restored.text })
   }
 
   let row = Object.keys(patch).length ? await updatePost(id, patch) : null

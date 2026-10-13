@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from 'react'
 import useSWR from 'swr'
-import { Check, Lightbulb, PlugZap, Play, Send, X } from 'lucide-react'
+import { Check, Lightbulb, PlugZap, Play, RotateCcw, Send, Sparkles, X } from 'lucide-react'
 import { AdminApiError, adminFetch, dateTime, fromLocalInput, swrFetcher, toLocalInput } from '@/lib/admin/client'
 import { useAdminAccess } from './admin-access'
 import { SettingsForm } from './settings-form'
@@ -16,6 +16,7 @@ type PostsData = {
   settings: { mode: 'off' | 'on'; dailyLimit: number; startHour: number; endHour: number; requireApproval: boolean; autoPlan: boolean; campaign: string }
   state: { at: string; planned: number; sent: number; failed: number; expired: number; note: string | null } | null
   configured: boolean
+  aiAvailable: boolean
   posts: Post[]
 }
 type Option = { value: string; label: string }
@@ -133,6 +134,7 @@ export function SocialPostsView() {
               <span>{post.source === 'engine' ? 'Sugerida pela Engine' : 'Criada à mão'}</span>
               {post.scheduledFor && <span>{post.status === 'sent' ? 'Horário' : 'Para'} {dateTime(post.scheduledFor)}</span>}
               {post.sentAt && <span>Enviada {dateTime(post.sentAt)}</span>}
+              {(post.facts as { ai?: { rewritten?: boolean } }).ai?.rewritten && <span className={`${styles.badge} ${styles.off}`}>Texto por IA</span>}
             </div>
             {editing === post.id
               ? <textarea className={styles.editor} rows={7} value={text} onChange={(event) => setDrafts((current) => ({ ...current, [post.id]: event.target.value }))} aria-label="Texto da postagem"/>
@@ -148,6 +150,8 @@ export function SocialPostsView() {
                   <button type="button" className="btn secondary" onClick={() => { setEditing(null); setDrafts((current) => { const { [post.id]: _gone, ...rest } = current; return rest }) }}>Descartar edição</button>
                 </>
                 : <button type="button" className="btn secondary" onClick={() => setEditing(post.id)}>Editar texto</button>}
+              {data.aiAvailable && <button type="button" className="btn secondary" disabled={busy === post.id} onClick={() => act(post.id, () => patch(post.id, { action: 'rewrite' }), () => 'Texto reescrito pela IA. Confira antes de aprovar.')}><Sparkles aria-hidden="true"/> Reescrever com IA</button>}
+              {(post.facts as { originalText?: string }).originalText && <button type="button" className="btn secondary" disabled={busy === post.id} onClick={() => act(post.id, () => patch(post.id, { action: 'restore_text' }), () => 'Texto original de volta.')}><RotateCcw aria-hidden="true"/> Texto original</button>}
               {post.status === 'pending' && <button type="button" className="btn primary" disabled={busy === post.id} onClick={() => act(post.id, () => patch(post.id, { action: 'approve' }), () => 'Aprovada: sai no horário marcado.')}><Check aria-hidden="true"/> Aprovar</button>}
               {data.configured && <button type="button" className="btn secondary" disabled={busy === post.id} onClick={() => { if (window.confirm('Enviar agora para o canal?')) void act(post.id, () => patch(post.id, { action: 'send' }), () => 'Enviada para o canal.') }}><Send aria-hidden="true"/> Enviar agora</button>}
               <button type="button" className="btn secondary" disabled={busy === post.id} onClick={() => act(post.id, () => patch(post.id, { action: 'cancel' }), () => 'Cancelada.')}><X aria-hidden="true"/> Cancelar</button>

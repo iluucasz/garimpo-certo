@@ -6,7 +6,7 @@ import { db } from '@/lib/db/client'
 import { offers, products, providers, socialPosts } from '@/lib/db/schema'
 import { brasiliaTime } from '@/lib/social/schedule'
 import {
-  approvePost, cancelPost, createPost, deliverDue, deliverPost, expireOldPending, loadCandidates, loadSocialSettings, planToday, type SocialSettings,
+  approvePost, cancelPost, createPost, deliverDue, deliverPost, expireOldPending, loadCandidates, loadSocialSettings, planToday, restoreOriginalText, rewritePost, type SocialSettings,
 } from '@/lib/social/store'
 import { checkTelegram, sendTelegramPost, telegramConfig, TelegramError } from '@/lib/social/telegram'
 import { createAuthenticatedUser } from '../helpers/auth'
@@ -110,7 +110,7 @@ describe('envio pelo Telegram', () => {
 })
 
 describe('fila de postagens', () => {
-  const settings = (patch: Partial<SocialSettings> = {}): SocialSettings => ({ mode: 'on', dailyLimit: 3, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, campaign: tag, ...patch })
+  const settings = (patch: Partial<SocialSettings> = {}): SocialSettings => ({ mode: 'on', dailyLimit: 3, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, useAi: false, campaign: tag, ...patch })
 
   it('cria a postagem com link etiquetado e texto só com números reais', async () => {
     const calls = stubShopee()
@@ -241,5 +241,91 @@ describe('API das postagens', () => {
     const response = await actionRoute(new Request('http://localhost/x', { method: 'POST', headers: { 'content-type': 'application/json', cookie: editor.cookie }, body: JSON.stringify({ action: 'check' }) }))
     expect(response.status).toBe(409)
     expect((await response.json()).error.message).toContain('TELEGRAM_BOT_TOKEN')
+  })
+})
+
+describe('texto por IA nas postagens', () => {
+  const link = `https://s.shopee.com.br/${tag}`
+  const goodText = `Achei esse fone bluetooth 🎧
+Sai por <b>R$ 39,90</b> (antes R$ 59,90), nota 4,8 e mais de 1,3 mil vendas.
+${link}`
+
+  /** Shopee devolve o link; o DeepSeek devolve `answer`. */
+  function stubAi(answer: string | (() => Response)) {
+    const requests: { url: string; body: string }[] = []
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('open-api.affiliate.shopee')) return json({ data: { generateShortLink: { shortLink: link } } })
+      if (url.includes('api.deepseek.com')) {
+        requests.push({ url, body: String(init?.body ?? '') })
+        return typeof answer === 'function' ? answer() : json({ choices: [{ message: { content: answer } }] })
+      }
+      return realFetch(input, init)
+    })
+    return requests
+  }
+
+  beforeEach(() => { process.env.DEEPSEEK_API_KEY = 'sk-teste-ia' })
+  afterEach(() => { delete process.env.DEEPSEEK_API_KEY })
+
+  it('cria a postagem já com o texto da IA quando ele passa na validação', async () => {
+    const requests = stubAi(goodText)
+    const candidate = await fixtureCandidate()
+    const row = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null, useAi: true })
+    expect(row.text).toContain('Achei esse fone bluetooth')
+    expect(row.text).toContain('Link de afiliado')
+    expect(row.facts).toMatchObject({ ai: { rewritten: true } })
+    expect(requests).toHaveLength(1)
+    // O pedido leva só dados da oferta, e a chave só no cabeçalho.
+    expect(requests[0].body).toContain('R$ 39,90')
+    expect(requests[0].body).not.toContain('sk-teste-ia')
+  })
+
+  it('se a IA inventar urgência, vale o modelo fixo e o motivo fica registrado', async () => {
+    stubAi(`${goodText}
+Só hoje!`)
+    const candidate = await fixtureCandidate()
+    const row = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null, useAi: true })
+    expect(row.text).not.toContain('Só hoje')
+    expect(row.text).toContain('R$ 39,90')
+    expect(row.facts).toMatchObject({ ai: { rewritten: false } })
+  })
+
+  it('sem chave da IA não chama a API e usa o modelo fixo', async () => {
+    delete process.env.DEEPSEEK_API_KEY
+    delete process.env.deep_seek
+    const requests = stubAi(goodText)
+    const candidate = await fixtureCandidate()
+    const row = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null, useAi: true })
+    expect(requests).toHaveLength(0)
+    expect(row.facts).not.toHaveProperty('ai')
+  })
+
+  it('reescrever guarda o texto anterior e dá para voltar', async () => {
+    stubAi(goodText)
+    const candidate = await fixtureCandidate()
+    const created = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null })
+    const original = created.text
+
+    const rewritten = await rewritePost(created.id)
+    expect(rewritten.ok).toBe(true)
+    expect(rewritten.ok && rewritten.row.text).toContain('Achei esse fone bluetooth')
+    expect((await db.select().from(socialPosts).where(eq(socialPosts.id, created.id)))[0].facts).toMatchObject({ originalText: original })
+
+    const restored = await restoreOriginalText(created.id)
+    expect(restored?.text).toBe(original)
+    expect(await restoreOriginalText(created.id)).toBeNull()
+  })
+
+  it('reescrita recusada mantém o texto e explica; postagem enviada não é reescrita', async () => {
+    stubAi('Texto sem link nem preço, só conversa.')
+    const candidate = await fixtureCandidate()
+    const created = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null })
+    const refused = await rewritePost(created.id)
+    expect(refused).toMatchObject({ ok: false, status: 422 })
+    expect((await db.select().from(socialPosts).where(eq(socialPosts.id, created.id)))[0].text).toBe(created.text)
+
+    await cancelPost(created.id)
+    expect(await rewritePost(created.id)).toMatchObject({ ok: false, status: 409 })
   })
 })

@@ -2,6 +2,7 @@ import { recordAudit } from '@/lib/admin/audit'
 import { runSocialQueue } from '@/lib/social/run'
 import { createPost, listPosts, loadCandidates, loadSocialSettings, planToday, readSocialState } from '@/lib/social/store'
 import { checkTelegram, telegramConfig, TelegramError } from '@/lib/social/telegram'
+import { deepseekConfig } from '@/lib/ai/deepseek'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
   const { blocked } = await authorize(request, 'catalog:read')
   if (blocked) return blocked
   const [settings, state, posts] = await Promise.all([loadSocialSettings(), readSocialState(), listPosts({ limit: 150 })])
-  return ok({ settings, state, configured: Boolean(telegramConfig()), posts: posts.map(view) })
+  return ok({ settings, state, configured: Boolean(telegramConfig()), aiAvailable: Boolean(deepseekConfig()), posts: posts.map(view) })
 }
 
 /**
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     const candidate = (await loadCandidates()).find((item) => item.productId === body.productId)
     if (!candidate) return fail('Produto não encontrado ou sem oferta ativa.', 404)
     try {
-      const row = await createPost({ candidate, campaign: settings.campaign, source: 'manual', status: 'pending', scheduledFor: null, userId })
+      const row = await createPost({ candidate, campaign: settings.campaign, source: 'manual', status: 'pending', scheduledFor: null, userId, useAi: settings.useAi })
       await recordAudit({ actorUserId: userId, action: 'posts.create', entityType: 'postagem', entityId: row.id, after: { productId: candidate.productId } })
       return ok(view(row), { status: 201 })
     } catch (error) {

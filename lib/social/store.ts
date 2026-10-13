@@ -4,7 +4,9 @@ import { globalSettings, socialPosts } from '@/lib/db/schema'
 import { settingDefinitions } from '@/lib/admin/settings-defs'
 import { generateShortLink } from '@/lib/providers/shopee/client'
 import { toSubId } from '@/lib/providers/shopee/links'
+import { deepseekConfig } from '@/lib/ai/deepseek'
 import { composePost, type PostFacts } from './compose'
+import { rewriteWithAi } from './rewrite'
 import { defaultPickOptions, rankCandidates, type PostCandidate, type Ranked } from './picker'
 import { brasiliaDay, missingSlots } from './schedule'
 import { sendTelegramPost, telegramConfig, TelegramError } from './telegram'
@@ -21,6 +23,7 @@ export type SocialSettings = {
   endHour: number
   requireApproval: boolean
   autoPlan: boolean
+  useAi: boolean
   campaign: string
 }
 
@@ -41,6 +44,7 @@ export async function loadSocialSettings(): Promise<SocialSettings> {
     endHour: number('endHour', 21),
     requireApproval: merged.requireApproval !== false,
     autoPlan: merged.autoPlan !== false,
+    useAi: merged.useAi === true,
     campaign: toSubId(String(merged.campaign ?? 'ofertas')) || 'ofertas',
   }
 }
@@ -102,14 +106,23 @@ const factsOf = (candidate: PostCandidate): PostFacts => ({
 /** Cria a postagem: gera o link com etiqueta `telegram-<campanha>` e escreve o texto com os números da oferta. */
 export async function createPost(input: {
   candidate: PostCandidate; campaign: string; source: 'manual' | 'engine'; status: 'pending' | 'approved'; scheduledFor: number | null; userId: string | null
+  /** Pede à IA uma redação alternativa (validada); se falhar ou inventar algo, vale o modelo fixo. */
+  useAi?: boolean
 }) {
   const { candidate } = input
   const link = await generateShortLink(candidate.externalUrl, ['telegram', toSubId(input.campaign) || 'ofertas'])
   const facts = factsOf(candidate)
-  const { text } = composePost(facts, link, candidate.productId, { caption: Boolean(candidate.imageUrl) })
+  const caption = Boolean(candidate.imageUrl)
+  let { text } = composePost(facts, link, candidate.productId, { caption })
+  let ai: { rewritten: boolean; reason?: string } | undefined
+  const config = input.useAi ? deepseekConfig() : null
+  if (config) {
+    const rewritten = await rewriteWithAi({ config, facts, link, seed: new Date().getDate() + candidate.name.length, caption })
+    if (rewritten.ok) { ai = { rewritten: true }; text = rewritten.text } else ai = { rewritten: false, reason: rewritten.reason }
+  }
   const [row] = await db.insert(socialPosts).values({
     channel: 'telegram', status: input.status, productId: candidate.productId, offerId: candidate.offerId, campaign: toSubId(input.campaign) || 'ofertas',
-    text, imageUrl: candidate.imageUrl, linkUrl: link, facts, source: input.source,
+    text, imageUrl: candidate.imageUrl, linkUrl: link, facts: ai ? { ...facts, ai } : facts, source: input.source,
     scheduledFor: input.scheduledFor ? new Date(input.scheduledFor).toISOString() : null,
     createdBy: input.userId, approvedBy: input.status === 'approved' ? input.userId : null,
   }).returning()
@@ -135,7 +148,7 @@ export async function planToday(settings: SocialSettings, now = Date.now(), user
   for (const [index, item] of ranked.entries()) {
     try {
       await createPost({
-        candidate: item.candidate, campaign: settings.campaign, source: 'engine', userId,
+        candidate: item.candidate, campaign: settings.campaign, source: 'engine', userId, useAi: settings.useAi,
         status: settings.requireApproval ? 'pending' : 'approved', scheduledFor: slots[index],
       })
       created++
@@ -160,6 +173,32 @@ export async function updatePost(id: string, patch: { text?: string; scheduledFo
     updatedAt: new Date().toISOString(),
   }).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).returning()
   return row ?? null
+}
+
+type StoredFacts = PostFacts & { originalText?: string; ai?: { rewritten: boolean; reason?: string } }
+
+/** Reescreve o texto com a IA. Guarda o texto anterior para dar para voltar. Só mexe em pendente ou agendada. */
+export async function rewritePost(id: string) {
+  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
+  if (!row) return { ok: false as const, reason: 'Só postagens pendentes ou agendadas podem ser reescritas.', status: 409 }
+  const config = deepseekConfig()
+  if (!config) return { ok: false as const, reason: 'A chave da IA não está configurada (DEEPSEEK_API_KEY).', status: 409 }
+  const facts = row.facts as StoredFacts
+  const result = await rewriteWithAi({ config, facts, link: row.linkUrl, seed: Date.now() % 997, caption: Boolean(row.imageUrl) })
+  if (!result.ok) return { ok: false as const, reason: `A IA não gerou um texto aproveitável: ${result.reason} O texto atual foi mantido.`, status: 422 }
+  const [updated] = await db.update(socialPosts).set({
+    text: result.text, facts: { ...facts, originalText: facts.originalText ?? row.text, ai: { rewritten: true } }, updatedAt: new Date().toISOString(),
+  }).where(eq(socialPosts.id, id)).returning()
+  return { ok: true as const, row: updated }
+}
+
+export async function restoreOriginalText(id: string) {
+  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
+  const facts = row?.facts as StoredFacts | undefined
+  if (!row || !facts?.originalText) return null
+  const { originalText, ...rest } = facts
+  const [updated] = await db.update(socialPosts).set({ text: originalText, facts: { ...rest, ai: { rewritten: false } }, updatedAt: new Date().toISOString() }).where(eq(socialPosts.id, id)).returning()
+  return updated ?? null
 }
 
 export async function approvePost(id: string, userId: string | null, scheduledFor?: string | null) {
