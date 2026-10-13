@@ -35,7 +35,7 @@ const recommendation: RecommendationEngine = {
   },
 }
 
-// TODO: buscar via /api/v1/providers em vez de fixar a lista — hoje só há "shopee" seedado no Neon.
+// Hoje só existe a Shopee. Um novo provedor entra aqui junto com seu cliente e mapeamento em lib/providers/<nome>/.
 function createAdapter(key: string, name: string): ProviderAdapter {
   return {
     key,

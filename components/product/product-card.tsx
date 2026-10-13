@@ -3,13 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, GitCompareArrows, Heart, Star } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
-import { formatPrice, formatSoldCount } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/format'
 import type { Product } from '@/lib/types'
 
 export function ProductCard({ product }: { product: Product }) {
-  const { favorites, compare, toggleFavorite, toggleCompare } = useMock()
+  const { favorites, compare, toggleFavorite, toggleCompare } = useVisitorState()
   const { getBestOffer, getProvider } = useStoreData()
   const offer = getBestOffer(product.id)
   const previous = offer?.previousPrice ?? offer?.price ?? 0

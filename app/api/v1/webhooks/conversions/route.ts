@@ -2,7 +2,7 @@ import { withIdempotency } from '@/lib/db/idempotency'
 import { publishEvent } from '@/lib/db/repositories/events'
 import { getProviderByCode } from '@/lib/db/repositories/providers'
 import { fail, jsonBody, ok } from '@/lib/server/api'
-import { rateLimit } from '@/lib/server/mock-rate-limit'
+import { rateLimit } from '@/lib/server/rate-limit'
 import { recordConversion, type ConversionStatus } from '@/lib/analytics/attribution'
 import { isFreshWebhook } from '@/lib/security/controls'
 

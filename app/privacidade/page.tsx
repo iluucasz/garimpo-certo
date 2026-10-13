@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Check, Download, Trash2 } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import styles from '@/components/storefront/content-pages.module.css'
 
@@ -13,8 +13,10 @@ const preferenceItems = [
   { key: 'marketing', label: 'Comunicações', description: 'Registra se você aceita receber novidades. Hoje não enviamos campanhas.' },
 ] as const
 
+const privacyContact = process.env.NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL
+
 export default function PrivacyPage() {
-  const state = useMock()
+  const state = useVisitorState()
   const [message, setMessage] = useState('')
   const preferences = state.cookiePreferences
 
@@ -72,6 +74,7 @@ export default function PrivacyPage() {
 
       <h2>Seus direitos (LGPD)</h2>
       <p>Quem tem conta resolve tudo sozinho, na hora, em <Link href="/conta#dados">Minha conta › Seus dados</Link>: baixar uma cópia (acesso e portabilidade), corrigir o nome no perfil e excluir a conta com os favoritos salvos nela. Os botões acima atuam só nos dados deste navegador.</p>
+      {privacyContact && <p>Para qualquer outro pedido sobre seus dados, escreva para <a href={`mailto:${privacyContact}`}>{privacyContact}</a>.</p>}
     </article>
   </StorefrontShell>
 }

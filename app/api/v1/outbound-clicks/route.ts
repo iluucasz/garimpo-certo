@@ -3,7 +3,7 @@ import { db } from '@/lib/db/client'
 import { offers } from '@/lib/db/schema'
 import { createSafeSubId, getAttribution, recordAffiliateClick } from '@/lib/analytics/attribution'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
-import { rateLimit } from '@/lib/server/mock-rate-limit'
+import { rateLimit } from '@/lib/server/rate-limit'
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

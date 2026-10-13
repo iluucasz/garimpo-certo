@@ -1,14 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StoreBrand } from './store-brand'
 import { editorialEnabled } from '@/lib/site'
 import styles from './storefront.module.css'
 
 export function SiteFooter() {
-  const { consent, setConsent, hydrated } = useMock()
+  const { consent, setConsent, hydrated } = useVisitorState()
   const { syncedAt } = useStoreData()
   const syncedLabel = syncedAt ? new Date(syncedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' }) : null
   return <>

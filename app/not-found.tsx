@@ -6,7 +6,7 @@ export default function NotFound() {
   return <StorefrontShell>
     <section className={styles.status}>
       <div>
-        <span className={styles.statusCode} aria-hidden="true">404</span>
+        <span className={styles.statusCode} data-code="404" aria-hidden="true"/>
         <h1>Essa página saiu do mapa.</h1>
         <p>O endereço pode ter mudado ou o produto já não está no catálogo. Procure pelo que você queria ou volte ao início.</p>
         <div className={styles.statusActions}>

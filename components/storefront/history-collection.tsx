@@ -1,7 +1,7 @@
 'use client'
 
 import { LockKeyhole } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import { ContentSkeleton } from './store-loading'
@@ -9,7 +9,7 @@ import { EmptyCollection, PersonalHeading, SuggestedProducts } from './personal-
 import styles from './personal-pages.module.css'
 
 export function HistoryCollection() {
-  const { recent, clearHistory, hydrated } = useMock()
+  const { recent, clearHistory, hydrated } = useVisitorState()
   const { products } = useStoreData()
   if (!hydrated) return <ContentSkeleton/>
   const items = recent.flatMap((id) => { const product = products.find((item) => item.id === id); return product ? [product] : [] })

@@ -19,7 +19,7 @@ export interface UserPreferences {
   newsletter: boolean
 }
 
-interface MockState {
+interface VisitorState {
   hydrated: boolean
   favorites: string[]
   recent: string[]
@@ -44,7 +44,7 @@ interface MockState {
 
 const defaultCookies: CookiePreferences = { essential: true, analytics: false, personalization: false, marketing: false }
 const defaultPreferences: UserPreferences = { categories: ['Tecnologia', 'Casa'], maxPrice: 1500, notifications: true, newsletter: false }
-const MockContext = createContext<MockState | null>(null)
+const VisitorStateContext = createContext<VisitorState | null>(null)
 
 function readArray(key: string): string[] {
   try { return JSON.parse(localStorage.getItem(key) ?? '[]') as string[] } catch { return [] }
@@ -54,7 +54,7 @@ function readObject<T>(key: string, fallback: T): T {
 }
 function persist(key: string, value: unknown) { localStorage.setItem(key, JSON.stringify(value)) }
 
-export function MockProvider({ children }: { children: React.ReactNode }) {
+export function VisitorStateProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const { products } = useStoreData()
   const syncedUserId = useRef<string | null>(null)
@@ -176,17 +176,17 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const value = useMemo<MockState>(() => ({
+  const value = useMemo<VisitorState>(() => ({
     hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches,
     toggleFavorite, toggleCompare, addRecent, clearRecent, clearHistory: clearRecent, setConsent, saveCookiePreferences,
     savePreferences, saveSearch, removeSavedSearch,
   }), [hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches, toggleFavorite, toggleCompare, addRecent, clearRecent, setConsent, saveCookiePreferences, savePreferences, saveSearch, removeSavedSearch])
 
-  return <MockContext.Provider value={value}>{children}</MockContext.Provider>
+  return <VisitorStateContext.Provider value={value}>{children}</VisitorStateContext.Provider>
 }
 
-export function useMock() {
-  const context = useContext(MockContext)
-  if (!context) throw new Error('useMock deve ser usado dentro de MockProvider')
+export function useVisitorState() {
+  const context = useContext(VisitorStateContext)
+  if (!context) throw new Error('useVisitorState deve ser usado dentro de VisitorStateProvider')
   return context
 }

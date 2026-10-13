@@ -4,16 +4,16 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useRef, useState } from 'react'
 import { GitCompareArrows, Heart, Menu, Search, X } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { AccountMenu } from './account-menu'
 import { StoreBrand } from './store-brand'
 import { editorialEnabled } from '@/lib/site'
 import styles from './storefront.module.css'
 
-export function SiteHeader() {
+export function SiteHeader({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter()
-  const { favorites, compare } = useMock()
+  const { favorites, compare } = useVisitorState()
   const { categories } = useStoreData()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -33,7 +33,7 @@ export function SiteHeader() {
         <div className={styles.headerActions}>
           <Link href="/comparar" aria-label={`${compare.length} produtos no comparador`}><GitCompareArrows aria-hidden="true"/>{compare.length > 0 && <span aria-hidden="true">{compare.length}</span>}</Link>
           <Link href="/favoritos" aria-label={`${favorites.length} favoritos`}><Heart aria-hidden="true"/>{favorites.length > 0 && <span aria-hidden="true">{favorites.length > 99 ? '99+' : favorites.length}</span>}</Link>
-          <AccountMenu/>
+          <AccountMenu googleEnabled={googleEnabled}/>
           <button ref={menuButton} type="button" onClick={() => setOpen((current) => !current)} className={styles.menuButton} aria-label={open ? 'Fechar menu' : 'Abrir menu'} aria-expanded={open} aria-controls="store-navigation">{open ? <X/> : <Menu/>}</button>
         </div>
       </div>

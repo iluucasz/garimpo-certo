@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatSoldCount } from '@/lib/mock-data'
+import { formatSoldCount } from '@/lib/format'
 
 describe('formatSoldCount', () => {
   it('abrevia milhares no padrão pt-BR e fala em vendas recentes', () => {

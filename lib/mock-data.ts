@@ -90,11 +90,6 @@ export const adminModules = [
  ['Governança',['Usuários e RBAC','LGPD','Audit Log','Logs']],
  ['Sistema',['Integrações','Tracking','AI','Segurança','Tema']],
 ] as const
-export const formatPrice=(value:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value)
-// A API de afiliados devolve um número de vendas menor que o total exibido no anúncio da Shopee
-// (o anúncio mostra o acumulado). Como a Shopee não documenta o período desse campo, a etiqueta
-// fala em vendas recentes, que é verdade nos dois casos.
-export const formatSoldCount=(value:number)=>`${new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(value)} ${value===1?'venda recente':'vendas recentes'}`
 export const getProduct=(slug:string)=>products.find(p=>p.slug===slug)
 export const getOffers=(id:string)=>offers.filter(o=>o.productId===id).sort((a,b)=>(a.price+a.shipping)-(b.price+b.shipping))
 export const getBestOffer=(id:string)=>getOffers(id).find(offer=>offer.stock!=='indisponível')

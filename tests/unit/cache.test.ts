@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mockCache } from '@/lib/server/mock-cache'
+import { mockCache } from '@/lib/server/memory-cache'
 describe('cache em memória', () => {
   it('invalida por namespace', () => {
     mockCache.set('product:1', { ok: true })

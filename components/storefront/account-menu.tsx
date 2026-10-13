@@ -9,7 +9,7 @@ import { GoogleIcon } from './google-icon'
 
 type Mode = 'entrar' | 'cadastro'
 
-export function AccountMenu() {
+export function AccountMenu({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter()
   const { data: session, isPending } = useSession()
   const [open, setOpen] = useState(false)
@@ -77,8 +77,10 @@ export function AccountMenu() {
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn primary" type="submit" disabled={submitting}>{submitting ? 'Validando…' : mode === 'cadastro' ? 'Criar conta' : 'Entrar'}</button>
       </form>
-      <div className="account-divider"><span>ou</span></div>
-      <button type="button" className="btn secondary account-google" onClick={withGoogle}><GoogleIcon /> Continuar com o Google</button>
+      {googleEnabled && <>
+        <div className="account-divider"><span>ou</span></div>
+        <button type="button" className="btn secondary account-google" onClick={withGoogle}><GoogleIcon /> Continuar com o Google</button>
+      </>}
       {mode === 'entrar' && <Link href="/recuperar-senha" className="text-link account-forgot" onClick={() => setOpen(false)}>Esqueci minha senha</Link>}
     </div>}
     {open && session && <div className="account-panel" role="menu">

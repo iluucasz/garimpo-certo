@@ -65,6 +65,7 @@
 /* Estados de página: 404 e erro */
 .status { display: grid; place-items: center; min-height: 58vh; padding: 48px 16px; text-align: center; }
 .status > div { max-width: 520px; }
+.statusCode::before { content: attr(data-code); }
 .statusCode { display: block; font-family: var(--font-display), sans-serif; font-size: clamp(72px, 14vw, 120px); font-weight: 800; letter-spacing: -.06em; line-height: 1; color: var(--border-strong); }
 .status h1 { font-family: var(--font-display), sans-serif; font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -.04em; line-height: 1.15; margin: 12px 0 10px; text-wrap: balance; }
 .status p { margin: 0 0 24px; font-size: 17px; line-height: 1.6; color: var(--muted-foreground); }

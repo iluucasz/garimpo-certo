@@ -1,5 +1,5 @@
 import { fail, ok } from '@/lib/server/api'
-import { mockCache } from '@/lib/server/mock-cache'
+import { mockCache } from '@/lib/server/memory-cache'
 import { generateRecommendations } from '@/lib/recommendation/engine'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { getProductMetrics } from '@/lib/db/repositories/product-metrics'

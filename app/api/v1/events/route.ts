@@ -1,7 +1,7 @@
 import { withIdempotency } from '@/lib/db/idempotency'
 import { listEvents, publishEvent, type DomainEventType } from '@/lib/db/repositories/events'
 import { authorize, fail, jsonBody, ok } from '@/lib/server/api'
-import { rateLimit } from '@/lib/server/mock-rate-limit'
+import { rateLimit } from '@/lib/server/rate-limit'
 export async function GET(request: Request) { const { blocked } = await authorize(request, 'analytics:read'); if (blocked) return blocked; return ok(await listEvents()) }
 export async function POST(request: Request) {
   const quota = rateLimit(request, 'events', 60)

@@ -16,7 +16,7 @@ const copy: Record<Mode, { title: string; lead: string; submit: string; busy: st
   recuperar: { title: 'Recupere seu acesso.', lead: 'Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.', submit: 'Enviar link', busy: 'Enviando…' },
 }
 
-export function AuthForm({ mode, emailEnabled = false }: { mode: Mode; emailEnabled?: boolean }) {
+export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: { mode: Mode; emailEnabled?: boolean; googleEnabled?: boolean }) {
   const router = useRouter()
   const [sent, setSent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -87,7 +87,7 @@ export function AuthForm({ mode, emailEnabled = false }: { mode: Mode; emailEnab
           {mode === 'recuperar' && <div className={styles.links}><Link href="/entrar">Voltar para entrar</Link></div>}
         </form>}
 
-      {mode !== 'recuperar' && !sent && <>
+      {mode !== 'recuperar' && !sent && googleEnabled && <>
         <div className={styles.divider}><span>ou</span></div>
         <button type="button" className={styles.secondary} onClick={withGoogle}><GoogleIcon/>Continuar com o Google</button>
       </>}

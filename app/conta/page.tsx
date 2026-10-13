@@ -4,17 +4,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 import { ArrowUpRight, Check, ChevronRight, Clock3, Download, GitCompareArrows, Heart, LockKeyhole, LogOut, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
 import { deleteUser, signOut, updateUser, useSession } from '@/lib/auth/client'
 import { currentPrice } from '@/lib/catalog/signals'
-import { formatPrice } from '@/lib/mock-data'
+import { formatPrice } from '@/lib/format'
 import styles from './account.module.css'
 
 export default function AccountPage() {
-  const state = useMock()
+  const state = useVisitorState()
   const { categories, products, offers } = useStoreData()
   const priceCeiling = Math.max(50, Math.ceil(Math.max(0, ...products.map((product) => currentPrice(product, offers))) / 10) * 10)
   const router = useRouter()

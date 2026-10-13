@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Check, ChevronLeft, ChevronRight, History, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import { useStoreData } from '@/components/store-data-provider'
-import { rankProducts, searchProducts } from '@/lib/mock-services'
+import { rankProducts, searchProducts } from '@/lib/catalog/search'
 import { catalogSignals, currentPrice, matchesSignal } from '@/lib/catalog/signals'
 import { platformServices } from '@/lib/platform'
 import styles from './search-experience.module.css'
@@ -24,7 +24,7 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const params = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
-  const { savedSearches, saveSearch, removeSavedSearch } = useMock()
+  const { savedSearches, saveSearch, removeSavedSearch } = useVisitorState()
   const { products, categories, offers } = useStoreData()
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)

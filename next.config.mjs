@@ -22,5 +22,7 @@ const images={
     {protocol:'https',hostname:'images.unsplash.com'},
   ],
 }
-const nextConfig={images,async headers(){return[{source:'/:path*',headers:securityHeaders}]}}
+// Só um booleano (nunca as credenciais) é inlinado no bundle, para o cliente saber se o login com Google existe.
+const env={NEXT_PUBLIC_GOOGLE_LOGIN:process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET?'1':''}
+const nextConfig={images,env,async headers(){return[{source:'/:path*',headers:securityHeaders}]}}
 export default nextConfig

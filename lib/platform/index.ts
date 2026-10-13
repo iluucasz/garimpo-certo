@@ -13,7 +13,7 @@ export type {
   TrackingEvent,
 } from './contracts'
 export { LocalRepository } from './local-repository'
-export { platformServices } from './mock-services'
+export { platformServices } from './services'
 
 /**
  * Ponto único de troca para integrações reais.

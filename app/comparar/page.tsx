@@ -3,16 +3,16 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, GitCompareArrows, LockKeyhole, MoveHorizontal, Star, X } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
 import { EmptyCollection, PersonalHeading, SuggestedProducts } from '@/components/storefront/personal-page-parts'
-import { formatPrice, formatSoldCount } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/format'
 import styles from '@/components/storefront/personal-pages.module.css'
 
 export default function ComparePage() {
-  const { compare, toggleCompare, hydrated } = useMock()
+  const { compare, toggleCompare, hydrated } = useVisitorState()
   const { products, getBestOffer, getProvider } = useStoreData()
   if (!hydrated) return <StorefrontShell><ContentSkeleton variant="compare"/></StorefrontShell>
   const items = compare.flatMap((id) => { const product = products.find((item) => item.id === id); return product ? [product] : [] }).slice(0, 4)

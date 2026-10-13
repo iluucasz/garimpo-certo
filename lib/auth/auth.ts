@@ -2,13 +2,20 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
+import { siteUrl } from '@/lib/site'
 import { buildPasswordResetEmail, emailEnabled, sendEmail } from './email'
 
 if (!process.env.BETTER_AUTH_SECRET) throw new Error('BETTER_AUTH_SECRET não configurado.')
 
+// Links de e-mail e callbacks usam esta URL. Sem BETTER_AUTH_URL, vale o endereço público do site.
+const baseURL = process.env.BETTER_AUTH_URL ?? siteUrl
+if (process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(baseURL)) {
+  console.error(`[auth] BETTER_AUTH_URL aponta para ${baseURL} em produção: links de redefinição e logins sociais vão falhar.`)
+}
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
+  baseURL,
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,

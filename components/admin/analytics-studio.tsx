@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Download, Filter, Link2 } from 'lucide-react'
-import { formatPrice } from '@/lib/mock-data'
+import { formatPrice } from '@/lib/format'
 import type { ConversionStatus } from '@/lib/analytics/attribution'
 
 type Provider = { id: string; code: string; displayName: string }

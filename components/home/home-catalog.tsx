@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
@@ -23,7 +23,7 @@ const PAGE = 8
 
 export function HomeCatalog({ activeFilter = 'trending' }: { activeFilter?: FilterId }) {
   const { products, categories, offers, getBestOffer } = useStoreData()
-  const { hydrated, cookiePreferences, preferences, preferencesSaved } = useMock()
+  const { hydrated, cookiePreferences, preferences, preferencesSaved } = useVisitorState()
   // "Para você" só existe com a personalização permitida e interesses que a pessoa realmente salvou.
   const interestSlugs = useMemo(() => categories.filter((category) => preferences.categories.includes(category.name)).map((category) => category.slug), [categories, preferences.categories])
   const forYouAvailable = hydrated && cookiePreferences.personalization && preferencesSaved && interestSlugs.length > 0

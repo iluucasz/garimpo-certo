@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, ChevronRight, Clock3, GitCompareArrows, Heart, UserRound } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import styles from './personal-pages.module.css'
@@ -10,7 +10,7 @@ import styles from './personal-pages.module.css'
 export type PersonalMode = 'favorites' | 'compare' | 'history'
 
 export function PersonalHeading({ mode }: { mode: PersonalMode }) {
-  const { favorites, compare, recent } = useMock()
+  const { favorites, compare, recent } = useVisitorState()
   const isFavorites = mode === 'favorites'
   const isHistory = mode === 'history'
   const title = isFavorites ? <>Seus <em>favoritos.</em></> : isHistory ? <>Vistos <em>recentemente.</em></> : <>Compare seus <em>achados.</em></>

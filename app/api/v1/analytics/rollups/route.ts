@@ -1,6 +1,6 @@
 import { listEvents } from '@/lib/db/repositories/events'
 import { authorize, ok } from '@/lib/server/api'
-import { mockCache } from '@/lib/server/mock-cache'
+import { mockCache } from '@/lib/server/memory-cache'
 export async function GET(request: Request) {
   const { blocked } = await authorize(request, 'analytics:read'); if (blocked) return blocked
   const cacheKey = 'rollups:overview'

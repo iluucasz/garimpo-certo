@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LockKeyhole } from 'lucide-react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import { ContentSkeleton } from './store-loading'
@@ -10,7 +10,7 @@ import { EmptyCollection, PersonalHeading, SuggestedProducts } from './personal-
 import styles from './personal-pages.module.css'
 
 export function FavoritesCollection() {
-  const { favorites, hydrated } = useMock()
+  const { favorites, hydrated } = useVisitorState()
   const { products, getBestOffer } = useStoreData()
   const [sort, setSort] = useState('saved')
   if (!hydrated) return <ContentSkeleton/>

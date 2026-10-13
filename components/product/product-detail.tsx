@@ -4,9 +4,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, BadgeCheck, GitCompareArrows, Heart, ShieldCheck, Star, Truck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useMock } from '@/components/mock-provider'
+import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
-import { formatPrice, formatSoldCount } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/format'
 import { generateRecommendations } from '@/lib/recommendation/engine'
 import type { Product } from '@/lib/types'
 import { ProductGrid } from './product-card'
@@ -16,7 +16,7 @@ import styles from './product-detail.module.css'
 const isGeneratedDescription = (text: string) => /^Vendido por .+ na Shopee\.?$/.test(text.trim())
 
 export function ProductDetail({ product }: { product: Product }) {
-  const { favorites, compare, toggleFavorite, toggleCompare, addRecent } = useMock()
+  const { favorites, compare, toggleFavorite, toggleCompare, addRecent } = useVisitorState()
   const { products, categories, offers: allOffers, metrics, getOffers: getOffersForProduct, getBestOffer, getProvider } = useStoreData()
   const [imageIndex, setImageIndex] = useState(0)
   const [showBar, setShowBar] = useState(false)
@@ -71,7 +71,7 @@ export function ProductDetail({ product }: { product: Product }) {
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><Link href={`/categorias/${product.category}`}>{categoryName}</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span></nav>
       <div className={styles.layout}>
         <div className={styles.gallery}>
-          <div className={styles.mainImage}><Image src={gallery[imageIndex]} alt={`${product.name}, imagem ${imageIndex + 1} de ${gallery.length}`} fill priority sizes="(max-width: 900px) 100vw, 50vw"/>{discount > 0 && <span className={styles.discount}>−{discount}%<span className="sr-only"> de desconto</span></span>}</div>
+          <div className={styles.mainImage}><Image src={gallery[imageIndex]} alt={`${product.name}, imagem ${imageIndex + 1} de ${gallery.length}`} fill preload sizes="(max-width: 900px) 100vw, 50vw"/>{discount > 0 && <span className={styles.discount}>−{discount}%<span className="sr-only"> de desconto</span></span>}</div>
           {gallery.length > 1 && <div className={styles.thumbs} role="group" aria-label="Galeria de imagens">{gallery.map((image, index) => <button type="button" key={`${image}-${index}`} className={imageIndex === index ? styles.thumbActive : ''} onClick={() => setImageIndex(index)} aria-label={`Mostrar imagem ${index + 1}`} aria-pressed={imageIndex === index}><Image src={image} alt="" fill sizes="72px"/></button>)}</div>}
         </div>
 

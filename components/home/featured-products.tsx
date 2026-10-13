@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
 import { useStoreData } from '@/components/store-data-provider'
-import { formatPrice, formatSoldCount } from '@/lib/mock-data'
+import { formatPrice, formatSoldCount } from '@/lib/format'
 import styles from './featured-products.module.css'
 
 export function FeaturedProducts() {
