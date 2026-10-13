@@ -39,6 +39,8 @@ export const auth = betterAuth({
   } : undefined,
   user: {
     modelName: 'users',
+    // Exclusão pela própria pessoa (LGPD). Quem tem senha precisa confirmá-la; as FKs do banco fazem o cascade.
+    deleteUser: { enabled: true },
   },
   session: {
     modelName: 'sessions',

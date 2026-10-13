@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Check, Download, Trash2 } from 'lucide-react'
 import { useMock } from '@/components/mock-provider'
@@ -8,7 +9,7 @@ import styles from '@/components/storefront/content-pages.module.css'
 
 const preferenceItems = [
   { key: 'analytics', label: 'Medição de uso', description: 'Permite registrar o que você faz no catálogo (favoritar, comparar, ver produtos) e medir acessos. Desligada, nada disso é enviado.' },
-  { key: 'personalization', label: 'Personalização', description: 'Reservada para recomendações baseadas nos seus interesses. Hoje ainda não altera a vitrine.' },
+  { key: 'personalization', label: 'Personalização', description: 'Usa os interesses salvos na sua conta para montar a aba “Para você” na página inicial.' },
   { key: 'marketing', label: 'Comunicações', description: 'Registra se você aceita receber novidades. Hoje não enviamos campanhas.' },
 ] as const
 
@@ -70,7 +71,7 @@ export default function PrivacyPage() {
       {message && <p className={styles.success} role="status"><Check aria-hidden="true"/>{message}</p>}
 
       <h2>Seus direitos (LGPD)</h2>
-      <p>Você pode pedir acesso, correção, portabilidade e exclusão dos dados da sua conta. Os botões acima atuam só nos dados deste navegador; pedidos sobre a conta ainda não têm um canal automático nesta página.</p>
+      <p>Quem tem conta resolve tudo sozinho, na hora, em <Link href="/conta#dados">Minha conta › Seus dados</Link>: baixar uma cópia (acesso e portabilidade), corrigir o nome no perfil e excluir a conta com os favoritos salvos nela. Os botões acima atuam só nos dados deste navegador.</p>
     </article>
   </StorefrontShell>
 }

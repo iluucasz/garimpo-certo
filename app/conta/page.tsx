@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
-import { ArrowUpRight, Check, ChevronRight, Clock3, GitCompareArrows, Heart, LockKeyhole, LogOut, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronRight, Clock3, Download, GitCompareArrows, Heart, LockKeyhole, LogOut, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
 import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
-import { signOut, updateUser, useSession } from '@/lib/auth/client'
+import { deleteUser, signOut, updateUser, useSession } from '@/lib/auth/client'
 import { currentPrice } from '@/lib/catalog/signals'
 import { formatPrice } from '@/lib/mock-data'
 import styles from './account.module.css'
@@ -25,13 +25,19 @@ export default function AccountPage() {
   const [leaving, setLeaving] = useState(false)
   const [sessionError, setSessionError] = useState('')
   const [activeSection, setActiveSection] = useState('perfil')
+  const [exporting, setExporting] = useState(false)
+  const [dataError, setDataError] = useState('')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => { if (session?.user.name) setName(session.user.name) }, [session?.user.name])
   useEffect(() => { if (!isPending && !session && !leaving) router.replace('/entrar') }, [isPending, session, leaving, router])
   useEffect(() => {
     const syncSection = () => {
       const section = window.location.hash.slice(1)
-      if (['perfil', 'preferencias'].includes(section)) setActiveSection(section)
+      if (['perfil', 'preferencias', 'dados'].includes(section)) setActiveSection(section)
     }
     syncSection()
     window.addEventListener('hashchange', syncSection)
@@ -64,6 +70,36 @@ export default function AccountPage() {
     } catch { setSessionError('Não foi possível sair. Confira sua conexão.'); setLeaving(false) }
   }
 
+  async function exportData() {
+    if (exporting) return
+    setExporting(true)
+    setDataError('')
+    try {
+      const response = await fetch('/api/v1/me/export', { credentials: 'same-origin' })
+      if (!response.ok) throw new Error('export')
+      const { data } = await response.json()
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'garimpo-minha-conta.json'
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch { setDataError('Não foi possível gerar o arquivo. Tente novamente.') } finally { setExporting(false) }
+  }
+
+  async function deleteAccount(event: FormEvent) {
+    event.preventDefault()
+    if (deleting) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const result = await deleteUser(deletePassword ? { password: deletePassword } : {})
+      if (result.error) { setDeleteError(result.error.message || 'Não foi possível excluir a conta. Confira a senha e tente de novo.'); setDeleting(false); return }
+      setLeaving(true)
+      router.replace('/')
+    } catch { setDeleteError('Não foi possível excluir a conta. Confira sua conexão e tente de novo.'); setDeleting(false) }
+  }
+
   function toggleCategory(category: string) {
     const selected = state.preferences.categories.includes(category)
     state.savePreferences({ ...state.preferences, categories: selected ? state.preferences.categories.filter((item) => item !== category) : [...state.preferences.categories, category] })
@@ -76,6 +112,7 @@ export default function AccountPage() {
   const sections = [
     { id: 'perfil', label: 'Meu perfil', icon: UserRound },
     { id: 'preferencias', label: 'Preferências', icon: SlidersHorizontal },
+    { id: 'dados', label: 'Seus dados', icon: Download },
   ]
   const shortcuts = [
     { href: '/favoritos', label: 'Seus favoritos', count: state.favorites.length, caption: 'Ver produtos salvos', icon: Heart },
@@ -115,7 +152,33 @@ export default function AccountPage() {
               <div className={styles.pricePreference}><div className={styles.priceHeading}><label htmlFor="preferred-price">Quanto você pretende gastar?</label><output htmlFor="preferred-price">Até {formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}</output></div><input id="preferred-price" type="range" min="10" max={priceCeiling} step="10" value={Math.min(state.preferences.maxPrice, priceCeiling)} aria-valuetext={`Até ${formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}`} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/><div className={styles.rangeLabels}><span>R$ 10</span><span>{formatPrice(priceCeiling)}</span></div></div>
             </div>
             <div className={styles.communication}><h3>Alertas e novidades</h3><p>Ainda não enviamos alertas nem e-mails. Sua escolha fica registrada para quando isso existir.</p><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong><small>Interesse em alertas sobre produtos mais baratos.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong><small>Interesse em novidades e seleções editoriais.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
+            <p className={styles.personalHint}>{state.cookiePreferences.personalization
+              ? <>Seus interesses aparecem na aba “Para você” da <Link href="/#ofertas">página inicial</Link>.</>
+              : <>Para ver seus interesses na página inicial, permita a personalização em <Link href="/privacidade">Privacidade</Link>.</>}</p>
             <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
+          </section>
+
+          <section className={styles.panel} id="dados" aria-labelledby="data-title">
+            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Privacidade</span><h2 id="data-title">Seus dados</h2><p>Baixe uma cópia do que guardamos na sua conta ou exclua a conta.</p></div><ShieldCheck aria-hidden="true"/></div>
+            <div className={styles.dataBody}>
+              <div className={styles.dataRow}>
+                <div><strong>Baixar meus dados</strong><small>Perfil e favoritos salvos na conta, em um arquivo JSON.</small></div>
+                <button type="button" className={styles.outlineButton} onClick={exportData} disabled={exporting}>{exporting ? 'Preparando…' : 'Baixar arquivo'}</button>
+              </div>
+              {dataError && <p className={`${styles.formMessage} ${styles.error}`} role="alert">{dataError}</p>}
+              <div className={styles.dataRow}>
+                <div><strong>Excluir minha conta</strong><small>Apaga a conta e os favoritos salvos nela. Não dá para desfazer.</small></div>
+                {!confirmingDelete && <button type="button" className={styles.dangerButton} onClick={() => setConfirmingDelete(true)}>Excluir conta</button>}
+              </div>
+              {confirmingDelete && <form className={styles.deleteForm} onSubmit={deleteAccount} aria-busy={deleting}>
+                <label className={styles.field}>Senha da conta<input name="password" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => { setDeletePassword(event.target.value); setDeleteError('') }} placeholder="Se você entra com o Google, deixe em branco"/></label>
+                {deleteError && <p className={`${styles.formMessage} ${styles.error}`} role="alert">{deleteError}</p>}
+                <div className={styles.deleteActions}>
+                  <button type="button" className={styles.outlineButton} onClick={() => { setConfirmingDelete(false); setDeletePassword(''); setDeleteError('') }}>Cancelar</button>
+                  <button type="submit" className={styles.dangerButton} disabled={deleting}>{deleting ? 'Excluindo…' : 'Excluir definitivamente'}</button>
+                </div>
+              </form>}
+            </div>
           </section>
 
           <div className={styles.privacyNote}><ShieldCheck aria-hidden="true"/><p>Seus interesses ficam salvos neste navegador. <Link href="/privacidade">Gerenciar privacidade e cookies</Link></p></div>

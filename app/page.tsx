@@ -9,7 +9,7 @@ import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { articles } from '@/lib/mock-data'
 import styles from '@/components/home/home.module.css'
 
-const validFilters = ['trending', 'discount', 'rating', 'budget'] as const
+const validFilters = ['trending', 'discount', 'rating', 'budget', 'foryou'] as const
 type HomeFilter = (typeof validFilters)[number]
 
 const siteJsonLd = {

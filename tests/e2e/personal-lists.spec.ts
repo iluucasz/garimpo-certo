@@ -65,3 +65,27 @@ test('medição só envia eventos de uso depois da permissão', async ({ page })
   await card.getByRole('button', { name: /dos favoritos/ }).click()
   await expect.poll(() => events.length).toBeGreaterThan(0)
 })
+
+test('aba "Para você" só aparece com personalização permitida e interesses salvos', async ({ page }) => {
+  const forYou = page.getByRole('link', { name: 'Para você' })
+  await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Em alta' })).toBeVisible()
+  await expect(forYou).toHaveCount(0)
+
+  // Personalização permitida, mas interesses nunca salvos: valores padrão não contam como escolha.
+  await page.evaluate(() => localStorage.setItem('garimpo:cookie-preferences', JSON.stringify({ essential: true, analytics: false, personalization: true, marketing: false })))
+  await page.reload()
+  await expect(page.getByRole('link', { name: 'Em alta' })).toBeVisible()
+  await expect(forYou).toHaveCount(0)
+
+  await page.evaluate(() => localStorage.setItem('garimpo:user-preferences', JSON.stringify({ categories: ['Cozinha'], maxPrice: 1500, notifications: true, newsletter: false })))
+  await page.reload()
+  await expect(forYou).toBeVisible()
+  await forYou.click()
+  await expect(page.locator('.product-card').first()).toBeVisible()
+  expect(await page.locator('.product-card').count()).toBeGreaterThan(0)
+
+  await page.evaluate(() => localStorage.setItem('garimpo:cookie-preferences', JSON.stringify({ essential: true, analytics: false, personalization: false, marketing: false })))
+  await page.reload()
+  await expect(forYou).toHaveCount(0)
+})

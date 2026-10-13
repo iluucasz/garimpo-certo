@@ -27,6 +27,8 @@ interface MockState {
   consent: boolean | null
   cookiePreferences: CookiePreferences
   preferences: UserPreferences
+  /** true só depois de a pessoa salvar interesses; os valores padrão não contam como escolha. */
+  preferencesSaved: boolean
   savedSearches: string[]
   toggleFavorite: (id: string) => void
   toggleCompare: (id: string) => void
@@ -63,6 +65,7 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
   const [consent, setConsentState] = useState<boolean | null>(null)
   const [cookiePreferences, setCookiePreferences] = useState(defaultCookies)
   const [preferences, setPreferences] = useState(defaultPreferences)
+  const [preferencesSaved, setPreferencesSaved] = useState(false)
   const [savedSearches, setSavedSearches] = useState<string[]>([])
 
   useEffect(() => {
@@ -81,6 +84,7 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
     setConsentState(storedConsent === null ? null : storedConsent === 'true')
     setCookiePreferences(readObject('garimpo:cookie-preferences', defaultCookies))
     setPreferences(readObject('garimpo:user-preferences', defaultPreferences))
+    setPreferencesSaved(localStorage.getItem('garimpo:user-preferences') !== null)
     setHydrated(true)
   }, [])
 
@@ -152,6 +156,7 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
   }, [])
   const savePreferences = useCallback((value: UserPreferences) => {
     setPreferences(value)
+    setPreferencesSaved(true)
     persist('garimpo:user-preferences', value)
     platformServices.tracker.track({ name: 'preferences_updated', resource: 'user', actor: 'visitor' })
   }, [])
@@ -172,10 +177,10 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const value = useMemo<MockState>(() => ({
-    hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, savedSearches,
+    hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches,
     toggleFavorite, toggleCompare, addRecent, clearRecent, clearHistory: clearRecent, setConsent, saveCookiePreferences,
     savePreferences, saveSearch, removeSavedSearch,
-  }), [hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, savedSearches, toggleFavorite, toggleCompare, addRecent, clearRecent, setConsent, saveCookiePreferences, savePreferences, saveSearch, removeSavedSearch])
+  }), [hydrated, favorites, recent, compare, consent, cookiePreferences, preferences, preferencesSaved, savedSearches, toggleFavorite, toggleCompare, addRecent, clearRecent, setConsent, saveCookiePreferences, savePreferences, saveSearch, removeSavedSearch])
 
   return <MockContext.Provider value={value}>{children}</MockContext.Provider>
 }
