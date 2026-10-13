@@ -8,6 +8,7 @@ import { useMock } from '@/components/mock-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { AccountMenu } from './account-menu'
 import { StoreBrand } from './store-brand'
+import { editorialEnabled } from '@/lib/site'
 import styles from './storefront.module.css'
 
 export function SiteHeader() {
@@ -39,7 +40,7 @@ export function SiteHeader() {
       <div id="store-navigation" className={`${styles.navRow} ${open ? styles.navOpen : ''}`} onKeyDown={(event) => { if (event.key === 'Escape') { closeMenu(); menuButton.current?.focus() } }}>
         <div className={`container ${styles.navInner}`}>
           <nav className={styles.mainNav} aria-label="Navegação principal"><Link href="/buscar" onClick={closeMenu}>Todos os achados</Link>{categories.map((category) => <Link href={`/categorias/${category.slug}`} key={category.id} onClick={closeMenu}>{category.name}</Link>)}</nav>
-          <nav className={styles.editorialNav} aria-label="Coleções e guias"><Link href="/#colecoes" onClick={closeMenu}>Coleções</Link><Link href="/guias" onClick={closeMenu}>Guias de compra</Link></nav>
+          {editorialEnabled && <nav className={styles.editorialNav} aria-label="Coleções e guias"><Link href="/colecoes/mesa-bem-resolvida" onClick={closeMenu}>Coleções</Link><Link href="/guias" onClick={closeMenu}>Guias de compra</Link></nav>}
         </div>
       </div>
     </header>

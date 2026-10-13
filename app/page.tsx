@@ -7,6 +7,7 @@ import { HeroStat } from '@/components/home/hero-stat'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { articles } from '@/lib/mock-data'
+import { editorialEnabled, siteUrl } from '@/lib/site'
 import styles from '@/components/home/home.module.css'
 
 const validFilters = ['trending', 'discount', 'rating', 'budget', 'foryou'] as const
@@ -16,9 +17,9 @@ const siteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'Garimpo certo',
-  url: 'https://garimpo.example',
+  url: siteUrl,
   inLanguage: 'pt-BR',
-  potentialAction: { '@type': 'SearchAction', target: 'https://garimpo.example/buscar?q={search_term_string}', 'query-input': 'required name=search_term_string' },
+  potentialAction: { '@type': 'SearchAction', target: `${siteUrl}/buscar?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
 }
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ filtro?: string }> }) {
@@ -49,12 +50,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
       <HomeCatalog activeFilter={activeFilter}/>
       <HomeSelections/>
 
-      <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
+      {editorialEnabled && <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
         <div className={styles.guideIntro}><h2 id="guides-title">Vale a leitura.</h2><p>Detalhes que ajudam a decidir qual produto combina com você.</p><Link href="/guias">Todos os guias <ArrowRight aria-hidden="true"/></Link></div>
         <div className={styles.guideList}>{articles.map((article) => <Link href={`/guias/${article.slug}`} className={styles.guide} key={article.id}>
           <div className={styles.guideImage}><Image src={article.image} alt="" fill sizes="(max-width: 700px) 88px, 140px"/></div><div><span>{article.category} <i/> {article.readTime} de leitura</span><h3>{article.title}</h3></div><ArrowUpRight aria-hidden="true"/>
         </Link>)}</div>
-      </div></section>
+      </div></section>}
 
       <section className={`${styles.howItWorks} container`} aria-labelledby="how-title">
         <h2 id="how-title">Você escolhe.<br/>A gente ajuda a encontrar.</h2>
