@@ -12,7 +12,7 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 | ✅ | **Relatório de cliques por cupom** | Colunas na lista de cupons e resumo no topo (hoje/7/30 dias, mais clicados). |
 | ✅ | Painel "Comissões reais" em Analytics (por situação, canal/categoria e produto) | |
 | ✅ | Tipo da execução (Catálogo × Comissões) na tela Importações | |
-| 🙋 | **Atualizar o worker na VPS** com o código novo | Sem isso a sincronização de comissões não roda sozinha (só pelo botão) e novos produtos continuam sem etiqueta. Passo a passo em `worker/README.md`. |
+| 🙋 | **Atualizar o worker na VPS** com o código novo | Sem isso a sincronização de comissões e a Engine não rodam sozinhas (só pelos botões do painel) e novos produtos continuam sem etiqueta. Passo a passo em `worker/README.md`. |
 | ⏳ | Conferir o primeiro pedido real: `utmContent` e `netCommission` chegam como esperado | Acontece sozinho quando houver a primeira venda. |
 
 ## 2. Painel e produto
