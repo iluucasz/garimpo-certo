@@ -42,7 +42,7 @@
 .sectionHeading p { margin: 8px 0 0; color: var(--muted-foreground); font-size: 17px; }
 .comparisonHint { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--muted-foreground); margin: 0 0 18px; }
 .tableScroll { position: relative; overflow-x: auto; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--surface); scrollbar-width: thin; scrollbar-color: var(--border-strong) var(--surface-sunken); }
-.comparisonTable { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: left; }
+.comparisonTable { width: 100%; min-width: calc(160px + var(--compare-cols, 2) * 240px); border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: left; }
 .comparisonTable th, .comparisonTable td { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 18px 20px; vertical-align: top; font-size: 16px; line-height: 1.5; color: var(--foreground); }
 .comparisonTable tr > :last-child { border-right: 0; }
 .comparisonTable tbody tr:last-child > * { border-bottom: 0; }
@@ -103,8 +103,11 @@
   .sectionHeading h2 { font-size: 28px; }
   .sectionHeading p { font-size: 16px; }
   .localNote { align-items: flex-start; line-height: 1.7; }
-  .comparisonTable th, .comparisonTable td { padding: 15px; font-size: 15px; }
-  .comparisonTable tr > :first-child { width: 124px; padding: 15px 10px; font-size: 13px; overflow-wrap: anywhere; }
+  .comparisonTable { min-width: calc(104px + var(--compare-cols, 2) * 196px); }
+  .tableScroll { scroll-snap-type: x proximity; }
+  .comparisonTable thead th:not(:first-child) { scroll-snap-align: start; scroll-margin-left: 104px; }
+  .comparisonTable th, .comparisonTable td { padding: 14px 12px; font-size: 15px; }
+  .comparisonTable tr > :first-child { width: 104px; padding: 14px 8px; font-size: 13px; overflow-wrap: anywhere; }
   .comparisonTable thead th { padding: 22px 17px; }
   .productHeading h2 { font-size: 16px; }
   .price { font-size: 22px; }

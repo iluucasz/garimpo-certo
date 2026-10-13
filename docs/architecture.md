@@ -25,7 +25,7 @@ components/               UI por domínio e shell
 lib/
   auth/                    RBAC e futura sessão
   platform/                contratos e adapters browser
-  server/                  adapters server, cache, ingestão e estado mock
+  server/                  adapters server, cache em memória, ingestão e importação do catálogo
 packages/
   contracts/               contrato compartilhável do workspace
 docs/                      decisões e modelos
@@ -106,7 +106,7 @@ Pipeline: elegibilidade → geração de candidatos editorial/comportamental/sim
 - Rollups: 30 segundos no admin.
 - Sessão e permissões: não armazenar em cache público.
 
-O mock implementa cache-aside com TTL. Em produção, usar cache do Next.js para conteúdo público e Redis apenas se houver necessidade de estado distribuído, rate limit ou filas.
+O catálogo e as métricas usam `unstable_cache` (5 min, com tags e invalidação pelo cron); rotas pontuais usam um cache em memória (`lib/server/memory-cache.ts`). Em produção, usar cache do Next.js para conteúdo público e Redis apenas se houver necessidade de estado distribuído, rate limit ou filas.
 
 ## Jobs
 

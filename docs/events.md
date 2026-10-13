@@ -18,4 +18,4 @@ Eventos de domínio usam `id`, `type`, `aggregateId`, `occurredAt`, `schemaVersi
 
 `page_view`, `search`, `product_view`, `favorite_add`, `compare_add`, `recommendation_impression`, `recommendation_click`, `affiliate_click`, `conversion`, `consent_updated` e `experiment_exposure`. Eventos não essenciais só são emitidos com consentimento adequado; `experiment_exposure` inclui assignment sticky, variante e versão do algoritmo.
 
-O mock mantém eventos em memória/local storage. Produção usa outbox transacional para fatos críticos, fila retryable e dead-letter review após falhas permanentes.
+Eventos da vitrine são enviados a `POST /api/v1/events` somente com a permissão de medição; cliques de compra vão para `POST /api/v1/outbound-clicks`. Para fatos críticos o desenho-alvo usa outbox transacional para fatos críticos, fila retryable e dead-letter review após falhas permanentes.

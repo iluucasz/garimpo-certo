@@ -1,5 +1,16 @@
 # Privacidade e LGPD
 
-Finalidades são separadas em `necessary`, `analytics`, `personalization` e `marketing`. Apenas necessary opera sem escolha; rejeitar categorias não essenciais deve ser tão acessível quanto aceitar. Personalização desativada usa ranking contextual/global e não quebra a experiência.
+## O que existe hoje
 
-Cada campo terá finalidade, base legal e retenção. Identificadores são pseudonimizados, IP completo não é mantido indefinidamente e categorias sensíveis são proibidas em segmentos. Solicitações de acesso, correção, portabilidade e exclusão geram jobs idempotentes e auditáveis; obrigações fiscais, antifraude e de auditoria permanecem minimizadas conforme base legal.
+- **Consentimento**: quatro categorias (`essential`, `analytics`, `personalization`, `marketing`), guardadas em `localStorage` (`garimpo:cookie-preferences`). Só `essential` opera sem escolha; o padrão das demais é desligado.
+- **Medição** (`analytics`): eventos da vitrine (favoritar, comparar, ver produto, cliques de compra) só saem do navegador com essa permissão (`lib/platform/consent.ts`), e o Vercel Analytics só é montado depois dela. Ações do painel administrativo não passam por esse filtro.
+- **Cliques de compra**: registram oferta, ponto da página e um identificador de aba; não gravam IP, user agent nem usuário.
+- **Personalização**: com a permissão e interesses salvos, a home mostra a aba "Para você".
+- **Direitos do titular, por autoatendimento** (`/conta#dados`): baixar os dados da conta (`GET /api/v1/me/export`), corrigir o nome e excluir a conta (Better Auth `deleteUser`; as chaves do banco removem favoritos e sessões).
+- **Dados locais**: a página `/privacidade` exporta e apaga o que fica no navegador.
+
+## Lacunas
+
+- Não há fila para pedidos que o autoatendimento não cobre; a página mostra um e-mail de contato quando `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` está definida.
+- As tabelas `consent_records`, `privacy_preferences` e `privacy_requests` existem, mas o consentimento ainda não é gravado no servidor.
+- Retenção e base legal por campo ainda não estão documentadas campo a campo.

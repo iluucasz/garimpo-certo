@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
     "test:e2e:prod": "next build && playwright test --config=playwright.prod.config.ts",
-    "quality": "pnpm typecheck && pnpm test && pnpm build",
+    "quality": "tsc --noEmit && vitest run && next build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:pull": "drizzle-kit pull",

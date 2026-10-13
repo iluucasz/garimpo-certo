@@ -1,44 +1,39 @@
-# Backlog — pendências da migração mock → real
+# Backlog
 
-Registro do que ficou pendente após a migração de backend/auth/storefront para Neon + Better Auth (2026-09-04/05). Nada aqui é bug — são lacunas conhecidas, deixadas de propósito por escopo/tempo. Ver `CLAUDE.md` para o estado do que **já** está real.
+Estado em 2026-10-13. O que **já** é real está descrito em `CLAUDE.md`; aqui ficam só as lacunas conhecidas.
+Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não está no código.
 
-## Prioridade alta
+## Depende de ação externa
 
-- [ ] **Git init + primeiro commit.** O projeto não tem nenhum histórico de versão salvo — todo o trabalho de migração (schema, auth, API, storefront) existe só no working directory. Rodar `git init`, revisar `.gitignore` (já protege `.env`), e commitar.
-- [ ] **LGPD real.** `consentRecords`, `privacyPreferences`, `privacyRequests` existem no schema mas nunca são gravadas — consentimento de cookies continua 100% em `localStorage` (`components/mock-provider.tsx`). É a única lacuna que toca dado sensível de verdade.
-- [ ] **E-mail transacional.** `lib/auth/auth.ts#sendResetPassword` só loga o link no console — nenhum provedor (Resend, SendGrid, Postmark) conectado. Sem isso, reset de senha não funciona em produção.
-- [ ] **Variáveis de ambiente de produção.** `BETTER_AUTH_URL`/`NEXT_PUBLIC_BETTER_AUTH_URL` apontam para `localhost:3000`. Precisam apontar para o domínio real antes de qualquer deploy.
+- [ ] **(você) E-mail transacional.** O envio por Resend está implementado (`lib/auth/email.ts`) e testado, mas só liga com `RESEND_API_KEY` e `EMAIL_FROM` no ambiente. Sem eles, o link de redefinição de senha só vai para o log do servidor e a tela avisa isso.
+- [ ] **(você) `BETTER_AUTH_URL` / `NEXT_PUBLIC_BETTER_AUTH_URL` em produção.** Precisam apontar para o domínio real (o código avisa no log se detectar `localhost` em produção).
+- [ ] **(você) `CRON_SECRET` em produção.** Sem ele a importação diária (`vercel.json`) responde 503 e o catálogo volta a envelhecer.
+- [ ] **(você) Domínio.** `NEXT_PUBLIC_SITE_URL` define canonical, sitemap, Open Graph e JSON-LD. Sem ele usa o domínio de produção que a Vercel injeta.
+- [ ] **(você) Contato da LGPD.** `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` aparece na página de privacidade para pedidos que o autoatendimento (`/conta#dados`) não cobre.
+- [ ] **(você) Login com Google.** O botão só aparece com `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (confirmar no ambiente de produção).
 
-## Tabelas do schema sem nenhum código usando
+## Produto
 
-Do levantamento em `CLAUDE.md` ("Schema coverage"), continuam com zero referências fora de `schema.ts`/`relations.ts`:
+- [ ] **Coleções e guias reais.** Hoje são conteúdo de demonstração, escondidos por `NEXT_PUBLIC_EDITORIAL_ENABLED`. Precisam de tabelas e de um fluxo de edição antes de serem ligados.
+- [ ] **Painel admin.** Segue demonstrativo (números fixos, CRUD em `localStorage` para ~29 módulos) e não recebeu o redesign da vitrine. Decidir se vira produto real; é também onde ainda mora a maior parte do `app/globals.css`.
+- [ ] **Personalização.** Hoje só alimenta a aba "Para você" da home. Busca e ranking não leem os interesses.
+- [ ] **Fila para pedidos de titulares.** O autoatendimento cobre acesso, portabilidade, correção e exclusão; não há fila para o que ele não resolve.
+- [ ] **Avaliações, frete e crescimento.** A API de afiliados da Shopee não expõe contagem de avaliações, frete nem série de crescimento; a interface não inventa esses dados.
 
-- [ ] `syncJobs` / `syncJobRuns` / `syncErrors` — o sync de providers usa a tabela genérica `jobQueueEntries` em vez dessas, mais específicas para esse fluxo
-- [ ] `affiliateLinks` / `affiliatePrograms` — cliques/conversões de afiliado usam `providerId` direto, sem a camada de "link" e "programa"
-- [ ] `offerPrices` / `offerAvailability` / `offerCommissions` — os campos equivalentes vivem direto na tabela `offers`; essas seriam para snapshot/histórico normalizado separado
-- [ ] `providerAccounts` / `providerCapabilities` — credenciais de API por provider e capacidades declaradas, sem UI/rota nenhuma
-- [ ] `anonymousIdentities` / `identityMerges` — resolução de identidade anônimo→logado não implementada
-- [ ] `dailyProductMetrics` / `hourlyProductMetrics` — `/api/v1/analytics/rollups` calcula na hora a partir de `analyticsEvents` em vez de usar agregados pré-computados
-- [ ] `auditLogs` — mutações do admin não geram trilha de auditoria real
-- [ ] `globalSettings` — sem UI/rota de configuração global
-- [ ] `productVariants` — variantes de produto (cor, tamanho etc.) não implementadas
+## Engenharia
 
-## Fora do catálogo (decisão de escopo, não esquecimento)
+- [ ] **Isolamento de banco em teste.** `tests/integration/**` roda no Neon real (criam e removem os próprios registros). Considerar um branch do Neon só para CI.
+- [ ] **Monitorar a cota do otimizador de imagens** no painel da Vercel e manter `images.remotePatterns` em dia ao adicionar um provedor com outro CDN.
+- [ ] **Métricas de campo.** Os Core Web Vitals foram medidos em laboratório (Pixel 5 emulado, CPU 4x, 1,6 Mbps). Falta RUM para valores reais.
+- [ ] **Regressão visual automática.** Não há; a limpeza de CSS foi validada por snapshot de estilos computados (script descartável).
+- [ ] **Gestão de admins.** Promover papel é manual via `pnpm db:grant-role <email> <ROLE_CODE>`.
 
-- [ ] **Coleções editoriais** (`app/colecoes/[slug]`) e **guias** (`app/guias*`) — sem tabela real no schema; continuam servidos por `lib/mock-data.ts`. Precisaria desenhar um schema de conteúdo/CMS antes de migrar.
-- [ ] **CRUD genérico do admin** (`components/admin/module-content.tsx`) — ~29 módulos (SEO, tema, campanhas, LGPD, etc.) rodando sobre `LocalRepository`/`localStorage`, a maioria sem tabela real para vincular.
-- [ ] **Simulador de ranking do admin** (`components/admin/experience-studio.tsx`) — usa `lib/mock-data` como fallback do motor de recomendação; ferramenta de demonstração, não afeta o cliente final.
+## Tabelas do schema sem código usando
 
-## Operacional / infraestrutura
-
-- [ ] **Gestão de admins.** Promover alguém a um papel hoje é manual via `pnpm db:grant-role <email> <ROLE_CODE>` — sem fluxo de convite/UI.
-- [ ] **OAuth / login social.** Só e-mail+senha está habilitado no Better Auth.
-- [ ] **Isolamento de banco em teste.** `tests/integration/**` roda contra o Neon real (se limpam sozinhos via `afterAll`, mas não há branch dedicado a testes — considerar um branch do Neon só para CI).
-- [ ] **Suíte e2e desatualizada.** Não rodei o Playwright desde a migração. `tests/e2e/accessibility.spec.ts` visita `/admin/ranking` sem sessão — hoje isso redireciona para `/entrar`, o que muda a intenção original do teste (testava a página do admin, agora testa o formulário de login).
-- [ ] **Catálogo pequeno.** Só 12 produtos reais (a seed original da Shopee), contra 24 no mock antigo — não é um bug, mas vale saber que a "loja" ainda é pequena para demonstração.
+`syncJobs`/`syncJobRuns`/`syncErrors`, `affiliateLinks`/`affiliatePrograms`, `offerPrices`/`offerAvailability`/`offerCommissions`, `providerAccounts`/`providerCapabilities`, `anonymousIdentities`/`identityMerges`, `dailyProductMetrics`/`hourlyProductMetrics`, `auditLogs`, `globalSettings`, `productVariants`, `consentRecords`/`privacyPreferences`/`privacyRequests` (o consentimento ainda é só `localStorage`; exportação e exclusão usam rota própria e o Better Auth).
 
 ## Referência rápida
 
-- Comandos de banco: `pnpm db:generate` / `db:migrate` / `db:pull` / `db:studio` / `db:seed-roles` / `db:grant-role` / `db:seed-catalog`
+- Banco: `pnpm db:generate` / `db:migrate` / `db:pull` / `db:studio` / `db:seed-roles` / `db:grant-role` / `db:seed-catalog` / `db:import-shopee`
+- Testes: `pnpm test` (unit + integração), `pnpm test:e2e` (dev), `pnpm test:e2e:prod` (build de produção)
 - Papéis RBAC: `OWNER`, `ADMIN`, `MARKETING`, `CATALOG_MANAGER`, `ANALYST`, `SUPPORT`, `READ_ONLY` (`lib/auth/rbac.ts`)
-- Plano original da migração (contexto histórico completo): `~/.claude/plans/crystalline-drifting-turtle.md`

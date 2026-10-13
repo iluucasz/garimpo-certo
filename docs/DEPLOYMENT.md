@@ -2,14 +2,39 @@
 
 ## Gates
 
-A promoção exige typecheck, testes unitários/integração, E2E desktop/mobile, axe, build e smoke checks em `/api/health`, `/api/ready`, homepage, busca, produto e admin. Budgets: p95 de API mock abaixo de 500 ms em carga leve; LCP abaixo de 2,5 s; CLS abaixo de 0,1; INP abaixo de 200 ms; erro HTTP abaixo de 1%.
+A promoção exige `pnpm typecheck`, `pnpm test` (unit + integração), `pnpm test:e2e:prod` (desktop e mobile, inclui axe com contraste) e `pnpm build`. Metas de campo: LCP abaixo de 2,5 s, CLS abaixo de 0,1.
+Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, build de produção): home 1,8 s, busca 1,6 s, categoria 1,4 s, produto 2,2 a 2,7 s, CLS 0.
+
+## Variáveis de ambiente
+
+| Variável | Obrigatória | Para quê |
+|---|---|---|
+| `DATABASE_URL` (+ variantes Neon) | sim | Banco |
+| `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL` | sim | Sessão e links de e-mail; as URLs devem ser as de produção |
+| `SHOPEE_AFFILIATE_APP_ID`, `SHOPEE_AFFILIATE_APP_SECRET` | sim | Importação do catálogo |
+| `CRON_SECRET` | sim | Autoriza o cron de importação (Vercel envia como Bearer) |
+| `BLOB_READ_WRITE_TOKEN` | sim | Re-hospedagem de imagens |
+| `RESEND_API_KEY`, `EMAIL_FROM` | para e-mail | Redefinição de senha |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | opcional | Login com Google (o botão some sem elas) |
+| `NEXT_PUBLIC_SITE_URL` | recomendada | Domínio canônico; sem ela vale o domínio de produção da Vercel |
+| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | recomendada | Contato LGPD na página de privacidade |
+| `NEXT_PUBLIC_EDITORIAL_ENABLED` | opcional | `1` mostra coleções e guias (conteúdo de demonstração) |
+| `NEXT_IMAGE_UNOPTIMIZED` | opcional | `1` desliga o otimizador de imagens |
+
+## Agendamento
+
+`vercel.json` roda `GET /api/v1/cron/shopee-import` todo dia às 06:00 UTC. A importação leva ~40 s, arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
+
+## Imagens
+
+`next/image` otimiza (WebP, cache de 7 dias) apenas hosts em `images.remotePatterns` (Shopee, Vercel Blob, Unsplash). Um host novo falha com 400 até ser adicionado em `next.config.mjs`. Monitore a cota de otimização no painel da Vercel.
 
 ## Estratégia
 
-Preview valida migrations e contratos antes do tráfego. Em produção, migrations compatíveis são aplicadas antes da aplicação; mudanças destrutivas usam expand/contract. Rollback aponta para a versão anterior e feature flags interrompem recursos novos sem redeploy.
+Preview valida migrations e contratos antes do tráfego. Em produção, migrations compatíveis são aplicadas antes da aplicação; mudanças destrutivas usam expand/contract. Rollback aponta para a versão anterior.
 
 ## Observabilidade
 
-Requests propagam `request_id` e `trace_id`; jobs incluem `job_id`; adapters registram provider, endpoint, duração, status e retry_count. Alertas mínimos: readiness indisponível, circuit breaker aberto, fila crescendo, erro acima de 1%, webhook rejeitado e queda anormal de atribuição.
+Requests propagam `request_id` e `trace_id` (`proxy.ts`). A importação agendada registra o resultado nos logs da função. Ainda faltam alertas e RUM de Core Web Vitals (ver `docs/BACKLOG.md`).
 
-O script `load-tests/core-journeys.js` cobre navegação, recomendação e ingestão com k6. Integrações reais, banco e autenticação permanecem fora do modo mock e devem ser conectados antes do go-live.
+O script `load-tests/core-journeys.js` cobre navegação, recomendação e ingestão com k6.
