@@ -105,6 +105,31 @@ test('aba "Para você" só aparece com personalização permitida e interesses s
   await expect(forYou).toHaveCount(0)
 })
 
+test('aba "Para você" aprende com o que a pessoa favoritou, sem interesses salvos, e não repete os favoritos', async ({ page }) => {
+  await page.goto('/')
+  // Favorita dois produtos pela interface.
+  const cards = page.locator('.product-card')
+  await cards.nth(0).getByRole('button', { name: /aos favoritos/ }).click()
+  await cards.nth(1).getByRole('button', { name: /aos favoritos/ }).click()
+  const favorites = await page.evaluate(() => JSON.parse(localStorage.getItem('garimpo:favorites') ?? '[]') as string[])
+  expect(favorites).toHaveLength(2)
+
+  // Sem permissão de personalização, a aba não existe.
+  await page.reload()
+  await expect(page.getByRole('link', { name: 'Para você' })).toHaveCount(0)
+
+  await page.evaluate(() => localStorage.setItem('garimpo:cookie-preferences', JSON.stringify({ essential: true, analytics: false, personalization: true, marketing: false })))
+  await page.reload()
+  const tab = page.getByRole('link', { name: 'Para você' })
+  await expect(tab).toBeVisible()
+  await tab.click()
+  await expect(page.getByText('Selecionado neste aparelho')).toBeVisible()
+  expect(await page.locator('.product-card').count()).toBeGreaterThan(0)
+  // Os dois favoritos não se repetem na seleção.
+  const names = await page.locator('.product-card h3').allInnerTexts()
+  expect(new Set(names).size).toBe(names.length)
+})
+
 test('clique em "Comprar" só é registrado com a medição permitida e nunca bloqueia a compra', async ({ page }) => {
   const clicks: unknown[] = []
   await page.route('**/api/v1/outbound-clicks', (route) => {

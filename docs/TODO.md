@@ -49,7 +49,7 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 | 🙋 | Canal e bot do Telegram | Criar o bot no @BotFather, adicioná-lo como administrador do canal e definir `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` na Vercel e na VPS. Depois: Painel → Postagens → "Conferir conexão" e ligar as postagens. |
 | ✅ | Fila de postagens + publicação no Telegram (3–5 ofertas/dia, com aprovação) | Painel → Postagens. Pronta e testada com envio simulado; só publica quando `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` existirem. Desligada por padrão. |
 | ✅ | IA para redação (DeepSeek) nas postagens | Opcional ("Usar IA para variar o texto" em Postagens → Ajustes, ou o botão "Reescrever com IA"). Só vê dados públicos da oferta; texto que inventar número, desconto ou urgência é descartado. Testado com a API real. |
-| ⏳ | Personalização por visitante | |
+| ✅ | Personalização por visitante (no aparelho) | A aba "Para você" aprende com o que a pessoa viu, favoritou e comparou, além dos interesses salvos; só com a personalização permitida e calculado no navegador, sem enviar nada. Personalização com perfil no servidor não foi feita de propósito (LGPD). |
 | ⏸ | Extensão de navegador | Parada por decisão sua. |
 | 🙋 | WhatsApp: decidir entre grupo manual com aprovação ou API não oficial | Recomendação: manual com aprovação. |
 | 🙋 | Confirmar com o programa de afiliados o enquadramento de "site de ofertas" e as regras sobre extensões | Não encontrei os termos completos nem regra sobre extensões; veja `docs/ENGINE.md`. |

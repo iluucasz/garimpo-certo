@@ -11,7 +11,7 @@ Anotação de visão, registrada em 2026-10-13 a pedido do dono. **Nada aqui est
 | Radar de tendências por calendário comercial | ✅ feito; termos aprovados alimentam o importador |
 | Radar por clima, notícias e buscas | ⏳ |
 | IA (DeepSeek) para redação das postagens | ✅ com validação rígida; sugestões editoriais por IA ficam para depois |
-| Personalização por visitante | ⏳ |
+| Personalização por visitante | ✅ no aparelho, sem perfil no servidor |
 | Postagens no Telegram | ✅ fila, texto com dados reais, horários e aprovação prontos; falta só o bot |
 | Extensão de navegador | ⏸ parada |
 
