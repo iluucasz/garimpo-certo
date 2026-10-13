@@ -10,8 +10,15 @@ import { useStoreData } from '@/components/store-data-provider'
 import { rankProducts, searchProducts } from '@/lib/mock-services'
 import { catalogSignals, currentPrice, matchesSignal } from '@/lib/catalog/signals'
 import { platformServices } from '@/lib/platform'
+import styles from './search-experience.module.css'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 12
+const sortOptions = [
+  { value: 'relevancia', label: 'Mais relevantes' },
+  { value: 'menor-preco', label: 'Menor preço' },
+  { value: 'avaliacao', label: 'Melhor avaliação' },
+  { value: 'mais-vendidos', label: 'Mais vendidos' },
+]
 
 export function SearchExperience({ initialCategory }: { initialCategory?: string }) {
   const params = useSearchParams()
@@ -19,9 +26,10 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const router = useRouter()
   const { savedSearches, saveSearch, removeSavedSearch } = useMock()
   const { products, categories, offers } = useStoreData()
-  const [query, setQuery] = useState(params.get('q') ?? '')
+  const urlQuery = params.get('q') ?? ''
+  const [query, setQuery] = useState(urlQuery)
   const [category, setCategory] = useState(initialCategory ?? params.get('categoria') ?? 'todos')
-  const [sort, setSort] = useState(params.get('ordem') ?? 'relevancia')
+  const [sort, setSort] = useState(sortOptions.some((option) => option.value === params.get('ordem')) ? params.get('ordem')! : 'relevancia')
   const priceCeiling = useMemo(() => Math.max(50, Math.ceil(Math.max(0, ...products.map((product) => currentPrice(product, offers))) / 10) * 10), [products, offers])
   const [maxParam, setMax] = useState<number | null>(params.get('precoMax') ? Number(params.get('precoMax')) : null)
   const max = Math.min(maxParam ?? priceCeiling, priceCeiling)
@@ -30,6 +38,8 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const lastUrlQuery = useRef(urlQuery)
 
   const activeCategory = categories.find((item) => item.slug === category)
 
@@ -45,23 +55,39 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
     return products.filter((product) => `${product.name} ${product.brand}`.toLocaleLowerCase('pt-BR').includes(term)).slice(0, 5)
   }, [query, products])
 
-  const results = useMemo(() => rankProducts(searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers))), sort, offers), [products, offers, query, category, max, signals, sort])
+  const results = useMemo(() => {
+    const filtered = searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers)))
+    if (sort === 'mais-vendidos') {
+      const sold = (id: string) => Math.max(0, ...offers.filter((offer) => offer.productId === id).map((offer) => offer.soldCount ?? 0))
+      return [...filtered].sort((a, b) => sold(b.id) - sold(a.id))
+    }
+    return rankProducts(filtered, sort, offers)
+  }, [products, offers, query, category, max, signals, sort])
 
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
   const visible = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-  const activeFilterCount = (category !== 'todos' ? 1 : 0) + (max < priceCeiling ? 1 : 0) + signals.length
+  const priceActive = max < priceCeiling
+  const activeFilterCount = (category !== (initialCategory ?? 'todos') ? 1 : 0) + (priceActive ? 1 : 0) + signals.length
+
+  // Mantém o campo em sincronia quando a busca do cabeçalho muda a URL com esta página já aberta.
+  useEffect(() => {
+    if (lastUrlQuery.current === urlQuery) return
+    lastUrlQuery.current = urlQuery
+    setQuery((current) => (current === urlQuery ? current : urlQuery))
+    setPage(1)
+  }, [urlQuery])
 
   useEffect(() => {
     const next = new URLSearchParams()
     if (query) next.set('q', query)
-    if (category !== 'todos') next.set('categoria', category)
+    if (category !== 'todos' && category !== initialCategory) next.set('categoria', category)
     if (sort !== 'relevancia') next.set('ordem', sort)
-    if (max < priceCeiling) next.set('precoMax', String(max))
+    if (priceActive) next.set('precoMax', String(max))
     if (signals.length) next.set('sinais', signals.join(','))
     if (page > 1) next.set('pagina', String(page))
     const url = `${pathname}${next.size ? `?${next.toString()}` : ''}`
     window.history.replaceState(null, '', url)
-  }, [query, category, sort, max, priceCeiling, signals, page, pathname])
+  }, [query, category, initialCategory, sort, max, priceActive, signals, page, pathname])
 
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [page, totalPages])
 
@@ -88,6 +114,11 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
     setPage(1)
   }
 
+  function goToPage(next: number) {
+    setPage(next)
+    resultsRef.current?.scrollIntoView({ block: 'start' })
+  }
+
   function runSuggestion(slug: string, name: string) {
     setQuery(name)
     setPage(1)
@@ -112,23 +143,28 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
   const subheading = query
     ? 'Preços e vendas conforme a última sincronização com a Shopee.'
     : activeCategory
-      ? `${categoryCounts.get(activeCategory.slug) ?? 0} produtos selecionados em ${activeCategory.name.toLocaleLowerCase('pt-BR')}, prontos para comparar.`
-      : `${products.length} produtos em ${categories.length} categorias, com filtros úteis, ordenação clara e URLs compartilháveis.`
+      ? `${categoryCounts.get(activeCategory.slug) ?? 0} produtos em ${activeCategory.name.toLocaleLowerCase('pt-BR')}, com preço e vendas da última sincronização com a Shopee.`
+      : `${products.length} produtos em ${categories.length} categorias. Busque por nome ou marca, ou comece por uma categoria.`
   const showQuickCategories = !query && category === 'todos' && categories.length > 0
+  const chips: { key: string; label: string; remove: () => void }[] = [
+    ...(category !== (initialCategory ?? 'todos') && activeCategory ? [{ key: 'categoria', label: activeCategory.name, remove: () => { setCategory(initialCategory ?? 'todos'); setPage(1) } }] : []),
+    ...(priceActive ? [{ key: 'preco', label: `Até R$ ${max.toLocaleString('pt-BR')}`, remove: () => { setMax(null); setPage(1) } }] : []),
+    ...signals.map((signal) => ({ key: signal, label: signal, remove: () => toggleSignal(signal) })),
+  ]
+  const statusText = results.length ? `${results.length} ${results.length === 1 ? 'produto encontrado' : 'produtos encontrados'}.` : 'Nenhum produto encontrado.'
 
   return <>
-    <section className="page-hero page-hero-compact container">
-      <nav className="breadcrumbs" aria-label="Navegação estrutural">
+    <section className={`${styles.hero} container`}>
+      <nav className={styles.breadcrumbs} aria-label="Navegação estrutural">
         <Link href="/">Início</Link>
-        <span>/</span>
-        {activeCategory ? <><Link href="/buscar">Categorias</Link><span>/</span><span aria-current="page">{activeCategory.name}</span></> : <span aria-current="page">Descobrir</span>}
+        <span aria-hidden="true">/</span>
+        {activeCategory ? <><Link href="/buscar">Descobrir</Link><span aria-hidden="true">/</span><span aria-current="page">{activeCategory.name}</span></> : <span aria-current="page">Descobrir</span>}
       </nav>
-      <div className="kicker">CATÁLOGO CURADO</div>
       <h1>{heading}</h1>
-      <p>{subheading}</p>
-      <div className="search-combobox" ref={searchRef}>
-        <div className="header-search">
-          <Search/>
+      <p className={styles.lead}>{subheading}</p>
+      <div className={styles.searchWrap} ref={searchRef}>
+        <div className={styles.searchField}>
+          <Search aria-hidden="true"/>
           <input
             value={query}
             onChange={(event) => { setQuery(event.target.value); setPage(1) }}
@@ -137,60 +173,76 @@ export function SearchExperience({ initialCategory }: { initialCategory?: string
             placeholder="Nome, marca ou benefício"
             aria-label="Buscar no catálogo"
           />
+          {query && <button type="button" className={styles.clearQuery} aria-label="Limpar busca" onClick={() => { setQuery(''); setPage(1) }}><X aria-hidden="true"/></button>}
         </div>
-        {searchOpen && suggestions.length > 0 && <div className="suggestions" role="listbox" aria-label="Sugestões de busca">
-          {suggestions.map((product) => <button key={product.id} onClick={() => runSuggestion(product.slug, product.name)}><span>{product.name}</span><small>{product.brand}</small></button>)}
+        {searchOpen && suggestions.length > 0 && <div className={styles.suggestions} role="listbox" aria-label="Sugestões de busca">
+          {suggestions.map((product) => <button type="button" key={product.id} onClick={() => runSuggestion(product.slug, product.name)}><span>{product.name}</span><small>{product.brand}</small></button>)}
         </div>}
-        {searchOpen && suggestions.length === 0 && query.trim().length < 2 && savedSearches.length > 0 && <div className="suggestions" role="listbox" aria-label="Buscas recentes">
-          <div className="suggestions-label">Buscas recentes</div>
-          {savedSearches.map((saved) => <div key={saved} className="suggestion-recent">
-            <button onClick={() => runRecentSearch(saved)}><History/><span>{saved}</span></button>
-            <button aria-label={`Remover busca ${saved}`} onClick={() => removeSavedSearch(saved)}><X/></button>
+        {searchOpen && suggestions.length === 0 && query.trim().length < 2 && savedSearches.length > 0 && <div className={styles.suggestions} role="listbox" aria-label="Buscas recentes">
+          <div className={styles.suggestionsLabel}>Buscas recentes</div>
+          {savedSearches.map((saved) => <div key={saved} className={styles.recent}>
+            <button type="button" onClick={() => runRecentSearch(saved)}><History aria-hidden="true"/><span>{saved}</span></button>
+            <button type="button" aria-label={`Remover busca ${saved}`} onClick={() => removeSavedSearch(saved)}><X aria-hidden="true"/></button>
           </div>)}
         </div>}
       </div>
 
-      {showQuickCategories && <div className="quick-categories">
-        <span>Comece por uma categoria</span>
-        <div className="quick-category-list">
-          {categories.map((item) => <button type="button" key={item.id} className="quick-category-chip" onClick={() => { setCategory(item.slug); setPage(1) }}>{item.name}<small>{categoryCounts.get(item.slug) ?? 0}</small></button>)}
-        </div>
+      {showQuickCategories && <div className={styles.quick} role="group" aria-label="Comece por uma categoria">
+        {categories.map((item) => <button type="button" key={item.id} onClick={() => { setCategory(item.slug); setPage(1) }}>{item.name}<small>{categoryCounts.get(item.slug) ?? 0}</small></button>)}
       </div>}
     </section>
 
-    <div className="container mobile-filter-trigger"><button className="btn secondary" onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal/> {filtersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}{activeFilterCount > 0 && <span className="filter-count-badge">{activeFilterCount}</span>}</button></div>
-    <div className="container filters-layout">
-      <aside className={`filter-panel ${filtersOpen ? 'open' : ''}`} aria-label="Filtros de busca">
-        <div className="filter-panel-head"><h2>Filtros</h2>{activeFilterCount > 0 && <button className="text-link" onClick={clearFilters}>Limpar tudo</button>}</div>
+    <div className={`container ${styles.layout}`}>
+      <div className={styles.toolbar} ref={resultsRef}>
+        <button type="button" className={styles.filterToggle} onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen} aria-controls="filtros-busca"><SlidersHorizontal aria-hidden="true"/>Filtros{activeFilterCount > 0 && <span className={styles.badge}>{activeFilterCount}</span>}</button>
+        <p className={styles.count}><strong>{results.length}</strong> {results.length === 1 ? 'produto' : 'produtos'}</p>
+        <label className={styles.sort}><span>Ordenar por</span><select aria-label="Ordenar por" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1) }}>{sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+      </div>
+
+      <aside id="filtros-busca" className={`${styles.panel} ${filtersOpen ? styles.panelOpen : ''}`} aria-label="Filtros de busca">
+        <div className={styles.panelHead}><h2>Filtros</h2>{(activeFilterCount > 0 || query) && <button type="button" onClick={clearFilters}>Limpar tudo</button>}</div>
 
         <fieldset>
-          <legend>Categorias</legend>
-          <div className="filter-options">
-            <label className={`filter-option ${category === 'todos' ? 'active' : ''}`}><span><input type="radio" checked={category === 'todos'} onChange={() => { setCategory('todos'); setPage(1) }}/> Todas</span><small>{products.length}</small></label>
-            {categories.map((item) => <label key={item.id} className={`filter-option ${category === item.slug ? 'active' : ''}`}><span><input type="radio" checked={category === item.slug} onChange={() => { setCategory(item.slug); setPage(1) }}/> {item.name}</span><small>{categoryCounts.get(item.slug) ?? 0}</small></label>)}
+          <legend>Categoria</legend>
+          <div className={styles.options}>
+            <label className={category === 'todos' ? styles.optionActive : ''}><span><input type="radio" name="categoria" checked={category === 'todos'} onChange={() => { setCategory('todos'); setPage(1) }}/>Todas</span><small>{products.length}</small></label>
+            {categories.map((item) => <label key={item.id} className={category === item.slug ? styles.optionActive : ''}><span><input type="radio" name="categoria" checked={category === item.slug} onChange={() => { setCategory(item.slug); setPage(1) }}/>{item.name}</span><small>{categoryCounts.get(item.slug) ?? 0}</small></label>)}
           </div>
         </fieldset>
 
         <fieldset>
           <legend>Preço máximo</legend>
-          <div className="price-filter">
+          <div className={styles.price}>
             <input type="range" min="10" max={priceCeiling} step="10" value={Math.max(10, max)} onChange={(event) => { setMax(Number(event.target.value)); setPage(1) }} aria-label="Preço máximo"/>
-            <strong>Até R$ {max.toLocaleString('pt-BR')}</strong>
+            <div><span>R$ 10</span><strong>Até R$ {max.toLocaleString('pt-BR')}</strong></div>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Sinais</legend>
-          <div className="signal-chips">
-            {catalogSignals.map((signal) => { const active = signals.includes(signal); return <button type="button" key={signal} className={`signal-chip ${active ? 'active' : ''}`} aria-pressed={active} onClick={() => toggleSignal(signal)}>{active && <Check/>}{signal}</button> })}
+          <legend>Destaques</legend>
+          <div className={styles.signals}>
+            {catalogSignals.map((signal) => { const active = signals.includes(signal); return <button type="button" key={signal} className={active ? styles.signalActive : ''} aria-pressed={active} onClick={() => toggleSignal(signal)}>{active && <Check aria-hidden="true"/>}{signal}</button> })}
           </div>
         </fieldset>
       </aside>
 
-      <section aria-live="polite">
-        <div className="results-bar"><div><strong>{results.length} produtos</strong>{signals.length > 0 && <small> · {signals.length} sinais ativos</small>}</div><label className="select-wrap"><span className="sr-only">Ordenar resultados</span><select className="select" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1) }} style={{ width: 'auto' }}><option value="relevancia">Mais relevantes</option><option value="menor-preco">Menor preço</option><option value="avaliacao">Melhor avaliação</option><option value="crescimento">Em crescimento</option></select></label></div>
-        {visible.length ? <ProductGrid items={visible}/> : <div className="empty-state"><SearchX/><h2>Nenhuma descoberta por aqui</h2><p>Tente remover um filtro ou buscar por um termo mais amplo.</p><button className="btn secondary" onClick={clearFilters}>Limpar filtros</button></div>}
-        {totalPages > 1 && <nav className="pagination" aria-label="Paginação"><button className="btn secondary" disabled={page === 1} onClick={() => setPage((current) => current - 1)}><ChevronLeft/> Anterior</button><span>Página {page} de {totalPages}</span><button className="btn secondary" disabled={page === totalPages} onClick={() => setPage((current) => current + 1)}>Próxima <ChevronRight/></button></nav>}
+      <section className={styles.results} aria-labelledby="resultados-titulo">
+        <h2 id="resultados-titulo" className="sr-only">Resultados</h2>
+        <p className="sr-only" role="status">{statusText}</p>
+        {chips.length > 0 && <ul className={styles.chips} aria-label="Filtros ativos">{chips.map((chip) => <li key={chip.key}><button type="button" onClick={chip.remove} aria-label={`Remover filtro ${chip.label}`}>{chip.label}<X aria-hidden="true"/></button></li>)}</ul>}
+        {visible.length
+          ? <ProductGrid items={visible}/>
+          : <div className={styles.empty}>
+            <SearchX aria-hidden="true"/>
+            <h2>Nenhum produto encontrado</h2>
+            <p>{query ? `Não achamos nada para “${query}” com os filtros atuais.` : 'Nenhum produto combina com os filtros atuais.'} Tente um termo mais amplo ou remova algum filtro.</p>
+            <button type="button" onClick={clearFilters}>Limpar filtros</button>
+          </div>}
+        {totalPages > 1 && <nav className={styles.pagination} aria-label="Paginação">
+          <button type="button" disabled={page === 1} onClick={() => goToPage(page - 1)}><ChevronLeft aria-hidden="true"/>Anterior</button>
+          <span aria-current="page">Página {page} de {totalPages}</span>
+          <button type="button" disabled={page === totalPages} onClick={() => goToPage(page + 1)}>Próxima<ChevronRight aria-hidden="true"/></button>
+        </nav>}
       </section>
     </div>
   </>
