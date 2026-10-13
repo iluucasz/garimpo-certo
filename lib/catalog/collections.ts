@@ -44,6 +44,7 @@ const LOVED_SALES = 1_000
 const FINDS_PRICE = 30
 const FINDS_SALES = 500
 const HEAVY_DISCOUNT = 0.4
+const PREMIUM_PRICE = 500
 
 const definitions: Definition[] = [
   // ---- Em alta: tudo medido em vendas recentes informadas pela Shopee ----
@@ -129,6 +130,15 @@ const definitions: Definition[] = [
     sort: byScore,
     describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual de até R$ 100, ordenados pelo Índice Garimpo.`,
   },
+  {
+    slug: 'acima-de-500',
+    title: 'Acima de R$ 500',
+    tone: 'Para quem quer o produto principal',
+    group: 'Preço',
+    matches: (product, { offers }) => currentPrice(product, offers) >= PREMIUM_PRICE,
+    sort: bySold,
+    describe: (count) => `${plural(count, 'produto com', 'produtos com')} preço atual a partir de R$ ${PREMIUM_PRICE}, dos mais vendidos para os menos: consoles, TVs, eletrodomésticos e outros itens de maior valor.`,
+  },
   // ---- Qualidade ----
   {
     slug: 'bem-avaliados',
@@ -138,6 +148,15 @@ const definitions: Definition[] = [
     matches: (product, { offers }) => matchesSignal('Bem avaliados', product, offers),
     sort: byRating,
     describe: (count) => `${plural(count, 'produto com', 'produtos com')} nota média 4,8 ou mais, desempatados pelo volume de vendas.`,
+  },
+  {
+    slug: 'custo-beneficio',
+    title: 'Bom custo-benefício',
+    tone: 'Nota alta, vendas e preço coerentes',
+    group: 'Qualidade',
+    matches: (product, { offers }) => matchesSignal('Bom custo-benefício', product, offers),
+    sort: byScore,
+    describe: (count) => `${plural(count, 'produto com', 'produtos com')} Índice Garimpo 85 ou mais e preço de até R$ 1.500, o mesmo critério do filtro “Bom custo-benefício” da busca.`,
   },
   {
     slug: 'nota-maxima',

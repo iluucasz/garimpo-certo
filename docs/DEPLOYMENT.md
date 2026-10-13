@@ -24,7 +24,7 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 
 ## Agendamento
 
-A importação diária roda na **VPS** (`worker/`, imagem Docker `garimpo-importer`, 06:00 de Brasília): grava direto no banco e depois chama `POST /api/v1/cron/revalidate` no site. Não há cron na Vercel (`vercel.json` sem `crons`). Passo a passo em `worker/README.md`. A importação leva ~90 s (8 categorias, ~96 produtos), arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
+A importação diária roda na **VPS** (`worker/`, imagem Docker `garimpo-importer`, 06:00 de Brasília): grava direto no banco e depois chama `POST /api/v1/cron/revalidate` no site. Não há cron na Vercel (`vercel.json` sem `crons`). Passo a passo em `worker/README.md`. A importação seleciona por faixa de preço (até R$ 99, R$ 100–499 e a partir de R$ 500) em 11 categorias, cerca de 264 produtos, e leva de 2 a 4 min, arquiva produtos fora da seleção só se cobrir >=70% do catálogo atual e invalida o cache do catálogo. Para rodar à mão: `pnpm db:import-shopee [--prune]`.
 
 ## Imagens
 

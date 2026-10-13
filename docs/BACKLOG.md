@@ -15,7 +15,7 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 
 ## Produto
 
-- [ ] **CMS visual estilo Shopify (editor de páginas e seções).** Hoje o painel edita por formulários: textos e ordem das seções da home, campanhas, artigos e páginas em Markdown. Falta um editor de **seções e blocos** com pré-visualização ao vivo, rascunho/publicação e versões, para montar a home, páginas e coleções sem código. Referência: o projeto **nextrotta** (no PC do dono) tem um CMS nesse estilo que pode ser copiado e adaptado. Ao portar, observar:
+- [ ] **CMS visual estilo Shopify (editor de páginas e seções).** Hoje o painel edita por formulários: textos e ordem das seções da home, campanhas, artigos e páginas em Markdown. Falta um editor de **seções e blocos** com pré-visualização ao vivo, rascunho/publicação e versões, para montar a home, páginas e coleções sem código. Referência: o projeto **nextrotta** (no PC do dono) tem um CMS nesse estilo que pode ser copiado e adaptado. Caminho: `C:\Users\iluuc\Documents\sistema-operacional`. Ao portar, observar:
   - modelo de dados: páginas → seções → blocos, com JSON validado por tipo de seção, rascunho e versão publicada (hoje só `content_pages.body` em Markdown e `global_settings.home`);
   - a vitrine precisa renderizar as seções por um registro de componentes (`hero`, `categorias`, `vitrine`, `campanha`, `guias`...), mantendo SSR/ISR e a invalidação por tag (`lib/db/invalidate.ts`);
   - substituir gradualmente o módulo **Home** (`settings.home`) pelo editor, sem perder o comportamento atual como padrão;

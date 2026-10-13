@@ -108,12 +108,21 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
   return { isNew, priceChanged: priceChanged || soldChanged }
 }
 
+/** Quantos produtos são gravados ao mesmo tempo. Cada produto é independente; marcas e selos já são seguros contra corrida. */
+const WRITE_CONCURRENCY = 4
+
 export async function importCatalogItems(items: CatalogItem[], providerId: string, categoryNames: Record<string, string>): Promise<ImportSummary> {
   const summary: ImportSummary = { created: 0, updated: 0, priceChanges: 0 }
-  for (const item of items) {
-    const result = await importCatalogItem(item, providerId, categoryNames[item.categorySlug] ?? item.categorySlug)
-    if (result.isNew) summary.created++; else summary.updated++
-    if (result.priceChanged) summary.priceChanges++
+  // Categorias não têm unicidade no banco: cria-as em sequência antes de paralelizar, para nunca duplicar.
+  for (const slug of new Set(items.map((item) => item.categorySlug))) await getOrCreateCategory(slug, categoryNames[slug] ?? slug)
+
+  for (let start = 0; start < items.length; start += WRITE_CONCURRENCY) {
+    const chunk = items.slice(start, start + WRITE_CONCURRENCY)
+    const results = await Promise.all(chunk.map((item) => importCatalogItem(item, providerId, categoryNames[item.categorySlug] ?? item.categorySlug)))
+    for (const result of results) {
+      if (result.isNew) summary.created++; else summary.updated++
+      if (result.priceChanged) summary.priceChanges++
+    }
   }
   return summary
 }

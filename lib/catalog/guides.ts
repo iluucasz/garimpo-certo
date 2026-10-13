@@ -8,6 +8,24 @@ export type GuideCheck = { title: string; text: string }
  * mantida curta e sem promessas. Edite aqui; o resto da página vem do banco.
  */
 export const guideChecklists: Record<string, GuideCheck[]> = {
+  games: [
+    { title: 'Edição e versão', text: 'Console com ou sem leitor de disco, 825 GB ou outra capacidade: confira a edição exata no título e nas fotos antes de comparar preços.' },
+    { title: 'O que vem na caixa', text: 'Veja se acompanha controle, cabos e jogo. Anúncios parecidos podem incluir itens diferentes.' },
+    { title: 'Garantia e nota fiscal', text: 'Em produto de valor alto, confirme se a loja informa garantia e emite nota fiscal, e se o vendedor é loja oficial ou revendedor.' },
+    { title: 'Compatibilidade de acessórios', text: 'Controles, headsets e cabos variam por plataforma e geração. Confira o modelo do seu console.' },
+  ],
+  eletronicos: [
+    { title: 'Ficha técnica completa', text: 'Em celulares, notebooks e TVs, compare memória, armazenamento e tamanho de tela em vez de só o nome do modelo.' },
+    { title: 'Novo, usado ou recondicionado', text: 'Alguns anúncios são de aparelho usado. O estado costuma estar no título ou na descrição da loja.' },
+    { title: 'Garantia e assistência', text: 'Veja o prazo de garantia e se há assistência no Brasil. Em importados, o suporte pode ser limitado.' },
+    { title: 'Preço varia com a variação', text: 'Cores, capacidades e voltagens têm preços diferentes. Escolha a variação antes de comparar.' },
+  ],
+  eletrodomesticos: [
+    { title: 'Voltagem', text: 'Confirme 110 V, 220 V ou bivolt. Aparelho com voltagem errada queima ou não liga.' },
+    { title: 'Tamanho e instalação', text: 'Meça o espaço e a porta de entrada. Geladeiras, máquinas e fogões raramente passam se a medida estiver no limite.' },
+    { title: 'Consumo de energia', text: 'Veja a etiqueta de eficiência: o custo na conta de luz ao longo dos anos pesa mais que pequenas diferenças de preço.' },
+    { title: 'Entrega e montagem', text: 'Itens grandes têm prazo e regras próprias de entrega. Confira o que a loja informa antes de finalizar.' },
+  ],
   tecnologia: [
     { title: 'Compatibilidade antes de tudo', text: 'Confira se o produto funciona com o seu aparelho (versão do Bluetooth, tipo de entrada USB, sistema do celular) e se o anúncio informa isso.' },
     { title: 'Bateria e carregamento', text: 'Veja a autonomia declarada e o tipo de carregador. Números muito acima do usual costumam vir de testes em condições ideais.' },

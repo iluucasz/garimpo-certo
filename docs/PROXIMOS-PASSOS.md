@@ -7,7 +7,7 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 
 ## 0. Próxima grande frente: CMS visual
 
-Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/publicação, versões). Ponto de partida: portar o CMS do projeto **nextrotta**, que está no PC do dono. Detalhes e cuidados em `docs/BACKLOG.md` (Produto → CMS visual).
+Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/publicação, versões). Ponto de partida: portar o CMS do projeto **nextrotta**, em `C:\Users\iluuc\Documents\sistema-operacional`. Detalhes e cuidados em `docs/BACKLOG.md` (Produto → CMS visual).
 
 ## 1. O que só o dono do projeto pode fazer
 
