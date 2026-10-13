@@ -18,3 +18,10 @@ Revogar sessões, desabilitar o adapter afetado, preservar audit logs, rotaciona
 - Vale 7 dias, é de uso único e só concede o papel à conta cujo e-mail é o convidado.
 - Só proprietários convidam proprietários e administradores. Cada criação, aceite e cancelamento entra na auditoria.
 - Pendência: verificação em duas etapas para OWNER/ADMIN (ver `docs/BACKLOG.md`).
+
+## Verificação em duas etapas (MFA)
+
+- Aplicativo autenticador (TOTP) com códigos de recuperação de uso único; o segredo e os códigos ficam cifrados no banco (Better Auth).
+- Falhas seguidas bloqueiam a conta por 15 minutos (padrão do plugin), além do limite por IP.
+- `ADMIN_REQUIRE_MFA=1` exige MFA de OWNER e ADMIN em toda rota do painel. Desligado por padrão para ninguém ficar de fora antes de ativar.
+- Recuperação: `pnpm db:disable-2fa <email>` (exige acesso ao banco). O login pelo Google não passa pelo segundo passo.

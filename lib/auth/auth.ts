@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { twoFactor } from 'better-auth/plugins'
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { siteUrl } from '@/lib/site'
@@ -23,6 +24,9 @@ export const auth = betterAuth({
   advanced: {
     database: { generateId: 'uuid' },
   },
+  // Verificação em duas etapas por aplicativo autenticador (TOTP) e códigos de recuperação. Opcional para quem tem senha;
+  // exigida de OWNER/ADMIN no painel quando ADMIN_REQUIRE_MFA=1 (lib/auth/mfa.ts).
+  plugins: [twoFactor({ issuer: 'Garimpo certo' })],
   emailAndPassword: {
     enabled: true,
     // Com BREVO_API_KEY e EMAIL_FROM o link é enviado por e-mail (Brevo). Sem eles, cai no log do servidor

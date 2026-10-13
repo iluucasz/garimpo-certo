@@ -8,6 +8,7 @@ import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { ContentSkeleton } from '@/components/storefront/store-loading'
+import { TwoFactorSection } from '@/components/account/two-factor-section'
 import { deleteUser, signOut, updateUser, useSession } from '@/lib/auth/client'
 import { currentPrice } from '@/lib/catalog/signals'
 import { formatPrice } from '@/lib/format'
@@ -37,7 +38,7 @@ export default function AccountPage() {
   useEffect(() => {
     const syncSection = () => {
       const section = window.location.hash.slice(1)
-      if (['perfil', 'preferencias', 'dados'].includes(section)) setActiveSection(section)
+      if (['perfil', 'preferencias', 'seguranca', 'dados'].includes(section)) setActiveSection(section)
     }
     syncSection()
     window.addEventListener('hashchange', syncSection)
@@ -112,6 +113,7 @@ export default function AccountPage() {
   const sections = [
     { id: 'perfil', label: 'Meu perfil', icon: UserRound },
     { id: 'preferencias', label: 'Preferências', icon: SlidersHorizontal },
+    { id: 'seguranca', label: 'Segurança', icon: LockKeyhole },
     { id: 'dados', label: 'Seus dados', icon: Download },
   ]
   const shortcuts = [
@@ -157,6 +159,8 @@ export default function AccountPage() {
               : <>Para ver seus interesses na página inicial, permita a personalização em <Link href="/privacidade">Privacidade</Link>.</>}</p>
             <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
           </section>
+
+          <TwoFactorSection/>
 
           <section className={styles.panel} id="dados" aria-labelledby="data-title">
             <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Privacidade</span><h2 id="data-title">Seus dados</h2><p>Baixe uma cópia do que guardamos na sua conta ou exclua a conta.</p></div><ShieldCheck aria-hidden="true"/></div>

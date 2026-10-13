@@ -18,6 +18,8 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | opcional | Login com Google (o botão some sem elas) |
 | `NEXT_PUBLIC_SITE_URL` | recomendada | Domínio canônico; sem ela vale o domínio de produção da Vercel |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | recomendada | Contato LGPD na página de privacidade |
+| `ADMIN_REQUIRE_MFA` | opcional | `1` exige verificação em duas etapas de OWNER/ADMIN no painel. Ative só depois de a equipe ativar o MFA em Minha conta |
+| `SHOPEE_TAGGED_LINKS` | opcional | `0` desliga as etiquetas de origem nos links de afiliado |
 | `NEXT_BUILD_CPUS` | só em build local | Limita os workers do `next build` (ex.: `3`) quando a máquina tem pouca memória/disco livre |
 | `TEST_DATABASE_URL` | só em testes | Banco usado por `pnpm test` (ex.: branch do Neon); sem ele, usa `DATABASE_URL` |
 | `NEXT_IMAGE_UNOPTIMIZED` | opcional | `1` desliga o otimizador de imagens |

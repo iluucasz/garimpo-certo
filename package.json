@@ -21,7 +21,8 @@
     "db:grant-role": "tsx --env-file=.env lib/db/grant-role.ts",
     "db:seed-catalog": "tsx --env-file=.env lib/db/seed-catalog-enrichment.ts",
     "db:import-shopee": "tsx --env-file=.env lib/db/import-shopee.ts",
-    "db:sync-conversions": "tsx --env-file=.env lib/db/sync-conversions.ts"
+    "db:sync-conversions": "tsx --env-file=.env lib/db/sync-conversions.ts",
+    "db:disable-2fa": "tsx --env-file=.env lib/db/disable-2fa.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -32,6 +33,7 @@
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.16.0",
     "next": "16.3.3",
+    "qrcode": "^1.5.4",
     "react": "^19",
     "react-dom": "^19",
     "swr": "^2.5.1",
@@ -42,6 +44,7 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/ws": "^8.18.1",

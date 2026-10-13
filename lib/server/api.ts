@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
-import { userHasPermission } from '@/lib/auth/permissions'
+import { getUserRoles, userHasPermission } from '@/lib/auth/permissions'
+import { MFA_REQUIRED_MESSAGE, mfaEnforced, needsMfa } from '@/lib/auth/mfa'
 import type { Permission } from '@/lib/auth/rbac'
 
 export const ok = <T>(data: T, init?: ResponseInit) => NextResponse.json({ data, meta: { mode: 'real', timestamp: new Date().toISOString() } }, init)
@@ -12,6 +13,11 @@ export async function authorize(request: Request, permission: Permission) {
   if (!session) return { blocked: fail('Sessão inválida ou ausente.', 401), userId: null as never }
   const allowed = await userHasPermission(session.user.id, permission)
   if (!allowed) return { blocked: fail(`Seu usuário não possui a permissão ${permission}.`, 403), userId: null as never }
+  // Só com ADMIN_REQUIRE_MFA=1: proprietários e administradores precisam da verificação em duas etapas.
+  if (mfaEnforced() && !(session.user as { twoFactorEnabled?: boolean }).twoFactorEnabled) {
+    const roles = (await getUserRoles(session.user.id)).map((role) => role.code)
+    if (needsMfa(roles)) return { blocked: fail(MFA_REQUIRED_MESSAGE, 403, { code: 'MFA_REQUIRED' }), userId: null as never }
+  }
   return { blocked: null, userId: session.user.id }
 }
 

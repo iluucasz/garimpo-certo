@@ -35,6 +35,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [navigationOpen, setNavigationOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [mfa, setMfa] = useState<{ enabled: boolean; required: boolean; enforced: boolean } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/v1/me').then((response) => response.ok ? response.json() : null)
+      .then((body) => { if (body?.data?.mfa) setMfa(body.data.mfa) })
+      .catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     if (sessionPending || rolesLoading) return
@@ -93,6 +100,10 @@ function Shell({ children }: { children: React.ReactNode }) {
         <nav className="breadcrumbs" aria-label="Caminho da página"><Link href="/admin">Workspace</Link><ChevronRight aria-hidden="true"/>{currentModule && <><span>{currentModule.group}</span><ChevronRight aria-hidden="true"/></>}<span aria-current="page">{currentModule?.title ?? 'Visão geral'}</span></nav>
         <div className="admin-header-actions"><Link href="/" className={styles.storeLink}>Ver loja <ArrowUpRight aria-hidden="true"/></Link></div>
       </header>
+      {mfa && mfa.required && !mfa.enabled && <p className="permission-banner" role="alert" style={{ margin: '12px 28px 0' }}>
+        {mfa.enforced ? 'Seu papel exige verificação em duas etapas e o painel está bloqueado até você ativar. ' : 'Proteja o painel: seu papel dá acesso a pessoas e configurações. '}
+        <Link href="/conta#seguranca">Ativar a verificação em duas etapas</Link>
+      </p>}
       <div id="admin-content" className="admin-content" tabIndex={-1}>{children}</div>
     </main>
   </div>

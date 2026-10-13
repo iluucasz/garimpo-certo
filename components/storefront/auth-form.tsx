@@ -45,11 +45,16 @@ export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: 
       return
     }
 
-    const { error: authError } = mode === 'cadastro'
+    const result = mode === 'cadastro'
       ? await signUp.email({ email, password, name })
       : await signIn.email({ email, password })
 
-    if (authError) { setError(authError.message ?? 'Não foi possível autenticar. Confira os dados e tente novamente.'); setSubmitting(false); return }
+    if (result.error) { setError(result.error.message ?? 'Não foi possível autenticar. Confira os dados e tente novamente.'); setSubmitting(false); return }
+    // Conta com verificação em duas etapas: a sessão só vale depois do código do aplicativo autenticador.
+    if ((result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+      router.push(redirectTo === '/conta' ? '/verificar' : `/verificar?next=${encodeURIComponent(redirectTo)}`)
+      return
+    }
     router.push(redirectTo)
   }
 

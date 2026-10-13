@@ -1,9 +1,11 @@
 'use client'
 
 import { createAuthClient } from 'better-auth/react'
+import { twoFactorClient } from 'better-auth/client/plugins'
 
 export const authClient = createAuthClient({
+  plugins: [twoFactorClient()],
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'),
 })
 
-export const { useSession, signIn, signUp, signOut, requestPasswordReset, resetPassword, updateUser, deleteUser } = authClient
+export const { useSession, signIn, signUp, signOut, requestPasswordReset, resetPassword, updateUser, deleteUser, twoFactor } = authClient

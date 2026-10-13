@@ -57,7 +57,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       .innerJoin(offers, eq(offers.productId, products.id))
       .leftJoin(brands, eq(brands.id, products.brandId))
       .where(sql`${products.status} = 'active' and ${offers.status} = 'active'`)
-      .orderBy(desc(offers.soldCount)).limit(5),
+      .orderBy(sql`${offers.soldCount} desc nulls last`).limit(5),
   ])
 
   const conversionTotals = conversionRows.reduce((acc, row) => {
@@ -93,7 +93,7 @@ export async function listCatalogForAdmin() {
   }).from(products)
     .leftJoin(offers, eq(offers.productId, products.id))
     .leftJoin(brands, eq(brands.id, products.brandId))
-    .orderBy(sql`${products.status} = 'active' desc`, desc(offers.soldCount))
+    .orderBy(sql`${products.status} = 'active' desc`, sql`${offers.soldCount} desc nulls last`)
   return rows.map((row) => ({
     id: row.id, name: row.name, slug: row.slug, active: row.status === 'active', brand: row.brand ?? 'Genérico',
     rating: Number(row.rating), score: Number(row.score), price: row.price ? Number(row.price) : null,

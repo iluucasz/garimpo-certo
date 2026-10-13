@@ -436,10 +436,31 @@ export const users = pgTable("users", {
 	image: text(),
 	defaultLocale: text("default_locale").default('pt-BR').notNull(),
 	personalizationEnabled: boolean("personalization_enabled").default(true).notNull(),
+	/** Verificação em duas etapas (TOTP) ativa. Gerenciada pelo plugin `twoFactor` do Better Auth. */
+	twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("users_email_unique").on(table.email),
+]);
+
+/** Segredo TOTP e códigos de recuperação (cifrados pelo Better Auth). Uma linha por usuário com 2FA. */
+export const twoFactor = pgTable("two_factor", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	secret: text().notNull(),
+	backupCodes: text("backup_codes").notNull(),
+	userId: uuid("user_id").notNull(),
+	/** Falso entre gerar o segredo e confirmar o primeiro código: só então a proteção passa a valer. */
+	verified: boolean().default(true).notNull(),
+	failedVerificationCount: integer("failed_verification_count").default(0).notNull(),
+	lockedUntil: timestamp("locked_until", { withTimezone: true, mode: 'string' }),
+}, (table) => [
+	index("two_factor_user_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "two_factor_user_id_users_id_fk"
+		}).onDelete("cascade"),
 ]);
 
 export const affiliateConversions = pgTable("affiliate_conversions", {

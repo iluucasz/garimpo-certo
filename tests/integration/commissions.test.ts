@@ -30,7 +30,7 @@ afterAll(async () => {
 async function fixture() {
   const suffix = crypto.randomUUID().slice(0, 8)
   const [provider] = await db.insert(providers).values({ code: `prov-com-${suffix}`, displayName: 'Provider Comissão' }).returning()
-  const [product] = await db.insert(products).values({ slug: `produto-com-${suffix}`, name: 'Produto Comissão', status: 'active' }).returning()
+  const [product] = await db.insert(products).values({ slug: `produto-com-${suffix}`, name: 'Produto Comissão', status: 'removed' }).returning()
   const externalId = `item-${suffix}`
   const [offer] = await db.insert(offers).values({ productId: product.id, providerId: provider.id, externalId, externalUrl: 'https://provider.test/x', price: '100.00' }).returning()
   providerIds.push(provider.id); productIds.push(product.id)

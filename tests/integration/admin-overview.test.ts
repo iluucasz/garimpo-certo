@@ -16,9 +16,11 @@ describe('números do painel administrativo', () => {
   })
 
   it('lista o catálogo com status e melhor oferta', async () => {
-    const [overview, list] = await Promise.all([getAdminOverview(), listCatalogForAdmin()])
-    expect(list.filter((item) => item.active).length).toBeGreaterThanOrEqual(1)
-    expect(new Set(list.filter((item) => item.active).map((item) => item.id)).size).toBe(overview.catalog.active)
-    for (const item of list.filter((entry) => entry.active)) expect(item.price).not.toBeNull()
+    const list = await listCatalogForAdmin()
+    const active = list.filter((item) => item.active)
+    expect(active.length).toBeGreaterThanOrEqual(1)
+    // Um produto com várias ofertas não pode aparecer duas vezes na lista.
+    expect(new Set(active.map((item) => item.id)).size).toBe(active.length)
+    for (const item of active) expect(item.price).not.toBeNull()
   })
 })
