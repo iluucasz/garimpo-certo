@@ -24,9 +24,9 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 | ✅ | Convite de administradores | Painel → Usuários e papéis → "Convidar para a equipe". Gera um link de 7 dias (também enviado por e-mail quando o Brevo estiver ativo); a pessoa entra com o mesmo e-mail e aceita. |
 | ⏳ | MFA (verificação em duas etapas) para OWNER/ADMIN | Deixado de propósito: mexe no login de produção. Plano em `docs/BACKLOG.md`. Recomendo fazermos juntos, com um modo "só avisar" antes de exigir. |
 | 🚫 | Cupons automáticos | Confirmado em 2026-10-13 listando todas as operações da API de afiliados: nenhuma devolve cupom ou voucher. Continua manual + campanhas de categoria. |
-| 🙋 | Outros provedores além da Shopee | Precisa de credenciais e da API do provedor escolhido. |
+| 🙋 | Outros provedores além da Shopee | Preciso que você escolha o provedor (Mercado Livre, Amazon, AliExpress, Magalu…) e tenha a conta de afiliado com acesso à API. Com isso eu separo o importador em um adaptador por provedor (hoje ele é só da Shopee) e ligo comissões e etiquetas do novo provedor. |
 | ✅ | Fila de pedidos de titulares (LGPD) e consentimento gravado no banco | Formulário em `/privacidade#pedido`; fila em Painel → LGPD; escolhas de cookies em `consent_records`. Falta aviso ao time quando chega pedido novo. |
-| ⏳ | Redesign de identidade autoral do site (`docs/PROXIMOS-PASSOS.md`, seção 3) | Precisa de direção visual sua. |
+| 🙋 | Redesign de identidade autoral do site (`docs/PROXIMOS-PASSOS.md`, seção 3) | É decisão de gosto, e o site já está no ar: preciso que você diga a direção (referências, o que manter, o que mudar) antes de eu mexer. Posso preparar 2 ou 3 propostas lado a lado para você escolher. |
 | ⏳ | CMS visual estilo Shopify (portar do nextrotta) | Próxima grande frente. |
 | ⏳ | Alertas operacionais (importação falhou, catálogo velho) | |
 | ⏳ | Alerta de queda de preço para o visitante | |
