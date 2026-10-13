@@ -13,10 +13,10 @@ type Mode = 'entrar' | 'cadastro' | 'recuperar'
 const copy: Record<Mode, { title: string; lead: string; submit: string; busy: string }> = {
   entrar: { title: 'Bem-vindo de volta.', lead: 'Entre para rever seus favoritos e preferências.', submit: 'Entrar', busy: 'Entrando…' },
   cadastro: { title: 'Crie sua conta.', lead: 'Salve favoritos e preferências na sua conta e acesse de qualquer aparelho.', submit: 'Criar conta', busy: 'Criando conta…' },
-  recuperar: { title: 'Recupere seu acesso.', lead: 'Informe o e-mail da sua conta para pedir a redefinição da senha.', submit: 'Pedir redefinição', busy: 'Enviando…' },
+  recuperar: { title: 'Recupere seu acesso.', lead: 'Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.', submit: 'Enviar link', busy: 'Enviando…' },
 }
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode, emailEnabled = false }: { mode: Mode; emailEnabled?: boolean }) {
   const router = useRouter()
   const [sent, setSent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -34,7 +34,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const name = String(data.get('name') ?? '').trim() || 'Usuário'
 
     if (mode === 'recuperar') {
-      const { error: requestError } = await requestPasswordReset({ email, redirectTo: '/entrar' })
+      const { error: requestError } = await requestPasswordReset({ email, redirectTo: '/redefinir-senha' })
       if (requestError) setError(requestError.message ?? 'Não foi possível registrar o pedido. Tente novamente.')
       else setSent(true)
       setSubmitting(false)
@@ -60,13 +60,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <h1>{text.title}</h1>
       <p className={styles.lead}>{text.lead}</p>
 
-      {mode === 'recuperar' && !sent && <p className={styles.notice} role="note">O envio do e-mail de redefinição ainda não está ativo. Seu pedido é registrado, mas a mensagem pode não chegar.</p>}
+      {mode === 'recuperar' && !sent && !emailEnabled && <p className={styles.notice} role="note">O envio do e-mail de redefinição ainda não está ativo. Seu pedido é registrado, mas a mensagem pode não chegar.</p>}
 
       {sent
         ? <div className={styles.done} role="status">
           <CheckCircle2 aria-hidden="true"/>
-          <h2>Pedido registrado</h2>
-          <p>Se o e-mail estiver cadastrado, a redefinição será enviada assim que o envio por e-mail estiver ativo. Por enquanto, a mensagem pode não chegar.</p>
+          <h2>{emailEnabled ? 'Verifique seu e-mail' : 'Pedido registrado'}</h2>
+          <p>{emailEnabled
+            ? 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha. Ele vale por 1 hora. Confira também a caixa de spam.'
+            : 'Se o e-mail estiver cadastrado, a redefinição será enviada assim que o envio por e-mail estiver ativo. Por enquanto, a mensagem pode não chegar.'}</p>
           <Link href="/entrar">Voltar para entrar</Link>
         </div>
         : <form className={styles.form} onSubmit={submit} aria-busy={submitting}>

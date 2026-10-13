@@ -9,9 +9,12 @@ import type {
   RecommendationEngine,
   TrackingEvent,
 } from './contracts'
+import { readStoredPreferences, shouldTrackEvent } from './consent'
 
 const tracker: EventTracker = {
   track(input) {
+    // Sem permissão de medição, eventos de visitante não saem do navegador.
+    if (!shouldTrackEvent(input, readStoredPreferences())) return
     fetch('/api/v1/events', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

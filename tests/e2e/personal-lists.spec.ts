@@ -50,3 +50,18 @@ test('histórico guarda o produto aberto e permite limpar', async ({ page }) => 
   await page.getByRole('button', { name: 'Limpar histórico' }).click()
   await expect(page.getByRole('heading', { name: 'Nada visto por enquanto.' })).toBeVisible()
 })
+
+test('medição só envia eventos de uso depois da permissão', async ({ page }) => {
+  const events: string[] = []
+  await page.route('**/api/v1/events', (route) => { events.push(route.request().url()); return route.fulfill({ json: { data: {} } }) })
+  await page.goto('/')
+  const card = page.locator('.product-card').first()
+  await card.getByRole('button', { name: /aos favoritos/ }).click()
+  await expect(card.getByRole('button', { name: /dos favoritos/ })).toBeVisible()
+  await page.waitForTimeout(400)
+  expect(events).toHaveLength(0)
+
+  await page.evaluate(() => localStorage.setItem('garimpo:cookie-preferences', JSON.stringify({ essential: true, analytics: true, personalization: false, marketing: false })))
+  await card.getByRole('button', { name: /dos favoritos/ }).click()
+  await expect.poll(() => events.length).toBeGreaterThan(0)
+})

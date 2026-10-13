@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
+import { buildPasswordResetEmail, emailEnabled, sendEmail } from './email'
 
 if (!process.env.BETTER_AUTH_SECRET) throw new Error('BETTER_AUTH_SECRET não configurado.')
 
@@ -17,9 +18,15 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    // Nenhum provedor de e-mail está configurado ainda: o link de reset só é logado no servidor.
+    // Com RESEND_API_KEY e EMAIL_FROM o link é enviado por e-mail. Sem eles, cai no log do servidor
+    // (único jeito de recuperar o acesso nesse caso) e a tela avisa a pessoa de que o envio não está ativo.
     async sendResetPassword({ user, url }) {
-      console.info(`[auth] link de redefinição de senha para ${user.email}: ${url}`)
+      if (emailEnabled()) {
+        const sent = await sendEmail({ to: user.email, ...buildPasswordResetEmail({ name: user.name, url }) })
+        if (!sent) console.warn(`[auth] não foi possível enviar o e-mail de redefinição para ${user.email}`)
+        return
+      }
+      console.info(`[auth] e-mail não configurado; link de redefinição para ${user.email}: ${url}`)
     },
   },
   // "Continuar com o Google" só fica ativo quando as credenciais existem — sem elas o botão

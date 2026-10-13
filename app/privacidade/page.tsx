@@ -7,9 +7,9 @@ import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import styles from '@/components/storefront/content-pages.module.css'
 
 const preferenceItems = [
-  { key: 'analytics', label: 'Medição de uso', description: 'Registra a sua escolha sobre medir como você usa o catálogo.' },
-  { key: 'personalization', label: 'Personalização', description: 'Registra a sua escolha sobre usar suas preferências nas recomendações.' },
-  { key: 'marketing', label: 'Comunicações', description: 'Registra a sua escolha sobre receber novidades e campanhas.' },
+  { key: 'analytics', label: 'Medição de uso', description: 'Permite registrar o que você faz no catálogo (favoritar, comparar, ver produtos) e medir acessos. Desligada, nada disso é enviado.' },
+  { key: 'personalization', label: 'Personalização', description: 'Reservada para recomendações baseadas nos seus interesses. Hoje ainda não altera a vitrine.' },
+  { key: 'marketing', label: 'Comunicações', description: 'Registra se você aceita receber novidades. Hoje não enviamos campanhas.' },
 ] as const
 
 export default function PrivacyPage() {
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
       <h2>O que vai para os nossos servidores</h2>
       <ul>
         <li><strong>Conta:</strong> se você criar uma, guardamos nome, e-mail e a sessão de acesso. Seus favoritos passam a ficar salvos nela.</li>
-        <li><strong>Uso do catálogo:</strong> ações como favoritar e comparar produtos são registradas para medir o que interessa. Em produção, também medimos acessos com o Vercel Analytics.</li>
+        <li><strong>Uso do catálogo, só com a sua permissão:</strong> se você ativar a medição de uso, ações como favoritar, comparar e ver produtos são registradas, e medimos acessos com o Vercel Analytics. Sem a permissão, nada disso é enviado.</li>
         <li><strong>Links de afiliado:</strong> ao comprar pelos nossos links, a Shopee identifica a origem da compra.</li>
       </ul>
 
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
       <div className={styles.prefs}>
         <div className={styles.pref}><span><strong>Armazenamento essencial</strong><small>Necessário para favoritos, comparador e histórico funcionarem.</small></span><button type="button" className={styles.switch} aria-pressed="true" disabled aria-label="Armazenamento essencial, sempre ativo"/></div>
         {preferenceItems.map(({ key, label, description }) => <div className={styles.pref} key={key}><span><strong>{label}</strong><small>{description}</small></span><button type="button" className={styles.switch} aria-label={label} aria-pressed={preferences[key]} onClick={() => update(key)}/></div>)}
-        <p className={styles.state}>Estado atual: <strong>{state.consent ? 'preferências opcionais permitidas' : 'somente o essencial'}</strong>. Estes controles guardam a sua escolha neste navegador; a medição básica de uso descrita acima ainda não é desativada por eles.</p>
+        <p className={styles.state}>Estado atual: <strong>{state.consent ? 'preferências opcionais permitidas' : 'somente o essencial'}</strong>. Sua escolha fica salva neste navegador e vale imediatamente.</p>
       </div>
 
       <h2>Seus dados locais</h2>
