@@ -33,7 +33,7 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 | 🙋 | Cadastrar um monitor externo em `/api/v1/health` (UptimeRobot, Better Stack…) | É o jeito mais barato de receber aviso no celular enquanto o bot do Telegram não existe. |
 | ✅ | Alerta de queda de preço para o visitante (no site) | Em Favoritos e no atalho de Minha conta: "ficou mais barato desde que você salvou" (referência guardada no navegador). **Aviso por e-mail ainda não existe** (depende do Brevo). |
 | ✅ | Teste A/B de verdade (texto do topo da home) | Painel → Testes A/B: variante B, divisão de tráfego, medição por visita, veredito só com 200+ visitas por variante e botão para aplicar o vencedor ao rascunho da home. Só mede quem permitiu a medição de uso. |
-| ⏳ | Segmentação que direciona conteúdo | |
+| ⏸ | Segmentação que direciona conteúdo | Parada de propósito: com a personalização no aparelho, a home já se adapta a cada pessoa sem guardar perfil no servidor. Segmentos continuam como análise de cliques (Painel → Segmentos). Retomo se você quiser direcionar banners ou coleções por perfil. |
 
 ## 3. Engine (IA)
 
@@ -75,7 +75,7 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 |---|---|
 | ✅ | Testes do painel com login real | `tests/e2e/admin-modules.spec.ts`: cria um proprietário de verdade (Better Auth + papel no banco), abre os 35 módulos no desktop e no celular e confere erro de execução, estado de falha e rolagem horizontal. 70 testes passando; as contas de teste são apagadas ao fim. |
 | ✅ | Layout do admin no celular (sem quebras) | Nenhum módulo cria rolagem horizontal na largura de um Pixel 5 (verificado automaticamente). A revisão visual do desenho, com você olhando, continua útil. |
-| ⏳ | Versionar e vigiar o worker da VPS (aviso se o container parar) |
-| ⏳ | Monitorar cota do otimizador de imagens |
-| ⏳ | Regressão visual automática |
+| ✅ | Vigiar o worker da VPS | Se o worker parar, a importação e as comissões envelhecem e o painel mostra o alerta; `/api/v1/health` responde 503 para o monitor externo. Atualizar o código na VPS continua manual (ver `worker/README.md`). |
+| 🙋 | Monitorar a cota do otimizador de imagens | Só o painel da Vercel mostra o uso; o código não consegue ler. Se estourar, `NEXT_IMAGE_UNOPTIMIZED=1` serve as imagens originais. |
+| ⏸ | Regressão visual automática | Parada de propósito: as capturas dependem de fonte e sistema e o catálogo muda todo dia, então gerariam alarme falso. A checagem automática de erro e de estouro de largura em todo o painel (feita) cobre o que mais quebra. |
 | 🙋 | ~22 tabelas do schema sem uso: remover exige migração destrutiva e sua decisão |
