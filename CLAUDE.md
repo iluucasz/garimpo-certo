@@ -95,6 +95,14 @@ Next 16 renamed edge middleware from `middleware.ts` to `proxy.ts` (exports `pro
 
 Organized by feature domain, not shadcn's typical flat/atomic layout: `components/{admin,home,product,search,storefront}/`. `components/ui/` is minimal (just `button.tsx`) — most UI is hand-built, not generated shadcn components, even though `components.json` configures shadcn tooling (style `base-nova`, base color `neutral`, aliases `@/components`, `@/components/ui`, `@/lib`, `@/hooks`). There is no `hooks/` directory yet despite the alias.
 
+### Styling: tokens live in `storefront.module.css`; prefer CSS Modules
+
+The storefront's design tokens (`--primary`, `--surface`, `--foreground`, `--success`, `--radius-*`, `--shadow-*`, `--ease`...) are defined once on `.store` in `components/storefront/storefront.module.css` (applied by `StorefrontShell`). One color per role: orange (`--primary`) is the only action color, green (`--success`) is only for savings/success, navy (`--foreground`) is text and brand. New storefront UI should use a CSS Module that reads those tokens — don't add hex colors. Existing modules: `home`, `featured-products`, `product-detail`, `search-experience`, `personal-pages`, `content-pages` (auth, prose, 404/error), `account`.
+
+`app/globals.css` is legacy: it was pruned by measurement (selectors whose classes appear nowhere in `app`/`components`/`lib` were removed) and now mostly serves the admin and a few shared classes (`.product-card` family in `ProductCard`, `.btn`, `.container`, `.sr-only`). `ProductCard` keeps its global class names on purpose — e2e tests select by them (`.product-card`, `.product-buy-button`, `.product-sold-count`, `.product-card-link`). Playwright's config uses `127.0.0.1`, which the Next dev server blocks for its own chunks; run e2e against `localhost` if tests fail on hydration.
+
+Known gaps worth knowing before touching copy: password-reset e-mail is not actually sent (no provider; link is only logged), and the privacy page's cookie toggles store a choice but do not gate event tracking (`lib/platform/mock-services.ts#tracker`).
+
 ## Docs
 
 `docs/architecture.md` (Portuguese) is the design doc that anticipated most of this migration (Neon/Drizzle, Better Auth, RBAC via roles) — the real schema (46 tables) turned out more granular than its ERD (normalized `product_attributes`/`product_variants`/`offer_prices`/`price_history`, LGPD tables, `daily_product_metrics`/`hourly_product_metrics` rollups, `anonymous_identities`/`identity_merges`). Also present: `docs/data-dictionary.md`, `docs/events.md`, `docs/SECURITY.md`, `docs/PRIVACY.md`, `docs/DEPLOYMENT.md` — useful for intent/rationale, but check the real `lib/db/schema.ts` for actual field names.
