@@ -134,7 +134,7 @@ Consent and e-mail (both real now): storefront events (`favorite_*`, `compare_up
 - **RUM**: `components/consented-analytics.tsx` mounts Vercel Analytics and Speed Insights only with `analytics` consent. **Tests DB**: set `TEST_DATABASE_URL` to point `pnpm test` at a separate Neon branch.
 - **Site URL**: `lib/site.ts#siteUrl` (`NEXT_PUBLIC_SITE_URL`, else Vercel's production domain, else localhost). Never hard-code a domain.
 - **Search/category SSR**: `SearchExperience` takes params by props (no `useSearchParams`) so the grid is in the HTML; `/buscar` reads `searchParams`, `/categorias/[slug]` is static and applies the URL after mount.
-- **E2E**: `pnpm test:e2e` (dev server) or `pnpm test:e2e:prod` (build + `next start` on :3100; faster and deterministic).
+- **E2E**: `pnpm test:e2e` (dev server) or `pnpm test:e2e:prod` (build + `next start` on :3100; faster and deterministic). `tests/e2e/admin-modules.spec.ts` logs in as a **real** OWNER (`tests/e2e/helpers/admin-session.ts`: Better Auth sign-up + role row, cookie applied to the context, users deleted afterwards) and walks every module of `adminConfigs` on desktop and mobile, failing on runtime/console errors, load-failure states or page-level horizontal overflow — add a module to `adminConfigs` and it is covered automatically. `playwright.config.ts` loads `.env` and strips the Brevo keys so no e-mail can leave.
 
 ## Docs
 

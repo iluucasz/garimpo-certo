@@ -73,8 +73,8 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 
 | | Item |
 |---|---|
-| ⏳ | Testes do painel com login real |
-| ⏳ | Layout do admin no celular |
+| ✅ | Testes do painel com login real | `tests/e2e/admin-modules.spec.ts`: cria um proprietário de verdade (Better Auth + papel no banco), abre os 35 módulos no desktop e no celular e confere erro de execução, estado de falha e rolagem horizontal. 70 testes passando; as contas de teste são apagadas ao fim. |
+| ✅ | Layout do admin no celular (sem quebras) | Nenhum módulo cria rolagem horizontal na largura de um Pixel 5 (verificado automaticamente). A revisão visual do desenho, com você olhando, continua útil. |
 | ⏳ | Versionar e vigiar o worker da VPS (aviso se o container parar) |
 | ⏳ | Monitorar cota do otimizador de imagens |
 | ⏳ | Regressão visual automática |
