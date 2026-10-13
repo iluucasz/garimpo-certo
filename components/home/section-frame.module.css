@@ -1,0 +1,2 @@
+/* Seção em largura completa: o conteúdo interno deixa de respeitar a largura máxima do site. */
+.full :global(.container) { max-width: none; }

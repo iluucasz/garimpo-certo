@@ -9,7 +9,7 @@ import { EngineView } from './engine-view'
 import { AbTestsView } from './ab-tests-view'
 import { SettingsForm } from './settings-form'
 import { SocialPostsView } from './social-posts-view'
-import { SiteBuilder } from './site-builder'
+import { SiteBuilder } from './site-builder/editor'
 
 /** Cabeçalho do módulo e a tela correspondente à sua `view`. O servidor aplica as mesmas permissões em cada chamada. */
 export function ModuleScreen({ config }: { config: ModuleConfig }) {

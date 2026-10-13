@@ -34,6 +34,9 @@ for (const module of modules) {
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 20_000 })
     await page.waitForLoadState('networkidle')
 
+    // Sem sessão o painel redireciona para o login (que também tem um h1): garante que a sessão valeu de fato.
+    expect(new URL(page.url()).pathname, `redirecionado em ${module.slug || '/admin'}`).toMatch(/^\/admin/)
+
     // Nada de tela de falha ou de acesso negado para o proprietário.
     await expect(page.getByText('Acesso restrito')).toHaveCount(0)
     await expect(page.getByText(/Não foi possível carregar/)).toHaveCount(0)

@@ -27,7 +27,7 @@ export function SiteHeader({ googleEnabled = false, notice, extras }: { googleEn
   const closeMenu = () => setOpen(false)
 
   return <>
-    {notice?.text && <aside className={styles.notice} aria-label="Aviso da vitrine">{notice.text}{notice.detail && <> <span>{notice.detail}</span></>}</aside>}
+    {notice?.text && <aside className={styles.notice} aria-label="Aviso da vitrine" data-cms-global="header">{notice.text}{notice.detail && <> <span>{notice.detail}</span></>}</aside>}
     <header className={styles.header}>
       <div className={`${styles.headerMain} container`}>
         <StoreBrand/>

@@ -1,10 +1,10 @@
 import { Fragment } from 'react'
-import { headers } from 'next/headers'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, BadgeCheck, ExternalLink, RefreshCw } from 'lucide-react'
 import { CampaignBanner } from '@/components/home/campaign-banner'
-import { CmsBlock } from '@/components/home/cms-blocks'
+import { PageBlock } from '@/components/home/page-block'
+import { SectionFrame } from '@/components/home/section-frame'
 import { HomeCatalog } from '@/components/home/home-catalog'
 import { HomeSelections } from '@/components/home/home-selections'
 import { HeroStat } from '@/components/home/hero-stat'
@@ -12,8 +12,10 @@ import { HeroCopy } from '@/components/home/hero-copy'
 import { getRunningExperiment } from '@/lib/db/repositories/experiments'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
-import { auth } from '@/lib/auth/auth'
-import { userHasPermission } from '@/lib/auth/permissions'
+import { StorefrontConfigProvider } from '@/components/storefront/storefront-config'
+import { resolveStorefrontConfig } from '@/lib/site-builder/storefront-config'
+import { visibleSections } from '@/lib/site-builder/document'
+import { canPreviewDrafts } from '@/lib/site-builder/preview'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
 import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { getActiveCampaigns } from '@/lib/db/repositories/site-content'
@@ -35,23 +37,13 @@ const siteJsonLd = {
   potentialAction: { '@type': 'SearchAction', target: `${siteUrl}/buscar?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
 }
 
-/** `?preview=1` mostra o rascunho do editor, só para quem pode editar conteúdo; para os demais é ignorado. */
-async function canPreview() {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    return Boolean(session && await userHasPermission(session.user.id, 'content:write'))
-  } catch {
-    return false
-  }
-}
-
 /** Quebra de linha digitada no editor vira <br/> (o título da seção "Como funciona" usa duas linhas). */
 const withBreaks = (text: string) => text.split('\n').map((line, index, all) => <Fragment key={index}>{line}{index < all.length - 1 && <br/>}</Fragment>)
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ filtro?: string; preview?: string }> }) {
   const params = await searchParams
   const activeFilter = validFilters.includes(params.filtro as HomeFilter) ? params.filtro as HomeFilter : 'trending'
-  const preview = params.preview === '1' && await canPreview()
+  const preview = params.preview === '1' && await canPreviewDrafts()
   const [baseCatalog, campaigns, checklists, document, running] = await Promise.all([
     getStoreCatalog(), getActiveCampaigns(), getGuideChecklists(), getRenderDocument('home', { preview }),
     // Na prévia do rascunho não há sorteio: a equipe vê o que escreveu.
@@ -59,7 +51,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   ])
   const catalog = { ...baseCatalog, checklists }
   const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] }).slice(0, 3)
-  const sections = document.sections.filter((section) => !section.hidden)
+  const sections = visibleSections(document)
   const hasCatalog = sections.some((section) => section.type === 'catalog')
 
   function render(section: (typeof sections)[number]) {
@@ -101,18 +93,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
           <div><p>{s.text}</p><Link href="/como-funciona">{s.buttonLabel} <ArrowUpRight aria-hidden="true"/></Link></div>
         </section>
       default:
-        return <CmsBlock section={section}/>
+        return <PageBlock section={section}/>
     }
   }
 
-  return <StorefrontShell>
+  const page = <StorefrontShell>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}/>
     {preview && <>
       <meta name="robots" content="noindex, nofollow"/>
       <p role="note" style={{ margin: 0, padding: '8px 16px', background: '#1c2434', color: '#fff', textAlign: 'center', fontSize: 14 }}>Prévia do rascunho: só quem edita vê isto. Publique no painel para ir ao ar.</p>
     </>}
     <div className={styles.home}>
-      {sections.map((section) => <Fragment key={section.id}>{render(section)}</Fragment>)}
+      {sections.map((section) => <SectionFrame key={section.id} section={section} preview={preview}>{render(section)}</SectionFrame>)}
     </div>
   </StorefrontShell>
+
+  // Na prévia, o tema, o aviso do topo e o rodapé também mostram o rascunho da Aparência do site.
+  return preview ? <StorefrontConfigProvider value={await resolveStorefrontConfig({ preview: true })}>{page}</StorefrontConfigProvider> : page
 }

@@ -1,19 +1,29 @@
 /**
- * Documento do editor visual de páginas (Painel → Home).
+ * Documento do editor visual de páginas (Painel → Home e Páginas).
  *
  * Uma página é uma lista ordenada de seções. Há dois tipos:
  *  - **internas**: já existem no site e puxam dado real (vitrine, coleções, guias, campanha). A equipe muda
  *    a ordem, esconde e ajusta os textos, mas o conteúdo continua vindo do catálogo;
- *  - **blocos livres**: banner, texto, cartões, imagem, chamada e espaçador, só com o que a pessoa escreveu.
+ *  - **blocos livres**: banner, texto, cartões, imagem, perguntas, chamada e espaçador, só com o que a pessoa
+ *    escreveu (mais "Produtos de uma coleção", que lê o catálogo pelo endereço da coleção).
+ *
+ * Seção **arquivada** sai da página e da lista de trabalho, mas continua no documento e pode voltar. Nada é
+ * apagado sem a pessoa pedir.
  *
  * Isomórfico: o painel desenha o formulário de cada seção a partir de `sectionTypes`, e o servidor valida o
- * mesmo documento com `normalizeDocument`. Sem documento publicado, o site usa `defaultHomeDocument`, que
+ * mesmo documento com `normalizeDocument`. Sem documento publicado, a home usa `defaultHomeDocument`, que
  * reproduz exatamente a home de antes do editor.
  */
+import { normalizeDesign, type SiteDesign } from './design'
+import { clip, isHex, newId, safeImage, safeLink, type DocumentErrors } from './validate'
+import { isLightEnough } from './visual'
+
+export { newId }
+export type { DocumentErrors }
 
 export type SectionType =
   | 'hero' | 'campaign' | 'catalog' | 'selections' | 'guides' | 'howItWorks'
-  | 'banner' | 'text' | 'cards' | 'image' | 'cta' | 'spacer'
+  | 'banner' | 'text' | 'cards' | 'image' | 'imageText' | 'faq' | 'collection' | 'cta' | 'spacer'
 
 export type SectionItem = { id: string; title: string; text: string; image: string; href: string }
 
@@ -30,12 +40,29 @@ export type SectionSettings = {
   tone?: 'default' | 'soft' | 'dark'
   height?: number
   items?: SectionItem[]
+  collection?: string
+  imageSide?: 'left' | 'right'
+  imageFit?: 'cover' | 'contain'
+  /** Aparência (vale para qualquer seção). */
+  background?: string
+  color?: string
+  padding?: number
+  width?: 'contained' | 'full'
 }
 
-export type Section = { id: string; type: SectionType; name: string; hidden: boolean; settings: SectionSettings }
-export type SiteDocument = { schemaVersion: 1; sections: Section[] }
+export type Section = { id: string; type: SectionType; name: string; hidden: boolean; archived: boolean; settings: SectionSettings }
 
-export type FieldKind = 'text' | 'textarea' | 'markdown' | 'url' | 'image' | 'select' | 'number' | 'items'
+export type PageMeta = { title?: string; description?: string }
+export type SiteDocument = {
+  schemaVersion: 1
+  sections: Section[]
+  /** Título e descrição nos buscadores. Só páginas criadas no editor; a home usa Configurações → SEO. */
+  page?: PageMeta
+  /** Só no documento `global` (Aparência do site). */
+  design?: SiteDesign
+}
+
+export type FieldKind = 'text' | 'textarea' | 'markdown' | 'url' | 'image' | 'select' | 'number' | 'items' | 'collection'
 export type SectionField = {
   key: keyof SectionSettings
   label: string
@@ -45,6 +72,8 @@ export type SectionField = {
   options?: { value: string; label: string }[]
   min?: number
   max?: number
+  /** Para `items`: cartões (imagem, título, texto, link) ou perguntas e respostas. */
+  variant?: 'cards' | 'faq'
 }
 
 export type SectionDefinition = {
@@ -58,6 +87,7 @@ export type SectionDefinition = {
 
 const alignField: SectionField = { key: 'align', label: 'Alinhamento', kind: 'select', options: [{ value: 'left', label: 'À esquerda' }, { value: 'center', label: 'Centralizado' }] }
 const toneField: SectionField = { key: 'tone', label: 'Fundo', kind: 'select', options: [{ value: 'default', label: 'Claro' }, { value: 'soft', label: 'Suave' }, { value: 'dark', label: 'Escuro' }] }
+const fitField: SectionField = { key: 'imageFit', label: 'Enquadramento da imagem', kind: 'select', options: [{ value: 'cover', label: 'Preencher o espaço' }, { value: 'contain', label: 'Mostrar a imagem inteira' }] }
 
 export const sectionTypes: Record<SectionType, SectionDefinition> = {
   hero: {
@@ -112,6 +142,7 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
       { key: 'text', label: 'Texto', kind: 'textarea', maxLength: 300 },
       { key: 'image', label: 'Imagem', kind: 'image' },
       { key: 'alt', label: 'Descrição da imagem', kind: 'text', maxLength: 140, help: 'Para leitores de tela. Deixe vazio se a imagem for só decorativa.' },
+      fitField,
       { key: 'buttonLabel', label: 'Texto do botão', kind: 'text', maxLength: 30 },
       { key: 'buttonHref', label: 'Link do botão', kind: 'url', help: 'Caminho do site (/colecoes) ou endereço https.' },
       alignField, toneField,
@@ -132,7 +163,7 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
     fields: [
       { key: 'title', label: 'Título da seção', kind: 'text', maxLength: 90 },
       { key: 'text', label: 'Texto de apoio', kind: 'textarea', maxLength: 300 },
-      { key: 'items', label: 'Cartões', kind: 'items' },
+      { key: 'items', label: 'Cartões', kind: 'items', variant: 'cards', maxLength: 300 },
     ],
   },
   image: {
@@ -141,7 +172,41 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
     fields: [
       { key: 'image', label: 'Imagem', kind: 'image' },
       { key: 'alt', label: 'Descrição da imagem', kind: 'text', maxLength: 140 },
+      fitField,
       { key: 'buttonHref', label: 'Link da imagem', kind: 'url' },
+    ],
+  },
+  imageText: {
+    type: 'imageText', label: 'Texto e imagem', builtin: false,
+    description: 'Duas colunas: um texto com botão ao lado de uma imagem.',
+    fields: [
+      { key: 'eyebrow', label: 'Chamada pequena', kind: 'text', maxLength: 40 },
+      { key: 'title', label: 'Título', kind: 'text', maxLength: 90 },
+      { key: 'text', label: 'Texto', kind: 'markdown', maxLength: 1500 },
+      { key: 'image', label: 'Imagem', kind: 'image' },
+      { key: 'alt', label: 'Descrição da imagem', kind: 'text', maxLength: 140 },
+      fitField,
+      { key: 'imageSide', label: 'Lado da imagem', kind: 'select', options: [{ value: 'right', label: 'À direita' }, { value: 'left', label: 'À esquerda' }] },
+      { key: 'buttonLabel', label: 'Texto do botão', kind: 'text', maxLength: 30 },
+      { key: 'buttonHref', label: 'Link do botão', kind: 'url' },
+    ],
+  },
+  faq: {
+    type: 'faq', label: 'Perguntas frequentes', builtin: false,
+    description: 'Perguntas e respostas que abrem e fecham.',
+    fields: [
+      { key: 'title', label: 'Título da seção', kind: 'text', maxLength: 90 },
+      { key: 'items', label: 'Perguntas', kind: 'items', variant: 'faq', maxLength: 800 },
+    ],
+  },
+  collection: {
+    type: 'collection', label: 'Produtos de uma coleção', builtin: false,
+    description: 'Os primeiros produtos de uma coleção do catálogo, com os preços de hoje.',
+    fields: [
+      { key: 'title', label: 'Título', kind: 'text', maxLength: 90 },
+      { key: 'text', label: 'Texto de apoio', kind: 'textarea', maxLength: 240 },
+      { key: 'collection', label: 'Coleção', kind: 'collection' },
+      { key: 'buttonLabel', label: 'Texto do link para a coleção', kind: 'text', maxLength: 40 },
     ],
   },
   cta: {
@@ -165,8 +230,10 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
 export const sectionTypeList = Object.keys(sectionTypes) as SectionType[]
 export const MAX_SECTIONS = 40
 export const MAX_ITEMS = 8
+export const MAX_PADDING = 160
 
-export const newId = () => `s_${Math.random().toString(36).slice(2, 10)}`
+/** Tipos que só mostram o que a equipe escreveu e, por isso, aceitam trocar a cor do texto. */
+export const isFreeBlock = (type: SectionType) => !sectionTypes[type].builtin
 
 export function newSection(type: SectionType): Section {
   const definition = sectionTypes[type]
@@ -174,9 +241,12 @@ export function newSection(type: SectionType): Section {
   if (type === 'banner') Object.assign(settings, { title: 'Título do banner', text: '', buttonLabel: 'Saiba mais', buttonHref: '/colecoes', align: 'left', tone: 'soft' })
   if (type === 'text') Object.assign(settings, { title: 'Título', text: 'Escreva aqui.', align: 'left' })
   if (type === 'cards') Object.assign(settings, { title: 'Título da seção', items: [{ id: newId(), title: 'Cartão', text: '', image: '', href: '' }] })
+  if (type === 'imageText') Object.assign(settings, { title: 'Conte uma história', text: 'Escreva aqui.', imageSide: 'right', buttonLabel: '', buttonHref: '' })
+  if (type === 'faq') Object.assign(settings, { title: 'Perguntas frequentes', items: [{ id: newId(), title: 'Qual é a pergunta?', text: 'Escreva a resposta aqui.', image: '', href: '' }] })
+  if (type === 'collection') Object.assign(settings, { title: 'Os mais vendidos', collection: 'mais-vendidos', buttonLabel: 'Ver a coleção completa' })
   if (type === 'cta') Object.assign(settings, { title: 'Pronto para garimpar?', text: '', buttonLabel: 'Ver ofertas', buttonHref: '/buscar', tone: 'dark' })
   if (type === 'spacer') settings.height = 48
-  return { id: newId(), type, name: definition.label, hidden: false, settings }
+  return { id: newId(), type, name: definition.label, hidden: false, archived: false, settings }
 }
 
 /** Valores de `home` (Painel → Home, versão antiga) que alimentam o documento padrão. */
@@ -203,27 +273,61 @@ export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
     schemaVersion: 1,
     sections: [
       {
-        id: 'hero', type: 'hero', name: sectionTypes.hero.label, hidden: false,
+        id: 'hero', type: 'hero', name: sectionTypes.hero.label, hidden: false, archived: false,
         settings: {
           title: homeText(home, 'heroTitle', 'Bons produtos.'), accent: homeText(home, 'heroAccent', 'Preços que valem.'),
           text: homeText(home, 'heroLead', 'Encontre seu próximo achado e compre direto na loja com a melhor oferta disponível.'),
           buttonLabel: homeText(home, 'ctaLabel', 'Ver ofertas'),
         },
       },
-      { id: 'campaign', type: 'campaign', name: sectionTypes.campaign.label, hidden: false, settings: {} },
-      ...order.map((id): Section => ({ id, type: id, name: sectionTypes[id].label, hidden: hidden(id), settings: settingsFor[id] })),
+      { id: 'campaign', type: 'campaign', name: sectionTypes.campaign.label, hidden: false, archived: false, settings: {} },
+      ...order.map((id): Section => ({ id, type: id, name: sectionTypes[id].label, hidden: hidden(id), archived: false, settings: settingsFor[id] })),
     ],
   }
 }
 
+// ---------------------------------------------------------------- páginas criadas no editor
+
+export const GLOBAL_KEY = 'global'
+export const PAGE_PREFIX = 'page:'
+export const pageSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+export const MAX_SLUG = 60
+
+export const pageKeyFor = (slug: string) => `${PAGE_PREFIX}${slug}`
+export const isPageKey = (key: string) => key.startsWith(PAGE_PREFIX) && key.length <= PAGE_PREFIX.length + MAX_SLUG && pageSlugPattern.test(key.slice(PAGE_PREFIX.length))
+export const slugOfKey = (key: string) => isPageKey(key) ? key.slice(PAGE_PREFIX.length) : null
+
+/** "Dia das Mães 2026!" → "dia-das-maes-2026". */
+export function slugify(text: string) {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, MAX_SLUG).replace(/-+$/g, '')
+}
+
+/** Ponto de partida de uma página nova: um bloco de texto com o título. */
+export function starterPageDocument(title: string): SiteDocument {
+  const text = newSection('text')
+  return { schemaVersion: 1, sections: [{ ...text, settings: { ...text.settings, title } }], page: { title } }
+}
+
 // ---------------------------------------------------------------- validação
 
-const safeLink = (value: string) => !/[\s\\]/.test(value) && (/^https:\/\/[^/\s]+/i.test(value) || /^\/(?!\/)/.test(value) || /^#[a-z][\w-]*$/i.test(value))
-const safeImage = (value: string) => !/[\s\\]/.test(value) && (/^https:\/\/[^/\s]+/i.test(value) || /^\/(?!\/)/.test(value))
-
-const clip = (value: unknown, max: number) => (typeof value === 'string' ? value.replace(/\r\n/g, '\n').trim().slice(0, max) : '')
-
-export type DocumentErrors = Record<string, string>
+function normalizeVisuals(type: SectionType, source: Record<string, unknown>, path: string, errors: DocumentErrors, settings: SectionSettings) {
+  const builtin = sectionTypes[type].builtin
+  if (typeof source.background === 'string' && source.background) {
+    if (!isHex(source.background)) errors[`${path}.background`] = 'Use uma cor no formato #rrggbb.'
+    // Seções do site mantêm o texto escuro da vitrine: um fundo escuro as deixaria ilegíveis.
+    else if (builtin && !isLightEnough(source.background)) errors[`${path}.background`] = 'Fundo escuro demais: esta seção usa texto escuro. Escolha um fundo claro.'
+    else settings.background = source.background.toLowerCase()
+  }
+  if (!builtin && typeof source.color === 'string' && source.color) {
+    if (!isHex(source.color)) errors[`${path}.color`] = 'Use uma cor no formato #rrggbb.'
+    else settings.color = source.color.toLowerCase()
+  }
+  if (source.padding !== undefined && source.padding !== null && source.padding !== '') {
+    const padding = Number(source.padding)
+    if (Number.isFinite(padding)) settings.padding = Math.min(Math.max(Math.round(padding), 0), MAX_PADDING)
+  }
+  if (source.width === 'full' || source.width === 'contained') settings.width = source.width
+}
 
 function normalizeSettings(type: SectionType, raw: unknown, path: string, errors: DocumentErrors): SectionSettings {
   const source = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
@@ -261,25 +365,43 @@ function normalizeSettings(type: SectionType, raw: unknown, path: string, errors
         if (Number.isFinite(number)) settings.height = Math.min(Math.max(Math.round(number), field.min ?? 0), field.max ?? 400)
         break
       }
+      case 'collection': {
+        const text = clip(value, 80)
+        if (text && !pageSlugPattern.test(text)) errors[`${path}.${field.key}`] = 'Escolha uma coleção da lista.'
+        else if (text) settings.collection = text
+        break
+      }
       case 'items': {
+        const faq = field.variant === 'faq'
+        const textMax = field.maxLength ?? 300
         const list = Array.isArray(value) ? value.slice(0, MAX_ITEMS) : []
         settings.items = list.map((entry, index): SectionItem => {
           const item = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {}
-          const image = clip(item.image, 2048)
-          const href = clip(item.href, 2048)
+          const image = faq ? '' : clip(item.image, 2048)
+          const href = faq ? '' : clip(item.href, 2048)
           if (image && !safeImage(image)) errors[`${path}.items.${index}.image`] = 'Use uma imagem https ou um caminho do site.'
           if (href && !safeLink(href)) errors[`${path}.items.${index}.href`] = 'Use um caminho do site ou um endereço https.'
-          return { id: clip(item.id, 40) || newId(), title: clip(item.title, 90), text: clip(item.text, 300), image: image && safeImage(image) ? image : '', href: href && safeLink(href) ? href : '' }
+          return {
+            id: clip(item.id, 40).replace(/[^\w-]/g, '') || newId(),
+            title: clip(item.title, faq ? 140 : 90), text: clip(item.text, textMax),
+            image: image && safeImage(image) ? image : '', href: href && safeLink(href) ? href : '',
+          }
         })
         break
       }
     }
   }
+  normalizeVisuals(type, source, path, errors, settings)
   return settings
 }
 
+export type NormalizeOptions = {
+  /** O documento `global` não tem seções (só `design`). */
+  allowEmpty?: boolean
+}
+
 /** Valida e normaliza um documento recebido. Campos desconhecidos são descartados. */
-export function normalizeDocument(input: unknown): { value: SiteDocument } | { errors: DocumentErrors } {
+export function normalizeDocument(input: unknown, options: NormalizeOptions = {}): { value: SiteDocument } | { errors: DocumentErrors } {
   const errors: DocumentErrors = {}
   const source = input && typeof input === 'object' ? input as Record<string, unknown> : null
   if (!source || !Array.isArray(source.sections)) return { errors: { sections: 'Documento inválido.' } }
@@ -301,17 +423,31 @@ export function normalizeDocument(input: unknown): { value: SiteDocument } | { e
       builtinSeen.add(type)
     }
     sections.push({
-      id, type, name: clip(raw.name, 80) || sectionTypes[type].label, hidden: raw.hidden === true,
+      id, type, name: clip(raw.name, 80) || sectionTypes[type].label, hidden: raw.hidden === true, archived: raw.archived === true,
       settings: normalizeSettings(type, raw.settings, `${path}.settings`, errors),
     })
   })
-  if (!errors.sections && sections.length === 0) errors.sections = 'A página precisa de pelo menos uma seção.'
-  return Object.keys(errors).length ? { errors } : { value: { schemaVersion: 1, sections } }
+  if (!errors.sections && sections.length === 0 && !options.allowEmpty) errors.sections = 'A página precisa de pelo menos uma seção.'
+
+  const value: SiteDocument = { schemaVersion: 1, sections }
+
+  if (source.page && typeof source.page === 'object') {
+    const page = source.page as Record<string, unknown>
+    const title = clip(page.title, 70)
+    const description = clip(page.description, 160)
+    if (title || description) value.page = { ...(title ? { title } : {}), ...(description ? { description } : {}) }
+  }
+  if (source.design && typeof source.design === 'object') value.design = normalizeDesign(source.design, 'design', errors)
+
+  return Object.keys(errors).length ? { errors } : { value }
 }
 
-/** Seções internas que o documento ainda não tem (podem ser adicionadas de novo). */
+/** Seções internas que o documento ainda não tem (podem ser adicionadas de novo). Arquivadas contam como presentes. */
 export const missingBuiltins = (document: SiteDocument) =>
   sectionTypeList.filter((type) => sectionTypes[type].builtin && !document.sections.some((section) => section.type === type))
+
+/** Seções que aparecem na página (nem ocultas, nem arquivadas). */
+export const visibleSections = (document: SiteDocument) => document.sections.filter((section) => !section.hidden && !section.archived)
 
 /** Copia os textos preenchidos da variante B de um teste A/B para a seção do topo. Campos em branco ficam como estão. */
 export function applyHeroCopy(document: SiteDocument, copy: { title?: string; accent?: string; text?: string; buttonLabel?: string }): SiteDocument {

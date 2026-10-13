@@ -3,11 +3,12 @@ import { collectionSlugsFor } from '@/lib/catalog/collections'
 import { guideSlugs } from '@/lib/catalog/guides'
 import { getCatalogRules } from '@/lib/catalog/server-rules'
 import { getPublishedContent, getStorefrontNav } from '@/lib/db/repositories/site-content'
+import { listPublishedPages } from '@/lib/db/repositories/site-documents'
 import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
 import { siteUrl } from '@/lib/site'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [catalog, articles, pages, nav, rules] = await Promise.all([getStoreCatalog(), getPublishedContent('article'), getPublishedContent('page'), getStorefrontNav(), getCatalogRules()])
+  const [catalog, articles, pages, nav, rules, landingPages] = await Promise.all([getStoreCatalog(), getPublishedContent('article'), getPublishedContent('page'), getStorefrontNav(), getCatalogRules(), listPublishedPages().catch(() => [])])
   const lastModified = new Date(new Date().toISOString().slice(0, 10))
   const entries: { path: string; frequency: 'daily' | 'weekly'; priority: number }[] = [
     { path: '', frequency: 'daily', priority: 1 },
@@ -20,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(articles.length ? [{ path: '/artigos', frequency: 'weekly' as const, priority: 0.5 }] : []),
     ...articles.map((article) => ({ path: `/artigos/${article.slug}`, frequency: 'weekly' as const, priority: 0.5 })),
     ...pages.map((page) => ({ path: `/p/${page.slug}`, frequency: 'weekly' as const, priority: 0.3 })),
+    ...landingPages.map((page) => ({ path: `/paginas/${page.slug}`, frequency: 'weekly' as const, priority: 0.5 })),
     ...catalog.categories.map((category) => ({ path: `/categorias/${category.slug}`, frequency: 'daily' as const, priority: 0.7 })),
     ...collectionSlugsFor({ ...catalog, rules }).map((slug) => ({ path: `/colecoes/${slug}`, frequency: 'daily' as const, priority: 0.6 })),
     ...guideSlugs(catalog).map((slug) => ({ path: `/guias/${slug}`, frequency: 'weekly' as const, priority: 0.6 })),

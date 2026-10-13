@@ -5,9 +5,9 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 
 ---
 
-## 0. CMS visual (primeira versão entregue em 2026-10-13)
+## 0. CMS visual (entregue em 2026-10-13)
 
-> **Status:** a home já é montada por seções e blocos em Painel → Home, com prévia, rascunho e publicação. O texto abaixo é o pedido original; o que falta está em `docs/BACKLOG.md`.
+> **Status:** feito. Home, páginas novas e Aparência do site no mesmo editor (Painel → Home). O que ficou de fora está em `docs/BACKLOG.md`. O texto abaixo é o pedido original.
 
 Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/publicação, versões). Ponto de partida: portar o CMS do projeto **nextrotta**, em `C:\Users\iluuc\Documents\sistema-operacional`. Detalhes e cuidados em `docs/BACKLOG.md` (Produto → CMS visual).
 

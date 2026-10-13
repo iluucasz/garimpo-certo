@@ -34,7 +34,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'tags', title: 'Selos', description: 'Selos exibidos nos cartões de produto.', group: 'Catálogo', view: { kind: 'resource', resource: 'tags' } },
   { slug: 'colecoes', title: 'Coleções manuais', description: 'Seleções montadas por você, na ordem que escolher.', group: 'Catálogo', view: { kind: 'resource', resource: 'colecoes' } },
 
-  { slug: 'home-builder', title: 'Home', description: 'Monte a página inicial por seções, com prévia, rascunho e publicação.', group: 'Experiência', view: { kind: 'builder', page: 'home' } },
+  { slug: 'home-builder', title: 'Home', description: 'Monte a home e novas páginas por seções, ajuste tema, aviso e rodapé, com prévia, rascunho e publicação.', group: 'Experiência', view: { kind: 'builder', page: 'home' } },
   { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
   { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
   { slug: 'testes-ab', title: 'Testes A/B', description: 'Compare dois textos do topo da home com visitantes reais e veja qual leva mais gente a clicar em comprar.', group: 'Experiência', view: { kind: 'abtests' } },

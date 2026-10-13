@@ -100,7 +100,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <nav className="breadcrumbs" aria-label="Caminho da página"><Link href="/admin">Workspace</Link><ChevronRight aria-hidden="true"/>{currentModule && <><span>{currentModule.group}</span><ChevronRight aria-hidden="true"/></>}<span aria-current="page">{currentModule?.title ?? 'Visão geral'}</span></nav>
         <div className="admin-header-actions"><Link href="/" className={styles.storeLink}>Ver loja <ArrowUpRight aria-hidden="true"/></Link></div>
       </header>
-      {mfa && mfa.required && !mfa.enabled && <p className="permission-banner" role="alert" style={{ margin: '12px 28px 0' }}>
+      {mfa && mfa.required && !mfa.enabled && <p className="permission-banner" role="alert" style={{ margin: '12px 28px 0', width: 'auto' }}>
         {mfa.enforced ? 'Seu papel exige verificação em duas etapas e o painel está bloqueado até você ativar. ' : 'Proteja o painel: seu papel dá acesso a pessoas e configurações. '}
         <Link href="/conta#seguranca">Ativar a verificação em duas etapas</Link>
       </p>}
