@@ -10,12 +10,14 @@
  *
  * Variáveis: DATABASE_URL, SHOPEE_AFFILIATE_APP_ID, SHOPEE_AFFILIATE_APP_SECRET (obrigatórias);
  * SITE_URL e CRON_SECRET (para o aviso ao site; sem elas o cache do site expira sozinho em 5 min);
- * IMPORT_AT (HH:MM), TZ, RUN_ON_START=1 (roda ao subir), CONVERSIONS_EVERY_MIN.
+ * IMPORT_AT (HH:MM), TZ, RUN_ON_START=1 (roda ao subir), CONVERSIONS_EVERY_MIN, SOCIAL_EVERY_MIN (padrão 5; 0 desliga as postagens),
+ * TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID (sem eles as postagens ficam na fila, sem envio).
  *
  * Uso: `node importer.mjs` (agenda) · `node importer.mjs --once` (roda e sai) · `--conversions` (só as comissões, uma vez)
  * · `--check` (valida a configuração).
  */
 import { runEngine } from '@/lib/engine/run'
+import { runSocialQueue } from '@/lib/social/run'
 import { runConversionSync } from '@/lib/providers/shopee/conversions-run'
 import { runCatalogImport } from '@/lib/providers/shopee/run'
 
@@ -78,6 +80,23 @@ async function runEngineStep() {
   }
 }
 
+/** Planeja e envia as postagens do canal. Falhar aqui nunca derruba o resto. */
+async function socialStep(trigger: string) {
+  try {
+    const state = await runSocialQueue()
+    if (state.planned || state.sent || state.failed || state.expired) log('social_ran', { trigger, planned: state.planned, sent: state.sent, failed: state.failed, expired: state.expired, note: state.note })
+  } catch (error) {
+    log('social_failed', { trigger, error: error instanceof Error ? error.message : String(error) })
+  }
+}
+
+async function socialLoop(everyMinutes: number, isStopping: () => boolean) {
+  while (!isStopping()) {
+    await sleep(everyMinutes * 60_000)
+    await socialStep('interval')
+  }
+}
+
 async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
   while (!isStopping()) {
     await sleep(everyMinutes * 60_000)
@@ -124,6 +143,7 @@ async function main() {
   }
   if (args.has('--conversions')) { await syncConversions('manual'); process.exit(0) }
   if (args.has('--engine')) { await runEngineStep(); process.exit(0) }
+  if (args.has('--social')) { await socialStep('manual'); process.exit(0) }
   if (args.has('--once')) process.exit((await runOnce()) ? 0 : 1)
 
   let stopping = false
@@ -132,6 +152,8 @@ async function main() {
   const everyMinutes = Number(process.env.CONVERSIONS_EVERY_MIN ?? 180)
   log('worker_started', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', conversionsEveryMin: everyMinutes > 0 ? everyMinutes : 'desligado' })
   if (Number.isFinite(everyMinutes) && everyMinutes > 0) void conversionLoop(everyMinutes, () => stopping)
+  const socialEvery = Number(process.env.SOCIAL_EVERY_MIN ?? 5)
+  if (Number.isFinite(socialEvery) && socialEvery > 0) void socialLoop(socialEvery, () => stopping)
   if (process.env.RUN_ON_START === '1') await runWithRetries()
   while (!stopping) {
     const wait = msUntilNext(at)

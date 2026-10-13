@@ -19,6 +19,8 @@ atualizar o cache (`POST /api/v1/cron/revalidate`). Substitui o cron da Vercel.
 | `CRON_SECRET` | recomendada | O **mesmo** valor definido na Vercel; autoriza o aviso ao site |
 | `IMPORT_AT` | não | `HH:MM` no fuso do contêiner (padrão `06:00`) |
 | `RUN_ON_START` | não | `1` roda uma importação ao subir o contêiner |
+| `SOCIAL_EVERY_MIN` | não | Intervalo, em minutos, do planejamento e envio das postagens do Telegram; padrão `5`, `0` desliga |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | só para postar | Token do bot (@BotFather) e canal (`@nome` ou `-100…`). Sem os dois as postagens ficam na fila, sem envio |
 | `CONVERSIONS_EVERY_MIN` | não | Intervalo, em minutos, da sincronização de comissões (`conversionReport`); padrão `180`, `0` desliga |
 
 Sem `SITE_URL`/`CRON_SECRET` o worker funciona igual; só que o site demora até 5 min para enxergar o catálogo novo.
@@ -42,12 +44,13 @@ Conferir sem importar nada: `docker run --rm --env-file ... garimpo-importer:<ta
 
 Rodar uma importação agora e sair: `docker exec garimpo-importer node importer.mjs --once`.
 Só as comissões, uma vez: `docker exec garimpo-importer node importer.mjs --conversions`.
+Só as postagens, uma vez: `docker exec garimpo-importer node importer.mjs --social`.
 Só a Engine, uma vez: `docker exec garimpo-importer node importer.mjs --engine` (depois de cada importação ela já roda sozinha).
 
 ## Logs e acompanhamento
 
 `docker logs --tail 50 garimpo-importer` (uma linha JSON por evento: `worker_started`, `waiting`,
-`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`, `conversions_synced`, `conversions_failed`, `engine_ran`, `engine_failed`).
+`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`, `conversions_synced`, `conversions_failed`, `engine_ran`, `engine_failed`, `social_ran`, `social_failed`).
 Se uma execução falha, o worker tenta de novo em 30 min e em 1 h; depois espera o dia seguinte.
 
 ## Reverter

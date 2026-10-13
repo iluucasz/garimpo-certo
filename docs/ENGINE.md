@@ -12,7 +12,7 @@ Anotação de visão, registrada em 2026-10-13 a pedido do dono. **Nada aqui est
 | Radar por clima, notícias e buscas | ⏳ |
 | IA (DeepSeek) para redação e sugestões | ⏳ |
 | Personalização por visitante | ⏳ |
-| Postagens no Telegram | ⏳ (depende do bot) |
+| Postagens no Telegram | ✅ fila, texto com dados reais, horários e aprovação prontos; falta só o bot |
 | Extensão de navegador | ⏸ parada |
 
 ## Em uma frase

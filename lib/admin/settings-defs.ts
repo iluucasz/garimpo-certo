@@ -19,7 +19,7 @@ export type SettingField =
   | { key: string; label: string; type: 'order'; help?: string; items: { id: string; label: string }[] }
   | { key: string; label: string; type: 'checklist'; help?: string }
 
-export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine'
+export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social'
 
 export type SettingDefinition = {
   key: SettingKey
@@ -192,6 +192,22 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('lookaheadDays', 'Antecedência máxima do calendário', 7, 90, undefined, 'dias'),
     ],
     defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40 },
+  },
+  social: {
+    key: 'social',
+    title: 'Postagens no Telegram',
+    description: 'Quantas ofertas vão ao canal por dia e em que horário. O texto usa só números reais da oferta e leva o aviso de link de afiliado. Com “exigir aprovação”, nada é publicado sem o seu OK. Comece com 3 a 5 boas ofertas por dia e meça quais geram clique.',
+    permission: 'catalog:write',
+    fields: [
+      { key: 'mode', label: 'Postagens', type: 'select', options: [{ value: 'off', label: 'Desligadas' }, { value: 'on', label: 'Ligadas' }] },
+      numberField('dailyLimit', 'Ofertas por dia', 1, 10, 'Poucas e boas rendem mais do que muitas.', 'por dia'),
+      numberField('startHour', 'Primeira postagem a partir de', 6, 20, 'Horário de Brasília.', 'h'),
+      numberField('endHour', 'Última postagem até', 10, 23, 'Horário de Brasília.', 'h'),
+      { key: 'requireApproval', label: 'Exigir a minha aprovação antes de publicar', type: 'boolean', help: 'Recomendado. Desligado, o que a Engine escolher é publicado no horário.' },
+      { key: 'autoPlan', label: 'A Engine sugere as ofertas do dia sozinha', type: 'boolean', help: 'Cria as postagens de hoje a partir das melhores ofertas ainda não divulgadas. Você pode criar à mão também.' },
+      { key: 'campaign', label: 'Nome da campanha (etiqueta do link)', type: 'text', maxLength: 24, help: 'Só letras e números. Aparece em Analytics como telegram › campanha, para separar o que rende.' },
+    ],
+    defaults: { mode: 'off', dailyLimit: 4, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, campaign: 'ofertas' },
   },
   guides: {
     key: 'guides',

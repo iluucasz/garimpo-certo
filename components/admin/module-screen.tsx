@@ -7,6 +7,7 @@ import { CouponsView, EventsView, ImportsView, IntegrationsView, LogsView, Secur
 import { ResourceManager } from './resource-manager'
 import { EngineView } from './engine-view'
 import { SettingsForm } from './settings-form'
+import { SocialPostsView } from './social-posts-view'
 import { SiteBuilder } from './site-builder'
 
 /** Cabeçalho do módulo e a tela correspondente à sua `view`. O servidor aplica as mesmas permissões em cada chamada. */
@@ -27,6 +28,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
     {view.kind === 'settings' && <SettingsForm settingKey={view.key}/>}
     {view.kind === 'builder' && <SiteBuilder pageKey={view.page}/>}
     {view.kind === 'engine' && <EngineView/>}
+    {view.kind === 'posts' && <SocialPostsView/>}
     {view.kind === 'analytics' && <AnalyticsStudio mode={view.mode}/>}
     {view.kind === 'events' && <EventsView/>}
     {view.kind === 'integrations' && <IntegrationsView/>}

@@ -1036,3 +1036,58 @@ export const engineProposals = pgTable("engine_proposals", {
 			name: "engine_proposals_decided_by_users_id_fk"
 		}).onDelete("set null"),
 ]);
+
+/**
+ * Fila de postagens em canais externos (hoje o Telegram). O texto sai só de dados reais da oferta (`facts`);
+ * a equipe aprova, ajusta o horário e, se quiser, edita. `status`: pending (aguarda aprovação) | approved
+ * (agendada) | sent | failed | cancelled.
+ */
+export const socialPosts = pgTable("social_posts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	channel: text().default('telegram').notNull(),
+	status: text().default('pending').notNull(),
+	productId: uuid("product_id"),
+	offerId: uuid("offer_id"),
+	/** Identificador curto da campanha, vira a 2ª etiqueta do link (`telegram-<campanha>`). */
+	campaign: text().default('ofertas').notNull(),
+	text: text().notNull(),
+	imageUrl: text("image_url"),
+	/** Link de afiliado com etiqueta, gerado com `generateShortLink`. */
+	linkUrl: text("link_url").notNull(),
+	/** Números da oferta no momento da criação (preço, nota, vendas, desconto): prova do que o texto diz. */
+	facts: jsonb().default({}).notNull(),
+	/** `manual` (a equipe criou) ou `engine` (sugerida pela Engine). */
+	source: text().default('manual').notNull(),
+	scheduledFor: timestamp("scheduled_for", { withTimezone: true, mode: 'string' }),
+	sentAt: timestamp("sent_at", { withTimezone: true, mode: 'string' }),
+	externalMessageId: text("external_message_id"),
+	attempts: integer().default(0).notNull(),
+	error: text(),
+	createdBy: uuid("created_by"),
+	approvedBy: uuid("approved_by"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("social_posts_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops"), table.scheduledFor.asc().nullsLast().op("timestamptz_ops")),
+	index("social_posts_product_idx").using("btree", table.productId.asc().nullsLast().op("uuid_ops"), table.createdAt.desc().nullsLast().op("timestamptz_ops")),
+	foreignKey({
+			columns: [table.productId],
+			foreignColumns: [products.id],
+			name: "social_posts_product_id_products_id_fk"
+		}).onDelete("set null"),
+	foreignKey({
+			columns: [table.offerId],
+			foreignColumns: [offers.id],
+			name: "social_posts_offer_id_offers_id_fk"
+		}).onDelete("set null"),
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [users.id],
+			name: "social_posts_created_by_users_id_fk"
+		}).onDelete("set null"),
+	foreignKey({
+			columns: [table.approvedBy],
+			foreignColumns: [users.id],
+			name: "social_posts_approved_by_users_id_fk"
+		}).onDelete("set null"),
+]);

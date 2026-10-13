@@ -10,6 +10,7 @@ export type ModuleView =
   | { kind: 'settings'; key: SettingKey }
   | { kind: 'builder'; page: 'home' }
   | { kind: 'engine' }
+  | { kind: 'posts' }
   | { kind: 'analytics'; mode: 'analytics' | 'funil' }
   | { kind: 'events' }
   | { kind: 'integrations' }
@@ -51,6 +52,8 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'eventos', title: 'Eventos', description: 'O que o site mediu: volumes, nomes e retenção.', group: 'Insights', view: { kind: 'events' } },
 
   { slug: 'engine', title: 'Engine', description: 'O que a Engine sugere (faxina do catálogo e termos de datas comerciais), com o motivo e os números. Nada é aplicado sem a sua aprovação, exceto no modo automático.', group: 'Engine', view: { kind: 'engine' } },
+
+  { slug: 'postagens', title: 'Postagens', description: 'Ofertas que vão ao canal do Telegram: o texto sai de números reais, você aprova, ajusta o horário e acompanha o que foi enviado.', group: 'Engine', view: { kind: 'posts' } },
 
   { slug: 'usuarios-rbac', title: 'Usuários e papéis', description: 'Quem tem acesso e o que cada papel pode fazer.', group: 'Governança', view: { kind: 'users' } },
   { slug: 'lgpd', title: 'LGPD', description: 'Pedidos de titulares de dados.', group: 'Governança', view: { kind: 'resource', resource: 'lgpd' } },
