@@ -9,6 +9,10 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 
 Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/publicação, versões). Ponto de partida: portar o CMS do projeto **nextrotta**, em `C:\Users\iluuc\Documents\sistema-operacional`. Detalhes e cuidados em `docs/BACKLOG.md` (Produto → CMS visual).
 
+### Frente seguinte: Engine
+
+Área com a IA do Garimpo (personalização, faxina do catálogo, tendências, postagens no Telegram/WhatsApp, extensão de navegador). Visão anotada em `docs/ENGINE.md`; começa pela medição (comissões reais e `sub_id` por canal).
+
 ## 1. O que só o dono do projeto pode fazer
 
 - [ ] **`CRON_SECRET` na Vercel + redeploy:** o worker de importação já roda na VPS (container `garimpo-importer`, 06:00 de Brasília; ver `worker/README.md`). O valor do segredo está no `.env` local; falta o mesmo valor na Vercel para o site aceitar o aviso do worker.
