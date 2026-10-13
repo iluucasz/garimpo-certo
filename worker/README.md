@@ -42,11 +42,12 @@ Conferir sem importar nada: `docker run --rm --env-file ... garimpo-importer:<ta
 
 Rodar uma importação agora e sair: `docker exec garimpo-importer node importer.mjs --once`.
 Só as comissões, uma vez: `docker exec garimpo-importer node importer.mjs --conversions`.
+Só a Engine, uma vez: `docker exec garimpo-importer node importer.mjs --engine` (depois de cada importação ela já roda sozinha).
 
 ## Logs e acompanhamento
 
 `docker logs --tail 50 garimpo-importer` (uma linha JSON por evento: `worker_started`, `waiting`,
-`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`, `conversions_synced`, `conversions_failed`).
+`import_started`, `import_finished`, `import_failed`, `retry_scheduled`, `site_notified`, `conversions_synced`, `conversions_failed`, `engine_ran`, `engine_failed`).
 Se uma execução falha, o worker tenta de novo em 30 min e em 1 h; depois espera o dia seguinte.
 
 ## Reverter

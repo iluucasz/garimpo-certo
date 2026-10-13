@@ -19,7 +19,7 @@ export type SettingField =
   | { key: string; label: string; type: 'order'; help?: string; items: { id: string; label: string }[] }
   | { key: string; label: string; type: 'checklist'; help?: string }
 
-export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides'
+export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine'
 
 export type SettingDefinition = {
   key: SettingKey
@@ -170,6 +170,28 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('valuePriceMax', 'Bom custo-benefício: preço máximo', 100, 10000, undefined, 'R$', 50),
     ],
     defaults: { ...defaultCatalogRules },
+  },
+  engine: {
+    key: 'engine',
+    title: 'Engine',
+    description: 'Como a Engine decide o que sugerir. Em “Sombra” ela só registra o que faria, sem pedir nada; em “Com aprovação” cada sugestão espera o seu OK; em “Automático” só o que é reversível (termos sazonais) é aplicado sozinho.',
+    permission: 'catalog:write',
+    fields: [
+      { key: 'mode', label: 'Modo', type: 'select', options: [
+        { value: 'off', label: 'Desligada' },
+        { value: 'shadow', label: 'Sombra (só registra)' },
+        { value: 'approval', label: 'Com aprovação' },
+        { value: 'auto', label: 'Automático (só o reversível)' },
+      ] },
+      numberField('windowDays', 'Janela de análise', 14, 90, 'Quantos dias de visitas, cliques e favoritos a Engine considera.', 'dias'),
+      numberField('minSiteViews', 'Visitas mínimas para decidir', 50, 5000, 'Abaixo disso a faxina não sugere nada: pouca gente visitando não prova que o produto é ruim.', 'visitas'),
+      numberField('minAgeDays', 'Idade mínima do produto', 7, 180, 'Produto que entrou há menos tempo que isso nunca é sugerido para sair.', 'dias'),
+      numberField('maxPerRun', 'Máximo de sugestões por execução', 1, 50, undefined, 'produtos'),
+      numberField('maxSharePercent', 'Parte máxima do catálogo por execução', 1, 30, undefined, '%'),
+      { key: 'seasonalEnabled', label: 'Sugerir termos de datas comerciais (Dia das Mães, Black Friday…)', type: 'boolean' },
+      numberField('lookaheadDays', 'Antecedência máxima do calendário', 7, 90, undefined, 'dias'),
+    ],
+    defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40 },
   },
   guides: {
     key: 'guides',

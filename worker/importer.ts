@@ -15,6 +15,7 @@
  * Uso: `node importer.mjs` (agenda) · `node importer.mjs --once` (roda e sai) · `--conversions` (só as comissões, uma vez)
  * · `--check` (valida a configuração).
  */
+import { runEngine } from '@/lib/engine/run'
 import { runConversionSync } from '@/lib/providers/shopee/conversions-run'
 import { runCatalogImport } from '@/lib/providers/shopee/run'
 
@@ -66,6 +67,17 @@ async function syncConversions(trigger: string) {
   }
 }
 
+/** A Engine (faxina e radar sazonal) roda depois de importar e de sincronizar comissões. Falhar aqui nunca derruba nada. */
+async function runEngineStep() {
+  const startedAt = Date.now()
+  try {
+    const state = await runEngine()
+    log('engine_ran', { mode: state.mode, created: state.created, refreshed: state.refreshed, expired: state.expired, applied: state.applied, note: state.note, wallMs: Date.now() - startedAt })
+  } catch (error) {
+    log('engine_failed', { error: error instanceof Error ? error.message : String(error), wallMs: Date.now() - startedAt })
+  }
+}
+
 async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
   while (!isStopping()) {
     await sleep(everyMinutes * 60_000)
@@ -80,6 +92,7 @@ async function runOnce() {
     const result = await runCatalogImport()
     log('import_finished', { ...result, wallMs: Date.now() - startedAt })
     await syncConversions('after_import')
+    await runEngineStep()
     await notifySite()
     return true
   } catch (error) {
@@ -110,6 +123,7 @@ async function main() {
     process.exit(0)
   }
   if (args.has('--conversions')) { await syncConversions('manual'); process.exit(0) }
+  if (args.has('--engine')) { await runEngineStep(); process.exit(0) }
   if (args.has('--once')) process.exit((await runOnce()) ? 0 : 1)
 
   let stopping = false

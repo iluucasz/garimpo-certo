@@ -5,6 +5,7 @@ import { useAdminAccess } from './admin-access'
 import { AnalyticsStudio } from './analytics-studio'
 import { CouponsView, EventsView, ImportsView, IntegrationsView, LogsView, SecurityView, UsersView } from './admin-views'
 import { ResourceManager } from './resource-manager'
+import { EngineView } from './engine-view'
 import { SettingsForm } from './settings-form'
 import { SiteBuilder } from './site-builder'
 
@@ -25,6 +26,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
     {view.kind === 'resource' && <ResourceManager slug={view.resource}/>}
     {view.kind === 'settings' && <SettingsForm settingKey={view.key}/>}
     {view.kind === 'builder' && <SiteBuilder pageKey={view.page}/>}
+    {view.kind === 'engine' && <EngineView/>}
     {view.kind === 'analytics' && <AnalyticsStudio mode={view.mode}/>}
     {view.kind === 'events' && <EventsView/>}
     {view.kind === 'integrations' && <IntegrationsView/>}

@@ -47,6 +47,8 @@ export type ImportOptions = {
   prune?: boolean
   /** Só seleciona e devolve os itens; não escreve nada no banco. Usado para pré-visualizar a seleção. */
   dryRun?: boolean
+  /** Termos extras por categoria (datas comerciais aprovadas na Engine). Somam-se às buscas de `categoryGroups`. */
+  extraKeywords?: { category: string; keyword: string }[]
 }
 
 type Counted = { offers: ShopeeProductOffer[]; failed: boolean }
@@ -64,7 +66,7 @@ async function search(query: Parameters<typeof fetchAllProductOffers>[0], total:
 }
 
 export async function importShopeeCatalog(options: ImportOptions = {}) {
-  const { perCategory = 24, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false } = options
+  const { perCategory = 24, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [] } = options
   const providerId = dryRun ? '' : await getOrCreateProvider('shopee', 'Shopee')
   const categoryNames = Object.fromEntries(categoryGroups.map((group) => [group.slug, group.name]))
   const state: SelectionState = { seen: new Set<string>(), perShop: new Map<number, number>() }
@@ -76,6 +78,7 @@ export async function importShopeeCatalog(options: ImportOptions = {}) {
       ...group.keywords.map((keyword) => ({ query: { keyword }, total: perKeyword, source: `kw:${keyword}` })),
       ...(group.premiumKeywords ?? []).map((keyword) => ({ query: { keyword }, total: perKeyword, source: `pk:${keyword}` })),
       ...(group.shopeeCategoryIds ?? []).map((productCatId) => ({ query: { productCatId }, total: 100, source: `cat:${productCatId}` })),
+      ...extraKeywords.filter((extra) => extra.category === group.slug).map((extra) => ({ query: { keyword: extra.keyword }, total: perKeyword, source: `seasonal:${extra.keyword}` })),
     ]
     // Poucas buscas ao mesmo tempo: a API da Shopee limita a taxa, e o cliente já refaz a chamada quando recusa.
     const results: Counted[] = []

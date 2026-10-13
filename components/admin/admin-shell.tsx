@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   ArrowUpRight, BarChart3, ChevronDown, ChevronRight, FileText,
-  LayoutDashboard, Menu, Package, Search, Settings2, ShieldCheck, SlidersHorizontal, X,
+  LayoutDashboard, Menu, Package, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, X,
   type LucideIcon,
 } from 'lucide-react'
 import { adminConfigs } from '@/lib/admin-config'
@@ -19,7 +19,7 @@ const roleLabels: Record<string, string> = {
 }
 const groupIcons: Record<string, LucideIcon> = {
   Catálogo: Package, Experiência: SlidersHorizontal, Conteúdo: FileText,
-  Insights: BarChart3, Governança: ShieldCheck, Sistema: Settings2,
+  Insights: BarChart3, Engine: Sparkles, Governança: ShieldCheck, Sistema: Settings2,
 }
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 

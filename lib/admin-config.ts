@@ -9,6 +9,7 @@ export type ModuleView =
   | { kind: 'resource'; resource: ResourceSlug }
   | { kind: 'settings'; key: SettingKey }
   | { kind: 'builder'; page: 'home' }
+  | { kind: 'engine' }
   | { kind: 'analytics'; mode: 'analytics' | 'funil' }
   | { kind: 'events' }
   | { kind: 'integrations' }
@@ -18,7 +19,7 @@ export type ModuleView =
   | { kind: 'users' }
   | { kind: 'security' }
 
-export type ModuleGroup = 'Catálogo' | 'Experiência' | 'Conteúdo' | 'Insights' | 'Governança' | 'Sistema'
+export type ModuleGroup = 'Catálogo' | 'Experiência' | 'Conteúdo' | 'Insights' | 'Engine' | 'Governança' | 'Sistema'
 export type ModuleConfig = { slug: string; title: string; description: string; group: ModuleGroup; view: ModuleView }
 
 export const adminConfigs: ModuleConfig[] = [
@@ -48,6 +49,8 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'analytics', title: 'Analytics', description: 'Cliques e conversões de afiliado registrados na plataforma.', group: 'Insights', view: { kind: 'analytics', mode: 'analytics' } },
   { slug: 'funil', title: 'Funil', description: 'Onde as pessoas avançam ou abandonam.', group: 'Insights', view: { kind: 'analytics', mode: 'funil' } },
   { slug: 'eventos', title: 'Eventos', description: 'O que o site mediu: volumes, nomes e retenção.', group: 'Insights', view: { kind: 'events' } },
+
+  { slug: 'engine', title: 'Engine', description: 'O que a Engine sugere (faxina do catálogo e termos de datas comerciais), com o motivo e os números. Nada é aplicado sem a sua aprovação, exceto no modo automático.', group: 'Engine', view: { kind: 'engine' } },
 
   { slug: 'usuarios-rbac', title: 'Usuários e papéis', description: 'Quem tem acesso e o que cada papel pode fazer.', group: 'Governança', view: { kind: 'users' } },
   { slug: 'lgpd', title: 'LGPD', description: 'Pedidos de titulares de dados.', group: 'Governança', view: { kind: 'resource', resource: 'lgpd' } },

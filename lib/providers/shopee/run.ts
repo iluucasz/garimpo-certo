@@ -1,5 +1,6 @@
 import { archiveProductsOutsideSelection, countCatalog } from '@/lib/db/repositories/catalog-import'
 import { importShopeeCatalog } from './import'
+import { activeSeasonalTerms } from '@/lib/engine/store'
 import { closeRun, openRun } from './job-runs'
 
 /** Só arquiva produtos que saíram da seleção se a importação trouxe uma parte razoável do catálogo atual. */
@@ -38,7 +39,9 @@ async function execute(): Promise<CatalogRunResult> {
 async function runImport(): Promise<CatalogRunResult> {
   const startedAt = Date.now()
   const before = await countCatalog()
-  const result = await importShopeeCatalog({ prune: false })
+  // Termos de datas comerciais que a equipe aprovou na Engine; se a leitura falhar, a importação segue sem eles.
+  const extraKeywords = await activeSeasonalTerms().catch(() => [])
+  const result = await importShopeeCatalog({ prune: false, extraKeywords })
 
   let pruned: string[] = []
   const coverage = before.products > 0 ? result.total / before.products : 1

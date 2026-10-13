@@ -1003,3 +1003,36 @@ export const siteDocuments = pgTable("site_documents", {
 			name: "site_documents_updated_by_users_id_fk"
 		}).onDelete("set null"),
 ]);
+
+/**
+ * Propostas da Engine: cada decisão que ela quer tomar (arquivar um produto, importar um termo sazonal...) vira
+ * uma linha com o motivo e os números que a justificaram. A equipe aprova ou recusa; em modo sombra só se registra.
+ * `status`: shadow | pending | applied | rejected | failed | expired.
+ */
+export const engineProposals = pgTable("engine_proposals", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	kind: text().notNull(),
+	subjectType: text("subject_type").notNull(),
+	subjectId: text("subject_id").notNull(),
+	title: text().notNull(),
+	reason: text().notNull(),
+	evidence: jsonb().default({}).notNull(),
+	payload: jsonb().default({}).notNull(),
+	status: text().default('pending').notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	decidedAt: timestamp("decided_at", { withTimezone: true, mode: 'string' }),
+	decidedBy: uuid("decided_by"),
+	decisionNote: text("decision_note"),
+	appliedAt: timestamp("applied_at", { withTimezone: true, mode: 'string' }),
+	result: jsonb(),
+	/** Vale até: termos sazonais deixam de ser usados depois; propostas pendentes antigas expiram. */
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }),
+}, (table) => [
+	index("engine_proposals_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops"), table.createdAt.desc().nullsLast().op("timestamptz_ops")),
+	index("engine_proposals_subject_idx").using("btree", table.kind.asc().nullsLast().op("text_ops"), table.subjectId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.decidedBy],
+			foreignColumns: [users.id],
+			name: "engine_proposals_decided_by_users_id_fk"
+		}).onDelete("set null"),
+]);

@@ -43,9 +43,9 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 |---|---|---|
 | ✅ | Medição (comissões reais e `sub_id` por canal) | Ver seção 1. |
 | 🙋 | Chave do DeepSeek | Já está no `.env` com o nome `deep_seek` (minúsculo). Na hora de usar eu leio `DEEPSEEK_API_KEY` e, se faltar, `deep_seek`. Na Vercel/VPS crie a mesma variável. |
-| ⏳ | Tabela de propostas da Engine + `/admin/engine` com fila de aprovação e modo "sombra" | |
-| ⏳ | Faxina do catálogo (arquivar o que ninguém vê/clica) | |
-| ⏳ | Radar de tendências (calendário comercial primeiro) | |
+| ✅ | Tabela de propostas da Engine + Painel → Engine com fila de aprovação e modo "sombra" | Modos: desligada, sombra (padrão), com aprovação e automático (só o reversível). Cada sugestão traz o motivo e os números. |
+| ✅ | Faxina do catálogo (sugere tirar o que ninguém vê/clica) | Só age com tráfego suficiente (500 visitas a produtos em 30 dias, ajustável). Hoje o site mede 0 visitas, então ela espera dados; isso é proposital. |
+| ✅ | Radar de tendências por calendário comercial | Sugere termos de busca perto de Dia das Mães, Black Friday, Natal etc.; aprovado, entra na próxima importação até a data. Clima e notícias ficam para depois. |
 | 🙋 | Canal e bot do Telegram | Criar o bot no @BotFather e me passar `TELEGRAM_BOT_TOKEN` e o ID do canal. |
 | ⏳ | Fila de postagens + publicação no Telegram (3–5 ofertas/dia, com aprovação) | Depende do bot. |
 | ⏳ | IA para redação (DeepSeek) com dados anonimizados | |

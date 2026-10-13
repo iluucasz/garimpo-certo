@@ -22,7 +22,8 @@
     "db:seed-catalog": "tsx --env-file=.env lib/db/seed-catalog-enrichment.ts",
     "db:import-shopee": "tsx --env-file=.env lib/db/import-shopee.ts",
     "db:sync-conversions": "tsx --env-file=.env lib/db/sync-conversions.ts",
-    "db:disable-2fa": "tsx --env-file=.env lib/db/disable-2fa.ts"
+    "db:disable-2fa": "tsx --env-file=.env lib/db/disable-2fa.ts",
+    "engine:run": "tsx --env-file=.env lib/db/run-engine.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

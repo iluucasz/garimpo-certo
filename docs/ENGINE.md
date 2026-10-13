@@ -2,6 +2,19 @@
 
 Anotação de visão, registrada em 2026-10-13 a pedido do dono. **Nada aqui está implementado.** É o rascunho do que a Engine deve ser, para virar tarefas mais adiante. O estado real do código está em `CLAUDE.md`; as lacunas de engenharia, em `docs/BACKLOG.md`.
 
+## Estado atual (2026-10-13)
+
+| Parte | Situação |
+|---|---|
+| Fila de propostas, modos (desligada, sombra, aprovação, automático), auditoria | ✅ feito (Painel → Engine) |
+| Faxina do catálogo | ✅ regra pronta; só age com tráfego suficiente |
+| Radar de tendências por calendário comercial | ✅ feito; termos aprovados alimentam o importador |
+| Radar por clima, notícias e buscas | ⏳ |
+| IA (DeepSeek) para redação e sugestões | ⏳ |
+| Personalização por visitante | ⏳ |
+| Postagens no Telegram | ⏳ (depende do bot) |
+| Extensão de navegador | ⏸ parada |
+
 ## Em uma frase
 
 A Engine é o cérebro do negócio: observa o que o público faz, decide o que entra e o que sai do catálogo, o que aparece nas vitrines e o que é divulgado fora do site, e tudo isso com o objetivo de gerar **cliques que viram compras na Shopee**.
