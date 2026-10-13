@@ -17,7 +17,7 @@ Editor de seções e blocos estilo Shopify (pré-visualização, rascunho/public
 
 ## 1. O que só o dono do projeto pode fazer
 
-- [ ] **`CRON_SECRET` na Vercel + redeploy:** o worker de importação já roda na VPS (container `garimpo-importer`, 06:00 de Brasília; ver `worker/README.md`). O valor do segredo está no `.env` local; falta o mesmo valor na Vercel para o site aceitar o aviso do worker.
+- [x] ~~**`CRON_SECRET` na Vercel + redeploy.**~~ Feito pelo dono.
 - [ ] **E-mail (Brevo):** chave e `EMAIL_FROM` já estão no `.env` local (`BREVO_API_KEY`, remetente `Garimpo certo <garimpou.certo@gmail.com>`). O Brevo mandou um e-mail de confirmação para `garimpou.certo@gmail.com`: confirme o remetente lá. Depois leve `BREVO_API_KEY` e `EMAIL_FROM` ao Vercel. Um `@gmail.com` costuma cair em spam por causa do DMARC; para produção, prefira remetente de domínio próprio.
 - [ ] **`BETTER_AUTH_URL` e `NEXT_PUBLIC_BETTER_AUTH_URL` no Vercel** com o domínio real. Se estiverem em `localhost`, os links do e-mail saem quebrados.
 - [ ] **Domínio próprio:** `NEXT_PUBLIC_SITE_URL` (sem ele vale o `*.vercel.app`).
