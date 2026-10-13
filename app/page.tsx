@@ -8,6 +8,8 @@ import { CmsBlock } from '@/components/home/cms-blocks'
 import { HomeCatalog } from '@/components/home/home-catalog'
 import { HomeSelections } from '@/components/home/home-selections'
 import { HeroStat } from '@/components/home/hero-stat'
+import { HeroCopy } from '@/components/home/hero-copy'
+import { getRunningExperiment } from '@/lib/db/repositories/experiments'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { auth } from '@/lib/auth/auth'
@@ -50,7 +52,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   const params = await searchParams
   const activeFilter = validFilters.includes(params.filtro as HomeFilter) ? params.filtro as HomeFilter : 'trending'
   const preview = params.preview === '1' && await canPreview()
-  const [baseCatalog, campaigns, checklists, document] = await Promise.all([getStoreCatalog(), getActiveCampaigns(), getGuideChecklists(), getRenderDocument('home', { preview })])
+  const [baseCatalog, campaigns, checklists, document, running] = await Promise.all([
+    getStoreCatalog(), getActiveCampaigns(), getGuideChecklists(), getRenderDocument('home', { preview }),
+    // Na prévia do rascunho não há sorteio: a equipe vê o que escreveu.
+    preview ? Promise.resolve(null) : getRunningExperiment().catch(() => null),
+  ])
   const catalog = { ...baseCatalog, checklists }
   const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] }).slice(0, 3)
   const sections = document.sections.filter((section) => !section.hidden)
@@ -63,12 +69,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
         return <section className={`${styles.hero} container`} aria-labelledby="home-title">
           <div className={styles.heroCopy}>
             <HeroStat/>
-            <h1 id="home-title">{s.title} <span>{s.accent}</span></h1>
-            <p className={styles.heroLead}>{s.text}</p>
-            <div className={styles.heroActions}>
-              <Link className={styles.heroButton} href={hasCatalog ? '#ofertas' : '/buscar'}>{s.buttonLabel} <ArrowRight aria-hidden="true"/></Link>
-              <Link className={styles.heroLink} href="/como-funciona">Como funciona</Link>
-            </div>
+            <HeroCopy
+              control={{ title: s.title ?? '', accent: s.accent ?? '', text: s.text ?? '', buttonLabel: s.buttonLabel ?? '' }}
+              experiment={running ? { key: running.key, splitB: running.splitB, variantB: running.variantB } : null}
+              ctaHref={hasCatalog ? '#ofertas' : '/buscar'}/>
             <ul className={styles.trust} aria-label="Como o Garimpo trabalha">
               <li><ExternalLink aria-hidden="true"/>Você compra na Shopee, não aqui</li>
               <li><RefreshCw aria-hidden="true"/>Preços e vendas da última sincronização</li>

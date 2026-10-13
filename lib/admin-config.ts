@@ -11,6 +11,7 @@ export type ModuleView =
   | { kind: 'builder'; page: 'home' }
   | { kind: 'engine' }
   | { kind: 'posts' }
+  | { kind: 'abtests' }
   | { kind: 'analytics'; mode: 'analytics' | 'funil' }
   | { kind: 'events' }
   | { kind: 'integrations' }
@@ -36,6 +37,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'home-builder', title: 'Home', description: 'Monte a página inicial por seções, com prévia, rascunho e publicação.', group: 'Experiência', view: { kind: 'builder', page: 'home' } },
   { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
   { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
+  { slug: 'testes-ab', title: 'Testes A/B', description: 'Compare dois textos do topo da home com visitantes reais e veja qual leva mais gente a clicar em comprar.', group: 'Experiência', view: { kind: 'abtests' } },
   { slug: 'regras-catalogo', title: 'Regras do catálogo', description: 'Os limiares de “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e dos filtros da busca.', group: 'Experiência', view: { kind: 'settings', key: 'rules' } },
   { slug: 'recommendation-slots', title: 'Slots de recomendação', description: 'Onde as recomendações aparecem e quantas mostram.', group: 'Experiência', view: { kind: 'settings', key: 'slots' } },
   { slug: 'segmentos', title: 'Segmentos', description: 'Audiências salvas sobre os cliques de compra medidos.', group: 'Experiência', view: { kind: 'resource', resource: 'segmentos' } },

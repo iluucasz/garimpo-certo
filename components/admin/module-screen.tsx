@@ -6,6 +6,7 @@ import { AnalyticsStudio } from './analytics-studio'
 import { CouponsView, EventsView, ImportsView, IntegrationsView, LogsView, SecurityView, UsersView } from './admin-views'
 import { ResourceManager } from './resource-manager'
 import { EngineView } from './engine-view'
+import { AbTestsView } from './ab-tests-view'
 import { SettingsForm } from './settings-form'
 import { SocialPostsView } from './social-posts-view'
 import { SiteBuilder } from './site-builder'
@@ -29,6 +30,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
     {view.kind === 'builder' && <SiteBuilder pageKey={view.page}/>}
     {view.kind === 'engine' && <EngineView/>}
     {view.kind === 'posts' && <SocialPostsView/>}
+    {view.kind === 'abtests' && <AbTestsView/>}
     {view.kind === 'analytics' && <AnalyticsStudio mode={view.mode}/>}
     {view.kind === 'events' && <EventsView/>}
     {view.kind === 'integrations' && <IntegrationsView/>}

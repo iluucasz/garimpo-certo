@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { analyticsAllowed, readStoredPreferences } from '@/lib/platform/consent'
+import { currentExperimentTag } from '@/lib/experiments/client'
 
 const SESSION_KEY = 'garimpo:session'
 
@@ -41,7 +42,7 @@ export function AffiliateClickTracker() {
           method: 'POST',
           keepalive: true,
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(offerId ? { offerId, slot: link.dataset.slot ?? 'unknown', sessionId: sessionId() } : { ...engagement, sessionId: sessionId() }),
+          body: JSON.stringify(offerId ? { offerId, slot: link.dataset.slot ?? 'unknown', sessionId: sessionId(), experiment: currentExperimentTag() ?? undefined } : { ...engagement, sessionId: sessionId() }),
         }).catch(() => {})
       } catch { /* a compra nunca depende do registro */ }
     }

@@ -32,7 +32,7 @@ O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`
 | ✅ | Alertas operacionais no painel (importação, comissões, tarefas, prazo da LGPD) | Bloco no topo de `/admin`. `/api/v1/health` responde 503 quando está crítico. |
 | 🙋 | Cadastrar um monitor externo em `/api/v1/health` (UptimeRobot, Better Stack…) | É o jeito mais barato de receber aviso no celular enquanto o bot do Telegram não existe. |
 | ✅ | Alerta de queda de preço para o visitante (no site) | Em Favoritos e no atalho de Minha conta: "ficou mais barato desde que você salvou" (referência guardada no navegador). **Aviso por e-mail ainda não existe** (depende do Brevo). |
-| ⏳ | Teste A/B de verdade | |
+| ✅ | Teste A/B de verdade (texto do topo da home) | Painel → Testes A/B: variante B, divisão de tráfego, medição por visita, veredito só com 200+ visitas por variante e botão para aplicar o vencedor ao rascunho da home. Só mede quem permitiu a medição de uso. |
 | ⏳ | Segmentação que direciona conteúdo | |
 
 ## 3. Engine (IA)

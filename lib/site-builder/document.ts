@@ -312,3 +312,13 @@ export function normalizeDocument(input: unknown): { value: SiteDocument } | { e
 /** Seções internas que o documento ainda não tem (podem ser adicionadas de novo). */
 export const missingBuiltins = (document: SiteDocument) =>
   sectionTypeList.filter((type) => sectionTypes[type].builtin && !document.sections.some((section) => section.type === type))
+
+/** Copia os textos preenchidos da variante B de um teste A/B para a seção do topo. Campos em branco ficam como estão. */
+export function applyHeroCopy(document: SiteDocument, copy: { title?: string; accent?: string; text?: string; buttonLabel?: string }): SiteDocument {
+  const patch: SectionSettings = {}
+  if (copy.title) patch.title = copy.title
+  if (copy.accent) patch.accent = copy.accent
+  if (copy.text) patch.text = copy.text
+  if (copy.buttonLabel) patch.buttonLabel = copy.buttonLabel
+  return { ...document, sections: document.sections.map((section) => section.type === 'hero' ? { ...section, settings: { ...section.settings, ...patch } } : section) }
+}

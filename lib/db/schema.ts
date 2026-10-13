@@ -1091,3 +1091,31 @@ export const socialPosts = pgTable("social_posts", {
 			name: "social_posts_approved_by_users_id_fk"
 		}).onDelete("set null"),
 ]);
+
+/**
+ * Testes A/B do texto do topo da home. Um por vez em andamento. `variantB` guarda os textos alternativos
+ * ({ title, accent, text, buttonLabel }); a variante A é sempre o que a home mostra hoje.
+ * `status`: draft | running | stopped. `winner`: 'a' | 'b' | null.
+ */
+export const abExperiments = pgTable("ab_experiments", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	key: text().notNull(),
+	name: text().notNull(),
+	hypothesis: text(),
+	status: text().default('draft').notNull(),
+	variantB: jsonb("variant_b").default({}).notNull(),
+	/** Porcentagem de visitantes que veem a variante B (1–99). */
+	splitB: integer("split_b").default(50).notNull(),
+	winner: text(),
+	startedAt: timestamp("started_at", { withTimezone: true, mode: 'string' }),
+	stoppedAt: timestamp("stopped_at", { withTimezone: true, mode: 'string' }),
+	createdBy: uuid("created_by"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("ab_experiments_key_unique").on(table.key),
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [users.id],
+			name: "ab_experiments_created_by_users_id_fk"
+		}).onDelete("set null"),
+]);

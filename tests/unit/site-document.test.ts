@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  defaultHomeDocument, MAX_ITEMS, MAX_SECTIONS, missingBuiltins, newSection, normalizeDocument, sectionTypeList, sectionTypes,
+  applyHeroCopy, defaultHomeDocument, MAX_ITEMS, MAX_SECTIONS, missingBuiltins, newSection, normalizeDocument, sectionTypeList, sectionTypes,
   type SiteDocument,
 } from '@/lib/site-builder/document'
 
@@ -103,5 +103,16 @@ describe('validação do documento', () => {
   it('lista as seções internas que faltam', () => {
     const doc = ok({ ...base(), sections: base().sections.filter((section) => section.type !== 'guides' && section.type !== 'catalog') })
     expect(missingBuiltins(doc).sort()).toEqual(['catalog', 'guides'])
+  })
+})
+
+describe('aplicar a variante vencedora do teste A/B', () => {
+  it('troca só os textos preenchidos do topo e preserva o resto da página', () => {
+    const base = defaultHomeDocument({})
+    const next = applyHeroCopy(base, { title: 'Achados do dia', buttonLabel: '' })
+    const hero = next.sections.find((section) => section.type === 'hero')!
+    expect(hero.settings).toMatchObject({ title: 'Achados do dia', accent: 'Preços que valem.', buttonLabel: 'Ver ofertas' })
+    expect(next.sections.map((section) => section.type)).toEqual(base.sections.map((section) => section.type))
+    expect(base.sections[0].settings.title).toBe('Bons produtos.')
   })
 })
