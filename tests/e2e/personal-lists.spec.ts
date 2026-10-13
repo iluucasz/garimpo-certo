@@ -89,3 +89,26 @@ test('aba "Para você" só aparece com personalização permitida e interesses s
   await page.reload()
   await expect(forYou).toHaveCount(0)
 })
+
+test('clique em "Comprar" só é registrado com a medição permitida e nunca bloqueia a compra', async ({ page }) => {
+  const clicks: unknown[] = []
+  await page.route('**/api/v1/outbound-clicks', (route) => {
+    if (route.request().method() === 'POST') clicks.push(route.request().postDataJSON())
+    return route.fulfill({ status: 201, json: { data: { clickId: 'clk_teste' } } })
+  })
+  // Impede a navegação real para a Shopee durante o teste.
+  await page.route('https://**/*', (route) => route.request().resourceType() === 'document' ? route.fulfill({ body: '<html></html>', contentType: 'text/html' }) : route.continue())
+
+  await page.goto('/')
+  const buy = page.locator('.product-buy-button').first()
+  await expect(buy).toHaveAttribute('data-offer-id', /^[0-9a-f-]{36}$/)
+  await buy.click()
+  await page.bringToFront()
+  await page.waitForTimeout(300)
+  expect(clicks).toHaveLength(0)
+
+  await page.evaluate(() => localStorage.setItem('garimpo:cookie-preferences', JSON.stringify({ essential: true, analytics: true, personalization: false, marketing: false })))
+  await buy.click()
+  await expect.poll(() => clicks.length).toBe(1)
+  expect(clicks[0]).toMatchObject({ slot: 'product-card' })
+})

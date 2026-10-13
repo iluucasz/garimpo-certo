@@ -94,7 +94,7 @@ export function ProductDetail({ product }: { product: Product }) {
               {saving > 0 && <span className={styles.saving}>Economize {formatPrice(saving)}</span>}
             </div>
             {hasRange && <p className={styles.range}>Vai até {formatPrice(bestOffer.priceMax!)} conforme a variação escolhida na {bestProvider.name}.</p>}
-            <a className={styles.buyButton} ref={buyButton} href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ArrowUpRight aria-hidden="true"/></a>
+            <a className={styles.buyButton} ref={buyButton} data-offer-id={bestOffer.id} data-slot="pdp-main" href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ArrowUpRight aria-hidden="true"/></a>
             <ul className={styles.facts}>
               <li><Truck aria-hidden="true"/>Frete calculado na {bestProvider.name}</li>
               <li><ShieldCheck aria-hidden="true"/>Link de afiliado: você finaliza a compra na loja</li>
@@ -121,7 +121,7 @@ export function ProductDetail({ product }: { product: Product }) {
       <ul className={styles.offers}>{alternativeOffers.map((offer) => { const provider = getProvider(offer.providerId); const offerTotal = offer.price + offer.shipping; return <li className={styles.offer} key={offer.id}>
         <div><strong>{provider.name}</strong><span>{provider.verified && <BadgeCheck aria-hidden="true"/>}{offer.stock} · atualizado {offer.updatedAt}</span></div>
         <div className={styles.offerPrice}><strong>{formatPrice(offer.price)}</strong><span>{offer.shipping > 0 ? `${formatPrice(offerTotal)} com frete` : offer.soldCount ? formatSoldCount(offer.soldCount) : 'oferta do parceiro'}</span></div>
-        <a href={offer.url} target="_blank" rel="sponsored noopener noreferrer">Ver oferta<ArrowUpRight aria-hidden="true"/></a>
+        <a data-offer-id={offer.id} data-slot="pdp-alternative" href={offer.url} target="_blank" rel="sponsored noopener noreferrer">Ver oferta<ArrowUpRight aria-hidden="true"/></a>
       </li> })}</ul>
     </section>}
 
@@ -141,7 +141,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
     {showBar && bestOffer && bestProvider && <div className={styles.stickyBar}>
       <div><strong>{formatPrice(bestOffer.price)}</strong><span>{hasRange ? 'a partir de · ' : ''}na {bestProvider.name}</span></div>
-      <a href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ArrowUpRight aria-hidden="true"/></a>
+      <a data-offer-id={bestOffer.id} data-slot="pdp-sticky" href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ArrowUpRight aria-hidden="true"/></a>
     </div>}
   </>
 }

@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { sql } from 'drizzle-orm'
 import { db } from '../client'
 import { affiliateClicks, affiliateConversions, analyticsEvents, offers } from '../schema'
@@ -12,7 +13,7 @@ const empty: ProductMetrics = { views: 0, clicks: 0, favorites: 0, conversions: 
  * Agrega os eventos brutos por produto. Tudo sai de `analytics_events`,
  * `affiliate_clicks` e `affiliate_conversions` — nenhum número é estimado aqui.
  */
-export async function getProductMetrics(): Promise<ProductMetricsMap> {
+async function loadProductMetrics(): Promise<ProductMetricsMap> {
   const [eventRows, clickRows, conversionRows] = await Promise.all([
     db.select({
       productId: analyticsEvents.productId,
@@ -56,4 +57,15 @@ export async function getProductMetrics(): Promise<ProductMetricsMap> {
     if (entry) entry.conversions = row.conversions
   }
   return metrics
+}
+
+const cachedProductMetrics = unstable_cache(loadProductMetrics, ['product-metrics-v1'], { revalidate: 300, tags: ['metrics'] })
+
+export async function getProductMetrics(): Promise<ProductMetricsMap> {
+  try {
+    return await cachedProductMetrics()
+  } catch (error) {
+    if (error instanceof Error && /incrementalCache|static generation store/i.test(error.message)) return loadProductMetrics()
+    throw error
+  }
 }

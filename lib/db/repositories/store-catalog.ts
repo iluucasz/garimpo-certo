@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db } from '../client'
 import { brands, categories, offers, priceHistory, productAttributeValues, productAttributes, productCategories, productImages, productTags, products, providers, tags } from '../schema'
@@ -17,9 +18,10 @@ const relativeUpdatedAt = (isoDate: string) => {
   return `há ${Math.round(hours / 24)} d`
 }
 
-export type StoreCatalog = { products: Product[]; offers: Offer[]; providers: Provider[]; categories: Category[] }
+/** `syncedAt`: última sincronização de oferta com a Shopee (ISO), para a interface dizer a data real. */
+export type StoreCatalog = { products: Product[]; offers: Offer[]; providers: Provider[]; categories: Category[]; syncedAt: string | null }
 
-export async function getStoreCatalog(): Promise<StoreCatalog> {
+async function loadStoreCatalog(): Promise<StoreCatalog> {
   const [productRows, offerRows, providerRows, categoryRows, brandRows, productCategoryRows, imageRows, tagRows, priceHistoryRows, attributeValueRows] = await Promise.all([
     db.select().from(products).where(eq(products.status, 'active')),
     db.select().from(offers).where(eq(offers.status, 'active')),
@@ -81,5 +83,25 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
     id: row.id, name: row.name, slug: row.slug, icon: 'Sparkles', description: '',
   }))
 
-  return { products: storeProducts, offers: storeOffers, providers: storeProviders, categories: storeCategories }
+  const syncedAt = offerRows.reduce<string | null>((latest, row) => {
+    const value = row.lastSyncedAt ? new Date(row.lastSyncedAt).toISOString() : null
+    return value && (!latest || value > latest) ? value : latest
+  }, null)
+  return { products: storeProducts, offers: storeOffers, providers: storeProviders, categories: storeCategories, syncedAt }
+}
+
+const cachedStoreCatalog = unstable_cache(loadStoreCatalog, ['store-catalog-v1'], { revalidate: 300, tags: ['catalog'] })
+
+/**
+ * Catálogo da vitrine com cache entre requisições (5 min). A importação agendada chama
+ * `revalidateTag('catalog', 'max')` para a mudança aparecer logo. Fora do runtime do Next
+ * (testes, scripts) o cache não existe e a leitura vai direto ao banco.
+ */
+export async function getStoreCatalog(): Promise<StoreCatalog> {
+  try {
+    return await cachedStoreCatalog()
+  } catch (error) {
+    if (error instanceof Error && /incrementalCache|static generation store/i.test(error.message)) return loadStoreCatalog()
+    throw error
+  }
 }

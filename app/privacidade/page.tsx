@@ -52,7 +52,7 @@ export default function PrivacyPage() {
       <h2>O que vai para os nossos servidores</h2>
       <ul>
         <li><strong>Conta:</strong> se você criar uma, guardamos nome, e-mail e a sessão de acesso. Seus favoritos passam a ficar salvos nela.</li>
-        <li><strong>Uso do catálogo, só com a sua permissão:</strong> se você ativar a medição de uso, ações como favoritar, comparar e ver produtos são registradas, e medimos acessos com o Vercel Analytics. Sem a permissão, nada disso é enviado.</li>
+        <li><strong>Uso do catálogo, só com a sua permissão:</strong> se você ativar a medição de uso, ações como favoritar, comparar e ver produtos são registradas, assim como os cliques nos botões de compra (só a oferta e o ponto da página, sem identificar você), e medimos acessos com o Vercel Analytics. Sem a permissão, nada disso é enviado.</li>
         <li><strong>Links de afiliado:</strong> ao comprar pelos nossos links, a Shopee identifica a origem da compra.</li>
       </ul>
 

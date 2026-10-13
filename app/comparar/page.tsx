@@ -35,7 +35,7 @@ export default function ComparePage() {
           <tr><th scope="row">Marca</th>{items.map((product) => <td key={product.id}>{product.brand}</td>)}</tr>
           <tr><th scope="row">Disponibilidade</th>{items.map((product, index) => <td key={product.id}>{offers[index]?.stock ?? 'Sem oferta'}</td>)}</tr>
           {specNames.map((spec) => <tr key={spec}><th scope="row">{spec}</th>{items.map((product) => <td key={product.id}>{product.specs[spec] ?? <span aria-label="Não informado">—</span>}</td>)}</tr>)}
-          <tr><th scope="row">Saiba mais</th>{items.map((product, index) => { const offer = offers[index]; return <td key={product.id}><div className={styles.tableActions}>{offer && <a className={styles.primaryLink} href={offer.url} target="_blank" rel="sponsored noopener noreferrer" aria-label={`Ver oferta de ${product.name}`}>Ver oferta <ArrowUpRight aria-hidden="true"/></a>}<Link className={styles.textLink} href={`/produto/${product.slug}`}>Ver detalhes <ArrowRight aria-hidden="true"/></Link></div></td> })}</tr>
+          <tr><th scope="row">Saiba mais</th>{items.map((product, index) => { const offer = offers[index]; return <td key={product.id}><div className={styles.tableActions}>{offer && <a className={styles.primaryLink} data-offer-id={offer.id} data-slot="compare" href={offer.url} target="_blank" rel="sponsored noopener noreferrer" aria-label={`Ver oferta de ${product.name}`}>Ver oferta <ArrowUpRight aria-hidden="true"/></a>}<Link className={styles.textLink} href={`/produto/${product.slug}`}>Ver detalhes <ArrowRight aria-hidden="true"/></Link></div></td> })}</tr>
         </tbody></table>
       </div>
     </> : <><EmptyCollection mode="compare"/><SuggestedProducts mode="compare"/></>}
