@@ -8,10 +8,10 @@ import styles from './home.module.css'
 
 type Shortcut = { icon: LucideIcon; title: string; hint: string; href: string; test: (price: number, has: (signal: string) => boolean) => boolean }
 const shortcuts: Shortcut[] = [
-  { icon: BadgePercent, title: 'Em promoção', hint: 'Com 20% ou mais abaixo do preço anterior', href: '/buscar?sinais=Em%20promo%C3%A7%C3%A3o', test: (_, has) => has('Em promoção') },
-  { icon: Flame, title: 'Mais vendidos', hint: 'Mais de mil vendas recentes', href: '/buscar?sinais=Mais%20vendidos', test: (_, has) => has('Mais vendidos') },
-  { icon: Star, title: 'Bem avaliados', hint: 'Nota 4,8 ou mais', href: '/buscar?sinais=Bem%20avaliados', test: (_, has) => has('Bem avaliados') },
-  { icon: Wallet, title: 'Até R$ 50', hint: 'Preço atual de até R$ 50', href: '/buscar?precoMax=50', test: (price) => price <= 50 },
+  { icon: BadgePercent, title: 'Em promoção', hint: 'Com 20% ou mais abaixo do preço anterior', href: '/colecoes/em-promocao', test: (_, has) => has('Em promoção') },
+  { icon: Flame, title: 'Mais vendidos', hint: 'Mais de mil vendas recentes', href: '/colecoes/mais-vendidos', test: (_, has) => has('Mais vendidos') },
+  { icon: Star, title: 'Bem avaliados', hint: 'Nota 4,8 ou mais', href: '/colecoes/bem-avaliados', test: (_, has) => has('Bem avaliados') },
+  { icon: Wallet, title: 'Até R$ 50', hint: 'Preço atual de até R$ 50', href: '/colecoes/ate-50', test: (price) => price <= 50 },
 ]
 
 export function HomeSelections() {

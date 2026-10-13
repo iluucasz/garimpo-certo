@@ -1,8 +1,38 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
-import { notFound } from 'next/navigation'
-import { articles } from '@/lib/mock-data'
-import { editorialEnabled } from '@/lib/site'
-export const metadata={title:'Guias de compra'}
-export default function GuidesPage(){if(!editorialEnabled)notFound();return <StorefrontShell><section className="page-hero container"><div className="kicker">CONTEÚDO EDITORIAL</div><h1>Comprar melhor também se aprende.</h1><p>Guias diretos, comparações honestas e seleções para ajudar você a decidir sem pressa.</p></section><section className="container section" style={{paddingTop:20}}><div className="article-grid">{articles.map(a=><Link href={`/guias/${a.slug}`} className="article-card" key={a.id}><div className="article-image"><Image src={a.image} alt="" fill/></div><span>{a.category} · {a.readTime}</span><h2>{a.title}</h2><p>{a.excerpt}</p></Link>)}</div></section></StorefrontShell>}
+import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
+import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { formatPrice } from '@/lib/format'
+import styles from '@/components/editorial/editorial.module.css'
+
+export const revalidate = 300
+export const metadata = {
+  title: 'Guias de compra',
+  description: 'O que observar antes de comprar em cada categoria, com os destaques atuais do catálogo.',
+  alternates: { canonical: '/guias' },
+}
+
+export default async function GuidesPage() {
+  const catalog = await getStoreCatalog()
+  const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] })
+
+  return <StorefrontShell>
+    <div className={`container ${styles.page}`}>
+      <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><span aria-current="page">Guias de compra</span></nav>
+      <header className={styles.header}>
+        <h1>Guias de compra</h1>
+        <p className={styles.lead}>Para cada categoria: o que vale conferir antes de comprar e quais produtos se destacam hoje em vendas, nota e preço.</p>
+      </header>
+      {guides.length === 0
+        ? <p className={styles.empty}>Os guias aparecem quando uma categoria tem produtos suficientes. <Link href="/buscar">Explorar o catálogo</Link></p>
+        : <div className={styles.cards}>{guides.map((guide) => {
+          const covers = guide.picks.slice(0, 3)
+          return <Link href={`/guias/${guide.slug}`} className={styles.card} key={guide.slug}>
+            <span className={styles.cardText}><small>{guide.count} produtos</small><strong>{guide.category.name}</strong><p>Preços de {formatPrice(guide.stats.minPrice)} a {formatPrice(guide.stats.maxPrice)} e {guide.checks.length} pontos para conferir antes de decidir.</p><span>Abrir o guia</span></span>
+            <span className={styles.mosaic} aria-hidden="true">{covers.map((pick) => <span key={pick.product.id}><Image src={pick.product.image} alt="" fill sizes="96px"/></span>)}</span>
+          </Link>
+        })}</div>}
+    </div>
+  </StorefrontShell>
+}

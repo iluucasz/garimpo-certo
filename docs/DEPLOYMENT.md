@@ -18,7 +18,8 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | opcional | Login com Google (o botão some sem elas) |
 | `NEXT_PUBLIC_SITE_URL` | recomendada | Domínio canônico; sem ela vale o domínio de produção da Vercel |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | recomendada | Contato LGPD na página de privacidade |
-| `NEXT_PUBLIC_EDITORIAL_ENABLED` | opcional | `1` mostra coleções e guias (conteúdo de demonstração) |
+| `NEXT_PUBLIC_ADMIN_DEMO_MODULES` | opcional | `1` mostra os módulos de demonstração do painel admin |
+| `TEST_DATABASE_URL` | só em testes | Banco usado por `pnpm test` (ex.: branch do Neon); sem ele, usa `DATABASE_URL` |
 | `NEXT_IMAGE_UNOPTIMIZED` | opcional | `1` desliga o otimizador de imagens |
 
 ## Agendamento
@@ -35,6 +36,6 @@ Preview valida migrations e contratos antes do tráfego. Em produção, migratio
 
 ## Observabilidade
 
-Requests propagam `request_id` e `trace_id` (`proxy.ts`). A importação agendada registra o resultado nos logs da função. Ainda faltam alertas e RUM de Core Web Vitals (ver `docs/BACKLOG.md`).
+Requests propagam `request_id` e `trace_id` (`proxy.ts`). A importação agendada registra o resultado nos logs da função. Core Web Vitals de campo vêm do Vercel Speed Insights, carregado só com o consentimento de medição; ative-o em *Project → Speed Insights* no painel da Vercel. Alertas ainda não existem (ver `docs/BACKLOG.md`).
 
 O script `load-tests/core-journeys.js` cobre navegação, recomendação e ingestão com k6.

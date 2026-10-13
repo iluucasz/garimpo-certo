@@ -15,7 +15,7 @@ export const defaultRolePermissions: Record<AdminRole, Permission[]> = {
 
 export function permissionForModule(slug: string, mutation = false): Permission {
   if (['analytics', 'funil', 'eventos'].includes(slug)) return 'analytics:read'
-  if (slug === 'imports-jobs') return mutation ? 'jobs:run' : 'catalog:read'
+  if (slug === 'imports-jobs' || slug === 'catalogo') return mutation ? 'jobs:run' : 'catalog:read'
   if (['usuarios-rbac', 'seguranca'].includes(slug)) return 'users:manage'
   if (['tracking', 'ai', 'tema', 'integracoes'].includes(slug)) return mutation ? 'settings:write' : 'catalog:read'
   if (['cms', 'paginas', 'seo'].includes(slug)) return mutation ? 'content:write' : 'catalog:read'

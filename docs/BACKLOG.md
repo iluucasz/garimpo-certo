@@ -14,17 +14,17 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 
 ## Produto
 
-- [ ] **Coleções e guias reais.** Hoje são conteúdo de demonstração, escondidos por `NEXT_PUBLIC_EDITORIAL_ENABLED`. Precisam de tabelas e de um fluxo de edição antes de serem ligados.
-- [ ] **Painel admin.** Segue demonstrativo (números fixos, CRUD em `localStorage` para ~29 módulos) e não recebeu o redesign da vitrine. Decidir se vira produto real; é também onde ainda mora a maior parte do `app/globals.css`.
+- [ ] **Edição humana de coleções e guias.** Hoje são calculados a partir do catálogo (`lib/catalog/collections.ts`, `lib/catalog/guides.ts`) e o texto de "o que observar" está em código. Curadoria manual (escolher produtos, escrever guias) exigiria tabelas e um fluxo de edição.
+- [ ] **Painel admin.** Enxuto por decisão: Visão geral, Catálogo/importação, Analytics e Funil usam dados reais. Os ~26 módulos de demonstração (CRUD em `localStorage`) ficam escondidos por `NEXT_PUBLIC_ADMIN_DEMO_MODULES`. Se algum virar produto real, ele precisa de tabela e API próprias; o admin não recebeu o redesign da vitrine e é onde mora a maior parte do `app/globals.css`.
 - [ ] **Personalização.** Hoje só alimenta a aba "Para você" da home. Busca e ranking não leem os interesses.
 - [ ] **Fila para pedidos de titulares.** O autoatendimento cobre acesso, portabilidade, correção e exclusão; não há fila para o que ele não resolve.
 - [ ] **Avaliações, frete e crescimento.** A API de afiliados da Shopee não expõe contagem de avaliações, frete nem série de crescimento; a interface não inventa esses dados.
 
 ## Engenharia
 
-- [ ] **Isolamento de banco em teste.** `tests/integration/**` roda no Neon real (criam e removem os próprios registros). Considerar um branch do Neon só para CI.
+- [ ] **Branch do Neon para testes.** O suporte existe (`TEST_DATABASE_URL`), mas ainda é preciso criar o branch no Neon e configurá-lo no CI. Sem isso, a integração roda no banco real (criando e removendo os próprios registros).
 - [ ] **Monitorar a cota do otimizador de imagens** no painel da Vercel e manter `images.remotePatterns` em dia ao adicionar um provedor com outro CDN.
-- [ ] **Métricas de campo.** Os Core Web Vitals foram medidos em laboratório (Pixel 5 emulado, CPU 4x, 1,6 Mbps). Falta RUM para valores reais.
+- [ ] **Ativar o Speed Insights** no painel da Vercel. O componente já é carregado com consentimento; sem a ativação não há dados de campo.
 - [ ] **Regressão visual automática.** Não há; a limpeza de CSS foi validada por snapshot de estilos computados (script descartável).
 - [ ] **Gestão de admins.** Promover papel é manual via `pnpm db:grant-role <email> <ROLE_CODE>`.
 

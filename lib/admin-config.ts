@@ -1,7 +1,9 @@
 export type ModuleKind='table'|'builder'|'analytics'|'settings'|'governance'
 export type ModuleConfig={slug:string;title:string;description:string;group:string;kind:ModuleKind;action:string;columns:string[];rows:string[][]}
 const table=(slug:string,title:string,description:string,group:string,action:string,columns:string[],rows:string[][]):ModuleConfig=>({slug,title,description,group,kind:'table',action,columns,rows})
-export const adminConfigs:ModuleConfig[]=[
+const catalogEntry:ModuleConfig={slug:'catalogo',title:'Produtos e importação',description:'Produtos, preços e importação da Shopee.',group:'Catálogo',kind:'table',action:'Importar agora',columns:[],rows:[]}
+const allAdminConfigs:ModuleConfig[]=[
+ catalogEntry,
  table('produtos','Produtos','Catálogo mestre separado das ofertas de cada loja.','Catálogo','Novo produto',['Produto','Marca','Categoria','Score','Status'],[['Headphone Quiet Pro','Auralis','Áudio','96','Ativo'],['Luminária Halo','Noma','Casa','93','Ativo'],['Câmera Pocket X','Lumina','Fotografia','98','Revisão'],['Moedor Atlas','Orbe','Cozinha','90','Ativo']]),
  table('ofertas','Ofertas','Preços, estoque e links recebidos dos providers.','Catálogo','Importar ofertas',['Oferta','Provider','Preço','Estoque','Atualização'],[['Headphone Quiet Pro','Amazon','R$ 649','Disponível','há 8 min'],['Headphone Quiet Pro','Mercado Livre','R$ 675','Baixo','há 22 min'],['Luminária Halo','Magalu','R$ 279','Disponível','há 4 min']]),
  table('providers','Providers','Fontes de catálogo e programas de afiliados.','Catálogo','Novo provider',['Provider','Produtos','Saúde','Última sync','Status'],[['Amazon','8.420','99,8%','há 8 min','Conectado'],['Mercado Livre','12.840','98,2%','há 22 min','Conectado'],['Magalu','4.110','91,4%','há 1 h','Alerta']]),
@@ -19,7 +21,7 @@ export const adminConfigs:ModuleConfig[]=[
  table('cms','CMS editorial','Artigos, guias e conteúdo de apoio.','Conteúdo','Novo artigo',['Título','Tipo','Autor','Atualização','Status'],[['Como escolher um headphone','Guia','Marina','Hoje','Publicado'],['Uma mesa melhor começa pela luz','Artigo','João','Ontem','Publicado']]),
  table('paginas','Páginas','Conteúdo institucional e landing pages.','Conteúdo','Nova página',['Página','Slug','Responsável','Atualização','Status'],[['Como funciona','/como-funciona','Marina','Hoje','Publicada'],['Privacidade','/privacidade','Legal','02 Set','Publicada']]),
  {slug:'seo',title:'SEO',description:'Metadados, indexação e saúde de conteúdo.',group:'Conteúdo',kind:'settings',action:'Salvar configurações',columns:[],rows:[]},
- {slug:'analytics',title:'Analytics',description:'Desempenho demonstrativo da descoberta ao clique afiliado.',group:'Insights',kind:'analytics',action:'Exportar relatório',columns:[],rows:[]},
+ {slug:'analytics',title:'Analytics',description:'Cliques e conversões de afiliado registrados na plataforma.',group:'Insights',kind:'analytics',action:'Exportar relatório',columns:[],rows:[]},
  {slug:'funil',title:'Funil',description:'Entenda onde as pessoas avançam ou abandonam.',group:'Insights',kind:'analytics',action:'Criar segmento',columns:[],rows:[]},
  table('eventos','Eventos','Fluxo de eventos coletados pela plataforma.','Insights','Ver schema',['Evento','Volume 24 h','Amostragem','Último evento','Status'],[['product_view','48.281','100%','agora','Saudável'],['affiliate_click','6.492','100%','agora','Saudável'],['search','18.204','100%','há 2 s','Saudável']]),
  table('usuarios-rbac','Usuários e RBAC','Perfis administrativos e permissões.','Governança','Convidar pessoa',['Pessoa','Papel','Escopo','Último acesso','Status'],[['Marina Costa','Admin','Tudo','Agora','Ativa'],['João Rocha','Editor','Conteúdo','Hoje, 09:10','Ativo'],['Ana Freitas','Analista','Insights','Ontem','Ativa']]),
@@ -32,4 +34,11 @@ export const adminConfigs:ModuleConfig[]=[
  {slug:'seguranca',title:'Segurança',description:'Sessões, políticas e controles administrativos.',group:'Sistema',kind:'governance',action:'Revisar acessos',columns:[],rows:[]},
  {slug:'tema',title:'Theme Editor',description:'Ajuste a identidade visual com preview local.',group:'Sistema',kind:'builder',action:'Publicar tema',columns:[],rows:[]},
 ]
+/**
+ * Só estes módulos têm dados reais por trás. Os demais (CRUD em localStorage, números de exemplo) ficam
+ * escondidos; NEXT_PUBLIC_ADMIN_DEMO_MODULES=1 os mostra de volta para demonstração.
+ */
+const realModules=new Set(['catalogo','analytics','funil'])
+const showDemoModules=process.env.NEXT_PUBLIC_ADMIN_DEMO_MODULES==='1'
+export const adminConfigs:ModuleConfig[]=allAdminConfigs.filter(config=>showDemoModules||realModules.has(config.slug))
 export const getAdminConfig=(slug:string)=>adminConfigs.find(x=>x.slug===slug)

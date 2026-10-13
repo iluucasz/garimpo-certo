@@ -246,3 +246,11 @@
   .productTable th:first-child, .productTable td:first-child { padding-left: 18px; }
   .dashboardNote { line-height: 1.6; }
 }
+
+.facts { margin: 0; padding: 4px 24px 8px; display: grid; gap: 0; }
+.facts > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.facts > div:last-child { border-bottom: 0; }
+.facts dt { color: var(--muted-foreground); }
+.facts dd { margin: 0; text-align: right; font-weight: 600; color: #2e3138; }
+.facts code { font-size: 12px; font-weight: 500; }
+.quiet { background: #e8f3ec; color: #1c6b4a; }

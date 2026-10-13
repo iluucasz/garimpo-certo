@@ -61,16 +61,6 @@ export const offers: Offer[] = products.flatMap((product,index)=>[
   {id:`o${index}b`,productId:product.id,providerId:'p2',price:Math.round(product.priceHistory.at(-1)!.price*1.04),shipping:19.9,installment:'12x com juros',stock:index%3===0?'últimas unidades':'disponível',url:providerUrl('p2',product),updatedAt:'há 22 min'},
   {id:`o${index}c`,productId:product.id,providerId:index%2?'p3':'p4',price:Math.round(product.priceHistory.at(-1)!.price*.98),shipping:29.9,installment:'8x sem juros',stock:'disponível',url:providerUrl(index%2?'p3':'p4',product),updatedAt:'há 1 h'},
 ])
-export const collections: Collection[] = [
-  {id:'cl1',title:'Mesa bem resolvida',slug:'mesa-bem-resolvida',description:'Peças para trabalhar com mais foco e menos ruído.',productIds:['1','5','9','10','11','13'],tone:'Foco'},
-  {id:'cl2',title:'Casa prática',slug:'casa-pratica',description:'Escolhas que economizam tempo na rotina e facilitam o cuidado da casa.',productIds:['8','12','16','17','18'],tone:'Rotina leve'},
-  {id:'cl3',title:'Até R$ 300',slug:'ate-300',description:'Boas escolhas que cabem no orçamento.',productIds:['4','6','7','8','11','20','21','23'],tone:'Preço justo'},
-]
-export const articles: Article[] = [
-  {id:'a1',title:'Como escolher um headphone sem cair no hype',slug:'como-escolher-headphone',excerpt:'Cinco critérios que importam mais do que a ficha técnica.',category:'Guia de compra',readTime:'6 min',image:'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=85',content:['Conforto vem antes de qualquer codec. Um bom headphone precisa desaparecer na cabeça depois dos primeiros minutos.','Compare autonomia real, peso e facilidade de troca entre dispositivos. Cancelamento de ruído forte não compensa um arco desconfortável.','Por fim, consulte o histórico de preço e compare a reputação das lojas antes de decidir.']},
-  {id:'a2',title:'Uma mesa melhor começa pela luz',slug:'mesa-melhor-luz',excerpt:'Temperatura, posição e intensidade para reduzir o cansaço.',category:'Casa e rotina',readTime:'4 min',image:'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=85',content:['A luz lateral reduz reflexos e cria profundidade sem disputar atenção com a tela.','Durante o dia, prefira tons neutros. À noite, luzes quentes ajudam a sinalizar que o expediente terminou.']},
-  {id:'a3',title:'O kit essencial para fotografar viagens',slug:'kit-fotografia-viagem',excerpt:'Menos equipamento, mais histórias para registrar.',category:'Seleção',readTime:'8 min',image:'https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?auto=format&fit=crop&w=1200&q=85',content:['Uma lente versátil, bateria extra e alça confortável resolvem a maioria dos cenários.','Escolha uma bolsa discreta e reserve espaço para deixar a câmera acessível.']},
-]
 export const jobs: Job[] = [
  {id:'j1',name:'Sincronização de ofertas',provider:'Amazon',status:'Concluído',progress:100,lastRun:'Hoje, 09:42'},
  {id:'j2',name:'Atualização de estoque',provider:'Mercado Livre',status:'Em execução',progress:68,lastRun:'Agora'},

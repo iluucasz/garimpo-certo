@@ -54,10 +54,15 @@ test('admin exige sessão com papel para abrir um módulo', async ({ page }) => 
   let roles: unknown[] = []
   await page.route('**/api/auth/get-session**', (route) => route.fulfill({ json: session }))
   await page.route('**/api/v1/me', (route) => route.fulfill({ json: { data: { roles } } }))
-  await page.goto('/admin/produtos')
+  await page.goto('/admin/catalogo')
   await expect(page).toHaveURL(/\/$/)
 
-  roles = [{ code: 'ADMIN', permissions: ['catalog:read', 'catalog:write'] }]
+  roles = [{ code: 'ADMIN', permissions: ['catalog:read', 'catalog:write', 'jobs:run'] }]
+  await page.goto('/admin/catalogo')
+  await expect(page.getByRole('heading', { name: 'Catálogo e importação' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Importar da Shopee agora' })).toBeVisible()
+
+  // Módulos de demonstração ficam fora do painel (e das rotas) por padrão.
   await page.goto('/admin/produtos')
-  await expect(page.getByRole('button', { name: /Novo produto/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Essa página saiu do mapa.' })).toBeVisible()
 })

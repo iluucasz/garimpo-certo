@@ -6,8 +6,10 @@ import { HomeSelections } from '@/components/home/home-selections'
 import { HeroStat } from '@/components/home/hero-stat'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { StorefrontShell } from '@/components/storefront/storefront-shell'
-import { articles } from '@/lib/mock-data'
-import { editorialEnabled, siteUrl } from '@/lib/site'
+import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
+import { getStoreCatalog } from '@/lib/db/repositories/store-catalog'
+import { formatPrice } from '@/lib/format'
+import { siteUrl } from '@/lib/site'
 import styles from '@/components/home/home.module.css'
 
 const validFilters = ['trending', 'discount', 'rating', 'budget', 'foryou'] as const
@@ -25,6 +27,8 @@ const siteJsonLd = {
 export default async function Home({ searchParams }: { searchParams: Promise<{ filtro?: string }> }) {
   const params = await searchParams
   const activeFilter = validFilters.includes(params.filtro as HomeFilter) ? params.filtro as HomeFilter : 'trending'
+  const catalog = await getStoreCatalog()
+  const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] }).slice(0, 3)
 
   return <StorefrontShell>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}/>
@@ -50,10 +54,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
       <HomeCatalog activeFilter={activeFilter}/>
       <HomeSelections/>
 
-      {editorialEnabled && <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
-        <div className={styles.guideIntro}><h2 id="guides-title">Vale a leitura.</h2><p>Detalhes que ajudam a decidir qual produto combina com você.</p><Link href="/guias">Todos os guias <ArrowRight aria-hidden="true"/></Link></div>
-        <div className={styles.guideList}>{articles.map((article) => <Link href={`/guias/${article.slug}`} className={styles.guide} key={article.id}>
-          <div className={styles.guideImage}><Image src={article.image} alt="" fill sizes="(max-width: 700px) 88px, 140px"/></div><div><span>{article.category} <i/> {article.readTime} de leitura</span><h3>{article.title}</h3></div><ArrowUpRight aria-hidden="true"/>
+      {guides.length > 0 && <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
+        <div className={styles.guideIntro}><h2 id="guides-title">Antes de comprar.</h2><p>O que conferir em cada categoria, com os destaques de hoje do catálogo.</p><Link href="/guias">Todos os guias <ArrowRight aria-hidden="true"/></Link></div>
+        <div className={styles.guideList}>{guides.map((guide) => <Link href={`/guias/${guide.slug}`} className={styles.guide} key={guide.slug}>
+          <div className={styles.guideImage}>{guide.picks[0] && <Image src={guide.picks[0].product.image} alt="" fill sizes="(max-width: 700px) 88px, 140px"/>}</div>
+          <div><span>{guide.count} produtos <i/> de {formatPrice(guide.stats.minPrice)} a {formatPrice(guide.stats.maxPrice)}</span><h3>{guide.title}</h3></div><ArrowUpRight aria-hidden="true"/>
         </Link>)}</div>
       </div></section>}
 

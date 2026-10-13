@@ -3,7 +3,7 @@
 ## O que existe hoje
 
 - **Consentimento**: quatro categorias (`essential`, `analytics`, `personalization`, `marketing`), guardadas em `localStorage` (`garimpo:cookie-preferences`). Só `essential` opera sem escolha; o padrão das demais é desligado.
-- **Medição** (`analytics`): eventos da vitrine (favoritar, comparar, ver produto, cliques de compra) só saem do navegador com essa permissão (`lib/platform/consent.ts`), e o Vercel Analytics só é montado depois dela. Ações do painel administrativo não passam por esse filtro.
+- **Medição** (`analytics`): eventos da vitrine (favoritar, comparar, ver produto, cliques de compra) só saem do navegador com essa permissão (`lib/platform/consent.ts`), e o Vercel Analytics e o Speed Insights (Core Web Vitals de campo) só são montados depois dela. Ações do painel administrativo não passam por esse filtro.
 - **Cliques de compra**: registram oferta, ponto da página e um identificador de aba; não gravam IP, user agent nem usuário.
 - **Personalização**: com a permissão e interesses salvos, a home mostra a aba "Para você".
 - **Direitos do titular, por autoatendimento** (`/conta#dados`): baixar os dados da conta (`GET /api/v1/me/export`), corrigir o nome e excluir a conta (Better Auth `deleteUser`; as chaves do banco removem favoritos e sessões).
