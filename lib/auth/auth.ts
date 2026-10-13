@@ -25,7 +25,7 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    // Com RESEND_API_KEY e EMAIL_FROM o link é enviado por e-mail. Sem eles, cai no log do servidor
+    // Com BREVO_API_KEY e EMAIL_FROM o link é enviado por e-mail (Brevo). Sem eles, cai no log do servidor
     // (único jeito de recuperar o acesso nesse caso) e a tela avisa a pessoa de que o envio não está ativo.
     async sendResetPassword({ user, url }) {
       if (emailEnabled()) {

@@ -8,7 +8,7 @@ O estado técnico geral está em `CLAUDE.md`; as lacunas de engenharia em `docs/
 ## 1. O que só o dono do projeto pode fazer
 
 - [ ] **`CRON_SECRET` no Vercel (urgente):** sem ele o cron responde 503 e o catálogo volta a envelhecer. Qualquer valor aleatório longo serve.
-- [ ] **Resend:** criar a conta, verificar o domínio remetente e definir `RESEND_API_KEY` e `EMAIL_FROM`.
+- [ ] **E-mail (Brevo):** a chave já está no `.env` local (nome `brevo`; aceito pelo código). Falta definir `EMAIL_FROM` com um remetente verificado e levar `BREVO_API_KEY` + `EMAIL_FROM` ao Vercel. Para produção, prefira um remetente de domínio próprio (um `@gmail.com` costuma cair em spam por causa do DMARC do Gmail).
 - [ ] **`BETTER_AUTH_URL` e `NEXT_PUBLIC_BETTER_AUTH_URL` no Vercel** com o domínio real. Se estiverem em `localhost`, os links do e-mail saem quebrados.
 - [ ] **Domínio próprio:** `NEXT_PUBLIC_SITE_URL` (sem ele vale o `*.vercel.app`).
 - [ ] **Contato LGPD:** `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL`.

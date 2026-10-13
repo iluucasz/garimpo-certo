@@ -14,7 +14,7 @@ Medição de laboratório de referência (Pixel 5, CPU 4x, 1,6 Mbps/150 ms, buil
 | `SHOPEE_AFFILIATE_APP_ID`, `SHOPEE_AFFILIATE_APP_SECRET` | sim | Importação do catálogo |
 | `CRON_SECRET` | sim | Autoriza o cron de importação (Vercel envia como Bearer) |
 | `BLOB_READ_WRITE_TOKEN` | sim | Re-hospedagem de imagens |
-| `RESEND_API_KEY`, `EMAIL_FROM` | para e-mail | Redefinição de senha |
+| `BREVO_API_KEY`, `EMAIL_FROM` | para e-mail | Redefinição de senha (Brevo; `EMAIL_FROM` = remetente verificado no Brevo) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | opcional | Login com Google (o botão some sem elas) |
 | `NEXT_PUBLIC_SITE_URL` | recomendada | Domínio canônico; sem ela vale o domínio de produção da Vercel |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | recomendada | Contato LGPD na página de privacidade |

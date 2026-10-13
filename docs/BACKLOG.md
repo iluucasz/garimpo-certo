@@ -5,7 +5,7 @@ Itens marcados com **(você)** dependem de uma conta, chave ou decisão que não
 
 ## Depende de ação externa
 
-- [ ] **(você) E-mail transacional.** O envio por Resend está implementado (`lib/auth/email.ts`) e testado, mas só liga com `RESEND_API_KEY` e `EMAIL_FROM` no ambiente. Sem eles, o link de redefinição de senha só vai para o log do servidor e a tela avisa isso.
+- [ ] **(você) E-mail transacional.** O envio por Brevo está implementado (`lib/auth/email.ts`) e testado, mas só liga com `BREVO_API_KEY` e `EMAIL_FROM` no ambiente (a chave existe no `.env` local; falta `EMAIL_FROM` e as duas no Vercel). Sem eles, o link de redefinição de senha só vai para o log do servidor e a tela avisa isso.
 - [ ] **(você) `BETTER_AUTH_URL` / `NEXT_PUBLIC_BETTER_AUTH_URL` em produção.** Precisam apontar para o domínio real (o código avisa no log se detectar `localhost` em produção).
 - [ ] **(você) `CRON_SECRET` em produção.** Sem ele a importação diária (`vercel.json`) responde 503 e o catálogo volta a envelhecer.
 - [ ] **(você) Domínio.** `NEXT_PUBLIC_SITE_URL` define canonical, sitemap, Open Graph e JSON-LD. Sem ele usa o domínio de produção que a Vercel injeta.

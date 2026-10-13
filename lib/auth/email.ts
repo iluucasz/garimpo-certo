@@ -1,13 +1,26 @@
 /**
  * Envio de e-mails transacionais (redefinição de senha).
  *
- * Usa a API HTTP do Resend por `fetch`, sem dependência extra. Fica ativo quando
- * RESEND_API_KEY e EMAIL_FROM existem; sem eles, `emailEnabled()` é falso e o chamador decide
- * o que fazer (hoje: registrar o link no log do servidor).
+ * Usa a API HTTP do Brevo (v3, `smtp/email`) por `fetch`, sem dependência extra. Fica ativo quando existem
+ * a chave (`BREVO_API_KEY`; o nome antigo `brevo` do .env também vale) e o remetente (`EMAIL_FROM`,
+ * "Nome <email>" ou só o e-mail, que precisa estar verificado no Brevo). Sem eles, `emailEnabled()` é falso
+ * e o chamador decide o que fazer (hoje: registrar o link no log do servidor).
  */
 
+const brevoKey = () => (process.env.BREVO_API_KEY ?? process.env.brevo ?? '').trim()
+
+/** Aceita `Nome <email@dominio>` ou `email@dominio`. Retorna null se não houver um e-mail válido. */
+export function parseSender(value: string | undefined) {
+  const raw = (value ?? '').trim()
+  if (!raw) return null
+  const match = raw.match(/^"?([^"<]*?)"?\s*<([^<>\s]+@[^<>\s]+)>$/) ?? raw.match(/^()([^<>\s]+@[^<>\s]+)$/)
+  if (!match) return null
+  const name = match[1]?.trim()
+  return { name: name || undefined, email: match[2] }
+}
+
 export function emailEnabled() {
-  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM)
+  return Boolean(brevoKey() && parseSender(process.env.EMAIL_FROM))
 }
 
 export type OutgoingEmail = { to: string; subject: string; html: string; text: string }
@@ -35,16 +48,18 @@ export function buildPasswordResetEmail({ name, url }: { name?: string | null; u
 
 /** Retorna true quando o provedor aceitou a mensagem. Nunca lança: falha de e-mail não deve quebrar o fluxo de autenticação. */
 export async function sendEmail(email: OutgoingEmail): Promise<boolean> {
-  if (!emailEnabled()) return false
+  const sender = parseSender(process.env.EMAIL_FROM)
+  if (!brevoKey() || !sender) return false
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email.to], subject: email.subject, html: email.html, text: email.text }),
+      headers: { 'api-key': brevoKey(), 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ sender, to: [{ email: email.to }], subject: email.subject, htmlContent: email.html, textContent: email.text }),
       signal: AbortSignal.timeout(8000),
     })
     if (!response.ok) {
-      console.error(`[email] provedor recusou o envio (HTTP ${response.status})`)
+      const detail = await response.json().catch(() => null) as { code?: string; message?: string } | null
+      console.error(`[email] Brevo recusou o envio (HTTP ${response.status}${detail?.code ? `, ${detail.code}` : ''}${detail?.message ? `: ${detail.message}` : ''})`)
       return false
     }
     return true
