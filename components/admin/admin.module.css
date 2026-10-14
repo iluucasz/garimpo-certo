@@ -23,7 +23,7 @@
 }
 .workspace :global(.admin-sidebar-head) { min-height: 80px; padding: 0 10px; flex-shrink: 0; }
 .wordmark { display: flex; align-items: center; gap: 9px; font-size: 23px; font-weight: 750; letter-spacing: -1.1px; }
-.brandMark { width: 30px; height: 32px; display: grid; place-items: center; padding-bottom: 4px; border-radius: 9px; color: #fff; background: #e86239; font-size: 29px; font-weight: 700; }
+.brandMark { width: 32px; height: 32px; object-fit: contain; flex: none; }
 .ops { font-size: 11px; font-weight: 550; letter-spacing: 0; color: var(--muted-foreground); border-left: 1px solid #d8dadf; margin-left: 9px; padding-left: 9px; }
 .workspace :global(.admin-nav) { display: flex; flex: 1; min-height: 0; overflow-y: auto; gap: 4px; padding: 0 2px 20px; scrollbar-width: thin; scrollbar-color: #d9dbe0 transparent; }
 .navSearch { display: flex; align-items: center; gap: 8px; border: 1px solid #e1e3e8; border-radius: 7px; min-height: 36px; padding: 0 10px; margin: 3px 0 19px; color: #787e87; background: #fff; }
@@ -207,7 +207,7 @@
   .workspace :global(.admin-sidebar) { position: sticky; top: 0; height: auto; z-index: 40; border-right: 0; border-bottom: 1px solid var(--border); padding: 0 16px; }
   .workspace :global(.admin-sidebar-head) { min-height: 62px; padding: 0; }
   .wordmark { font-size: 21px; }
-  .brandMark { width: 27px; height: 29px; font-size: 26px; }
+  .brandMark { width: 28px; height: 28px; }
   .workspace :global(.admin-sidebar-toggle) { width: 34px; height: 34px; border-radius: 6px; }
   .workspace :global(.admin-nav.open) { display: flex !important; max-height: calc(100dvh - 90px); margin-top: 0; padding-top: 15px; }
   .workspace :global(.admin-nav) a { min-height: 40px; }

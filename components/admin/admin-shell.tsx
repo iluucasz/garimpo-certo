@@ -65,7 +65,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <aside className="admin-sidebar">
       <div className="admin-sidebar-head">
         <Link href="/admin" className={styles.wordmark} onClick={closeNavigation} aria-label="Garimpo, painel administrativo">
-          <span className={styles.brandMark}>g</span><span>garimpo<span className={styles.ops}>ops</span></span>
+          <img className={styles.brandMark} src="/icon-192.png" alt="" width={32} height={32}/><span>garimpo<span className={styles.ops}>ops</span></span>
         </Link>
         <button className="admin-sidebar-toggle" aria-label={navigationOpen ? 'Fechar navegação administrativa' : 'Abrir navegação administrativa'} aria-expanded={navigationOpen} aria-controls="admin-navigation" onClick={() => setNavigationOpen((current) => !current)}>{navigationOpen ? <X/> : <Menu/>}</button>
       </div>

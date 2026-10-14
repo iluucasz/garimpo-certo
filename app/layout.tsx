@@ -20,7 +20,7 @@ export async function generateMetadata():Promise<Metadata>{
   const seo=await getSetting('seo')
   const title=String(seo.siteTitle)
   const description=String(seo.description)
-  const image=String(seo.ogImageUrl||'')
+  const image=String(seo.ogImageUrl||'')||'/og-default.png'
   const verification=String(seo.googleVerification||'')
   return{
     metadataBase:new URL(siteUrl),
@@ -28,6 +28,7 @@ export async function generateMetadata():Promise<Metadata>{
     description,
     applicationName:'Garimpo',authors:[{name:'Garimpo'}],creator:'Garimpo',publisher:'Garimpo',category:'shopping',
     alternates:{canonical:'/'},
+    icons:{icon:[{url:'/favicon-48.png',sizes:'48x48',type:'image/png'},{url:'/icon-192.png',sizes:'192x192',type:'image/png'}],apple:[{url:'/apple-icon.png',sizes:'180x180'}]},
     openGraph:{type:'website',locale:'pt_BR',siteName:'Garimpo',title,description,url:'/',...(image?{images:[{url:image}]}:{})},
     twitter:{card:'summary_large_image',title,description,...(image?{images:[image]}:{})},
     robots:seo.indexing===false?{index:false,follow:false}:{index:true,follow:true},
