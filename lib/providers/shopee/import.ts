@@ -66,7 +66,7 @@ async function search(query: Parameters<typeof fetchAllProductOffers>[0], total:
 }
 
 export async function importShopeeCatalog(options: ImportOptions = {}) {
-  const { perCategory = 24, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [] } = options
+  const { perCategory = 40, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [] } = options
   const providerId = dryRun ? '' : await getOrCreateProvider('shopee', 'Shopee')
   const categoryNames = Object.fromEntries(categoryGroups.map((group) => [group.slug, group.name]))
   const state: SelectionState = { seen: new Set<string>(), perShop: new Map<number, number>() }
