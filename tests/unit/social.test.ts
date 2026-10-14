@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CAPTION_LIMIT, cleanTitle, composePost, DISCLOSURE, escapeHtml, pick, priceLine, proofLine, type PostFacts } from '@/lib/social/compose'
+import { CAPTION_LIMIT, cleanTitle, composePost, escapeHtml, pick, priceLine, proofLine, type PostFacts } from '@/lib/social/compose'
 import { defaultPickOptions, rankCandidates, scoreCandidate, type PostCandidate } from '@/lib/social/picker'
 import { brasiliaDay, brasiliaTime, missingSlots, slotsForDay } from '@/lib/social/schedule'
 
@@ -14,7 +14,7 @@ describe('texto da postagem', () => {
     expect(text).toContain('Nota 4,8')
     expect(text).toContain('1,3 mil vendas')
     expect(text).toContain('https://s.shopee.com.br/abc')
-    expect(text).toContain(DISCLOSURE)
+    expect(text).not.toContain('Link de afiliado')
   })
 
   it('sem preço anterior não inventa desconto', () => {
@@ -51,7 +51,7 @@ describe('texto da postagem', () => {
   it('respeita o limite da legenda de foto do Telegram', () => {
     const { text } = composePost(facts({ name: 'Nome muito longo '.repeat(80) }), 'https://s.shopee.com.br/abc', 'p3', { caption: true })
     expect(text.length).toBeLessThanOrEqual(CAPTION_LIMIT)
-    expect(text).toContain(DISCLOSURE)
+    expect(text).not.toContain('Link de afiliado')
   })
 })
 

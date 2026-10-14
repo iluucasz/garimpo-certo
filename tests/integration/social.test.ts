@@ -122,7 +122,7 @@ describe('fila de postagens', () => {
     expect(query).toContain(`"${tag}"`)
     expect(row.text).toContain('R$ 39,90')
     expect(row.text).toContain('de R$ 59,90')
-    expect(row.text).toContain('Link de afiliado')
+    expect(row.text).not.toContain('Link de afiliado')
     expect(row.facts).toMatchObject({ price: 39.9, originalPrice: 59.9, soldCount: 1250 })
   })
 
@@ -273,7 +273,7 @@ ${link}`
     const candidate = await fixtureCandidate()
     const row = await createPost({ candidate, campaign: `${tag}ia`, source: 'manual', status: 'pending', scheduledFor: null, userId: null, useAi: true })
     expect(row.text).toContain('Achei esse fone bluetooth')
-    expect(row.text).toContain('Link de afiliado')
+    expect(row.text).not.toContain('Link de afiliado')
     expect(row.facts).toMatchObject({ ai: { rewritten: true } })
     expect(requests).toHaveLength(1)
     // O pedido leva só dados da oferta, e a chave só no cabeçalho.

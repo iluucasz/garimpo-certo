@@ -50,8 +50,6 @@ export function proofLine(facts: PostFacts) {
   return parts.join(' · ')
 }
 
-export const DISCLOSURE = 'Link de afiliado: o Garimpo pode receber comissão. Preço e estoque podem mudar.'
-
 type Template = (parts: { title: string; price: string; proof: string; link: string }) => string
 
 const templates: Template[] = [
@@ -79,7 +77,7 @@ export function composePost(facts: PostFacts, linkUrl: string, seed: string, opt
       proof: proofLine(facts),
       link: escapeHtml(linkUrl),
     })
-    return `${body}\n\n<i>${DISCLOSURE}</i>`
+    return body
   }
   let text = build(90)
   // O título é a única parte elástica; encurta até caber no limite do Telegram.

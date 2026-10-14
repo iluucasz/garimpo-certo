@@ -1,5 +1,5 @@
 import { chat, DeepseekError, type DeepseekConfig } from '@/lib/ai/deepseek'
-import { CAPTION_LIMIT, DISCLOSURE, escapeHtml, MESSAGE_LIMIT, priceLine, proofLine, cleanTitle, type PostFacts } from './compose'
+import { CAPTION_LIMIT, escapeHtml, MESSAGE_LIMIT, priceLine, proofLine, cleanTitle, type PostFacts } from './compose'
 
 /**
  * Reescrita opcional do texto da postagem por IA. A IA só muda o **tom e a estrutura**; todo número vem do que
@@ -65,7 +65,7 @@ export function validateRewrite(raw: string, facts: PostFacts, link: string, opt
   if (amounts.some((amount) => !okAmounts.has(amount))) return { ok: false, reason: 'O texto cita um valor que não é o preço da oferta.' }
   if ((facts.originalPrice === null || (facts.discountPercent ?? 0) < 5) && /\d+\s*%/.test(withoutLink)) return { ok: false, reason: 'O texto cita desconto que a Shopee não informou.' }
 
-  const text = `${body}\n\n<i>${DISCLOSURE}</i>`
+  const text = body
   if (text.length > limit) return { ok: false, reason: 'O texto passa do limite do Telegram.' }
   return { ok: true, text }
 }

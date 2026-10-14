@@ -14,7 +14,7 @@ describe('validação da reescrita por IA', () => {
   it('aceita um texto fiel aos dados e anexa o aviso de afiliado', () => {
     const result = validateRewrite(good, facts, link)
     expect(result.ok).toBe(true)
-    if (result.ok) expect(result.text).toContain('Link de afiliado')
+    if (result.ok) expect(result.text).not.toContain('Link de afiliado')
   })
 
   it('exige o link e o preço exatos', () => {
