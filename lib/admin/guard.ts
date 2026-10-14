@@ -26,5 +26,6 @@ export function parseListParams(url: URL) {
     page,
     pageSize: Math.min(100, Math.max(1, size)),
     filter: (url.searchParams.get('filter') ?? '').slice(0, 40),
+    sort: (url.searchParams.get('sort') ?? '').slice(0, 24),
   }
 }

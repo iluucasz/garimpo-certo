@@ -18,8 +18,9 @@ import { resources, wiredFlags, type ResourceSlug } from './resource-meta'
 import { validatePeriod, type Values } from './validate'
 
 export type AdminRow = Record<string, unknown> & { id: string }
-export type ListParams = { q: string; page: number; pageSize: number; filter: string }
-export type ListResult = { rows: AdminRow[]; total: number }
+export type ListParams = { q: string; page: number; pageSize: number; filter: string; sort?: string }
+export type SummaryItem = { label: string; value: string; hint?: string; tone?: 'warn' }
+export type ListResult = { rows: AdminRow[]; total: number; summary?: SummaryItem[] }
 export type Failure = { errors: Record<string, string>; status?: number }
 export type Saved = { row: AdminRow }
 export type Removed = { ok: true; before: AdminRow } | { error: string; status: number }
@@ -57,7 +58,50 @@ async function existingIds(table: typeof categories | typeof tags | typeof produ
 }
 
 // ---------------------------------------------------------------- produtos
+/** Campo da melhor oferta ativa (a de menor preço) do produto. */
+const bestOffer = (column: string) => sql<string | null>`(select ${sql.raw(`o.${column}`)}::text from offers o where o.product_id = ${products.id} and o.status = 'active' order by o.price asc limit 1)`
+/** Desconto só vale quando a faixa de preço da Shopee é um preço único (senão o percentual é de outra variante). */
+const reliableDiscount = sql<string | null>`(select (case when o.price_max is null or o.price_max = o.price then o.discount_percentage end)::text from offers o where o.product_id = ${products.id} and o.status = 'active' order by o.price asc limit 1)`
 const productOffersSql = (column: 'price' | 'sold_count') => sql<string | null>`(select ${sql.raw(column === 'price' ? 'min(o.price)' : 'max(o.sold_count)')} from offers o where o.product_id = ${products.id} and o.status = 'active')`
+const productImageSql = sql<string | null>`(select i.source_url from product_images i where i.product_id = ${products.id} order by i.is_primary desc, i.position asc limit 1)`
+const productSyncedSql = sql<string | null>`(select to_char(max(o.last_synced_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from offers o where o.product_id = ${products.id})`
+
+const productSorts: Record<string, ReturnType<typeof sql>[]> = {
+  recent: [sql`${products.updatedAt} desc`],
+  sold: [sql`${productOffersSql('sold_count')} desc nulls last`, sql`${products.name} asc`],
+  price_desc: [sql`${productOffersSql('price')} desc nulls last`],
+  price_asc: [sql`${productOffersSql('price')} asc nulls last`],
+  rating: [sql`${products.rating} desc nulls last`, sql`${productOffersSql('sold_count')} desc nulls last`],
+  discount: [sql`(${reliableDiscount})::numeric desc nulls last`],
+  name: [sql`${products.name} asc`],
+}
+
+/** Números do catálogo inteiro, no alto da lista de produtos. */
+async function productSummary(): Promise<SummaryItem[]> {
+  const result = await db.execute(sql`
+    select count(*)::int as total,
+      count(*) filter (where p.status = 'active')::int as active,
+      count(*) filter (where p.status <> 'active')::int as hidden,
+      count(*) filter (where p.editorial_locked)::int as locked,
+      count(*) filter (where p.status = 'active' and not exists (select 1 from product_images i where i.product_id = p.id))::int as no_image,
+      count(*) filter (where p.status = 'active' and not exists (select 1 from offers o where o.product_id = p.id and o.status = 'active'))::int as no_offer,
+      coalesce(sum(b.sold_count) filter (where p.status = 'active'), 0)::bigint as sold,
+      avg(b.rating) filter (where p.status = 'active' and b.rating is not null)::float as rating,
+      count(*) filter (where p.status = 'active' and b.discount_percentage >= 10)::int as discounted
+    from products p
+    left join lateral (select o.sold_count, o.rating, (case when o.price_max is null or o.price_max = o.price then o.discount_percentage end) as discount_percentage from offers o where o.product_id = p.id and o.status = 'active' order by o.price asc limit 1) b on true`)
+  const row = result.rows[0] as Record<string, number | string | null>
+  const n = (key: string) => Number(row[key] ?? 0)
+  const problems = n('no_image') + n('no_offer')
+  return [
+    { label: 'Produtos ativos', value: n('active').toLocaleString('pt-BR'), hint: `${n('hidden').toLocaleString('pt-BR')} ocultos ou arquivados · ${n('total').toLocaleString('pt-BR')} no total` },
+    { label: 'Vendas somadas', value: n('sold').toLocaleString('pt-BR'), hint: 'soma do que a Shopee informa dos ativos' },
+    { label: 'Nota média', value: row.rating === null ? '—' : Number(row.rating).toFixed(2).replace('.', ','), hint: 'dos produtos ativos' },
+    { label: 'Com desconto (10%+)', value: n('discounted').toLocaleString('pt-BR'), hint: 'preço abaixo do anterior informado' },
+    { label: 'Protegidos da importação', value: n('locked').toLocaleString('pt-BR'), hint: 'você editou: a importação não sobrescreve' },
+    { label: 'Precisam de atenção', value: problems.toLocaleString('pt-BR'), hint: `${n('no_image')} sem foto · ${n('no_offer')} sem oferta ativa`, tone: problems > 0 ? 'warn' : undefined },
+  ]
+}
 
 const productsHandler: Handler = {
   revalidate: ['catalog'],
@@ -68,23 +112,33 @@ const productsHandler: Handler = {
       like ? or(ilike(products.name, like), ilike(products.slug, like)) : undefined,
       status ? eq(products.status, status) : undefined,
     )
-    const [rows, count] = await Promise.all([
+    const order = productSorts[params.sort ?? '']
+      ?? [sql`(${products.status} = 'active') desc`, sql`${productOffersSql('sold_count')} desc nulls last`, sql`${products.updatedAt} desc`]
+    const [rows, count, summary] = await Promise.all([
       db.select({
         id: products.id, name: products.name, slug: products.slug, status: products.status, description: products.description,
-        editorialLocked: products.editorialLocked, brandName: brands.name,
+        editorialLocked: products.editorialLocked, brandName: brands.name, rating: products.rating,
         price: productOffersSql('price'), soldCount: productOffersSql('sold_count'),
+        discount: reliableDiscount, commission: bestOffer('commission_rate'),
+        imageUrl: productImageSql, syncedAt: productSyncedSql,
         categories: sql<string | null>`(select string_agg(c.name, ', ' order by c.name) from product_categories pc join categories c on c.id = pc.category_id where pc.product_id = ${products.id})`,
       }).from(products).leftJoin(brands, eq(brands.id, products.brandId)).where(where)
-        .orderBy(desc(products.updatedAt)).limit(page(params).limit).offset(page(params).offset),
+        .orderBy(...order).limit(page(params).limit).offset(page(params).offset),
       total(db.select({ n: sql<number>`count(*)::int` }).from(products).where(where)),
+      productSummary(),
     ])
+    const percent = (value: string | null, scale: number) => (value === null || Number(value) === 0 ? null : `${(Number(value) * scale).toFixed(scale === 1 ? 0 : 1).replace('.', ',')}%`)
     return {
       total: count,
+      summary,
       rows: rows.map((row) => ({
         ...row,
         price: money(row.price),
         soldCount: row.soldCount === null ? '—' : Number(row.soldCount).toLocaleString('pt-BR'),
         categories: row.categories ?? '—',
+        rating: row.rating === null || Number(row.rating) === 0 ? null : Number(row.rating).toFixed(1).replace('.', ','),
+        discount: percent(row.discount, 1) ? `−${percent(row.discount, 1)}` : null,
+        commission: percent(row.commission, 100),
       })),
     }
   },

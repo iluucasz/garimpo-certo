@@ -11,7 +11,8 @@ import { ImageUpload } from './image-upload'
 import styles from './resource.module.css'
 
 type Row = Record<string, unknown> & { id: string }
-type ListResponse = { rows: Row[]; total: number; page: number; pageSize: number }
+type SummaryItem = { label: string; value: string; hint?: string; tone?: 'warn' }
+type ListResponse = { rows: Row[]; total: number; page: number; pageSize: number; summary?: SummaryItem[] }
 type Values = Record<string, unknown>
 
 const hiddenInTable = new Set(['textarea', 'markdown', 'multi', 'products', 'rules', 'json'])
@@ -24,6 +25,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
   const [q, setQ] = useState('')
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('')
+  const [sort, setSort] = useState(meta.sort?.options[0]?.value ?? '')
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Row | null>(null)
   const [creating, setCreating] = useState(false)
@@ -39,7 +41,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer) }, [toast])
 
   const pageSize = 25
-  const key = `/api/v1/admin/resources/${slug}?q=${encodeURIComponent(query)}&filter=${encodeURIComponent(filter)}&page=${page}&pageSize=${pageSize}`
+  const key = `/api/v1/admin/resources/${slug}?q=${encodeURIComponent(query)}&filter=${encodeURIComponent(filter)}&sort=${encodeURIComponent(sort)}&page=${page}&pageSize=${pageSize}`
   const { data, error, isLoading, mutate } = useSWR<ListResponse>(key, swrFetcher, { keepPreviousData: true, revalidateOnFocus: false })
 
   const columns = useMemo(() => meta.fields.filter((field) => !field.formOnly && !hiddenInTable.has(field.type)), [meta])
@@ -63,7 +65,8 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
     }
   }
 
-  const title = (row: Row) => String(row[meta.fields[0].key] ?? row.id)
+  const titleKey = meta.titleKey ?? meta.fields[0].key
+  const title = (row: Row) => String(row[titleKey] ?? row.id)
   const linkFor = (row: Row) => meta.publicPath?.replace('{slug}', String(row.slug ?? ''))
 
   return <div className="panel">
@@ -77,19 +80,29 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
             {meta.filter.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>}
+        {meta.sort && <label className="select-wrap"><span className="sr-only">{meta.sort.label}</span>
+          <select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1) }}>
+            {meta.sort.options.map((option) => <option key={option.value} value={option.value}>{meta.sort!.label}: {option.label}</option>)}
+          </select>
+        </label>}
         {toolbar}
         {meta.create && <button className="btn primary" disabled={!canWrite} onClick={() => setCreating(true)} title={canWrite ? undefined : 'Seu papel não permite criar'}><Plus aria-hidden="true"/> {meta.createLabel}</button>}
       </div>
     </div>
+    {data?.summary && data.summary.length > 0 && <ul className={styles.summary} aria-label="Resumo">
+      {data.summary.map((item) => <li key={item.label} className={item.tone === 'warn' ? styles.summaryWarn : undefined}>
+        <span>{item.label}</span><strong>{item.value}</strong>{item.hint && <small>{item.hint}</small>}
+      </li>)}
+    </ul>}
     {!canWrite && meta.fields.some((field) => !field.readOnly) && <p className={styles.note}>Seu papel só permite consultar este módulo.</p>}
     {error && <p className={`${styles.note} ${styles.warn}`} role="alert">{userFacingError(error)}</p>}
 
     <div className="table-scroll">
       <table className="data-table" aria-label={meta.title}>
-        <thead><tr>{columns.map((field) => <th scope="col" key={field.key}>{field.label}</th>)}<th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
+        <thead><tr>{columns.map((field) => <th scope="col" key={field.key} className={field.type === 'image' ? styles.thumbCell : field.key === titleKey ? styles.titleCell : undefined}>{field.type === 'image' ? <span className="sr-only">{field.label}</span> : field.label}</th>)}<th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
         <tbody>
           {rows.map((row) => <tr key={row.id}>
-            {columns.map((field, index) => <td key={field.key}>{cell(field, row, index === 0 ? linkFor(row) : undefined)}</td>)}
+            {columns.map((field) => <td key={field.key} className={field.type === 'image' ? styles.thumbCell : field.key === titleKey ? styles.titleCell : undefined}>{cell(field, row, field.key === titleKey ? linkFor(row) : undefined)}</td>)}
             <td><div className="row-actions">
               {(editable && canWrite) || !editable ? <button aria-label={`${editable ? 'Editar' : 'Ver detalhes de'} ${title(row)}`} onClick={() => setEditing(row)}>{editable ? <Pencil aria-hidden="true"/> : <Search aria-hidden="true"/>}</button> : <button aria-label={`Ver ${title(row)}`} onClick={() => setEditing(row)}><Search aria-hidden="true"/></button>}
               {meta.remove && canWrite && <button aria-label={`${meta.remove === 'archive' ? 'Ocultar' : meta.slug === 'sessoes' ? 'Encerrar' : 'Excluir'} ${title(row)}`} onClick={() => { setProblem(''); setConfirming(row) }}><Trash2 aria-hidden="true"/></button>}
@@ -131,6 +144,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
 
 function cell(field: ResourceField, row: Row, link?: string) {
   const value = row[field.key]
+  if (field.type === 'image' && (value === null || value === undefined || value === '')) return <span className={styles.thumbEmpty} aria-label="Sem foto">sem foto</span>
   if (value === null || value === undefined || value === '') return <span className={styles.badgeOff}>—</span>
   const content = (() => {
     switch (field.type) {
@@ -138,6 +152,7 @@ function cell(field: ResourceField, row: Row, link?: string) {
       case 'datetime': return dateTime(String(value))
       case 'select': return <span className={`${styles.badge} ${isPositive(value) ? styles.badgeOn : ''}`}>{field.options?.find((option) => option.value === value)?.label ?? String(value)}</span>
       case 'number': return Number(value).toLocaleString('pt-BR')
+      case 'image': return <img className={styles.thumb} src={String(value)} alt="" loading="lazy" decoding="async" width={56} height={56}/>
       case 'url': return <a href={String(value)} target="_blank" rel="noreferrer noopener" className={styles.clip}>{String(value).replace(/^https?:\/\//, '')}</a>
       default: return <span className={styles.clip} title={String(value)}>{String(value)}</span>
     }

@@ -88,3 +88,21 @@
 
 .upload { display: grid; gap: 8px; margin-top: 4px; }
 .uploadPreview { max-width: 220px; max-height: 140px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: var(--muted); }
+
+/* Resumo no alto da lista (cartões com números do módulo) */
+.summary { list-style: none; margin: 0 0 22px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+.summary li { display: grid; gap: 4px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.summary span { font-size: 13px; color: var(--muted-foreground); }
+.summary strong { font-size: 28px; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.summary small { font-size: 12px; color: var(--muted-foreground); line-height: 1.35; }
+.summaryWarn { border-color: #f3c9a7 !important; background: #fff8f1 !important; }
+.summaryWarn strong { color: #b54708; }
+
+/* Miniatura de imagem na tabela */
+.thumbCell { width: 76px; min-width: 76px; padding-right: 0 !important; }
+.thumb { display: block; width: 56px; height: 56px; min-width: 56px; max-width: none; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.thumbEmpty { display: grid; place-items: center; width: 56px; height: 56px; border: 1px dashed var(--border); border-radius: 10px; font-size: 10px; color: var(--muted-foreground); text-align: center; }
+
+/* Nome do item: nunca estreito a ponto de quebrar palavras no meio. */
+.titleCell { min-width: 260px; }
+@media (max-width: 700px) { .titleCell { min-width: 200px; } }

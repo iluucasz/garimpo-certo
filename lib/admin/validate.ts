@@ -88,6 +88,9 @@ function coerce(field: ResourceField, raw: unknown, slug: string): { value: unkn
       return { value: raw ?? { windowDays: 30, conditions: [] } }
     case 'json':
       return { value: raw ?? null }
+    case 'image':
+      // Foto só de leitura (miniatura na tabela): nunca vem do formulário.
+      return { value: null }
   }
 }
 

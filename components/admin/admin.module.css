@@ -278,6 +278,3 @@
 @media (min-width: 1100px) and (max-width: 1399px) { .workspace:global(.admin-shell) { --admin-zoom: 1.1; } }
 @media (max-width: 1099px) { .workspace:global(.admin-shell) { --admin-zoom: 1; } }
 
-/* A primeira coluna das tabelas (nome) nunca fica estreita a ponto de quebrar palavras no meio. */
-.workspace :global(.data-table) th:first-child, .workspace :global(.data-table) td:first-child { min-width: 240px; }
-@media (max-width: 700px) { .workspace :global(.data-table) th:first-child, .workspace :global(.data-table) td:first-child { min-width: 200px; } }

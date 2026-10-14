@@ -15,7 +15,7 @@ export type Lookup = 'categories' | 'brands' | 'tags' | 'products' | 'roles'
 export type ResourceField = {
   key: string
   label: string
-  type: 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'datetime' | 'url' | 'multi' | 'products' | 'rules' | 'markdown' | 'json'
+  type: 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'datetime' | 'url' | 'multi' | 'products' | 'rules' | 'markdown' | 'json' | 'image'
   required?: boolean
   help?: string
   placeholder?: string
@@ -52,6 +52,10 @@ export type ResourceMeta = {
   filter?: { key: string; label: string; options: Option[] }
   /** Endereço público do registro, quando existe. Recebe a linha. */
   publicPath?: string
+  /** Campo que dá nome à linha (padrão: o primeiro). Útil quando a primeira coluna é uma imagem. */
+  titleKey?: string
+  /** Ordenações oferecidas na tabela; a primeira é a padrão. */
+  sort?: { label: string; options: Option[] }
   emptyText: string
 }
 
@@ -81,17 +85,33 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     createLabel: '', searchPlaceholder: 'Buscar por nome ou endereço', emptyText: 'Nenhum produto encontrado. Rode a importação em Importações.',
     filter: { key: 'status', label: 'Situação', options: productStatuses },
     publicPath: '/produto/{slug}',
+    titleKey: 'name',
+    sort: { label: 'Ordenar', options: [
+      { value: 'relevance', label: 'Ativos primeiro, mais vendidos' },
+      { value: 'recent', label: 'Atualizados há pouco' },
+      { value: 'sold', label: 'Mais vendidos' },
+      { value: 'price_desc', label: 'Maior preço' },
+      { value: 'price_asc', label: 'Menor preço' },
+      { value: 'rating', label: 'Melhor nota' },
+      { value: 'discount', label: 'Maior desconto' },
+      { value: 'name', label: 'Nome (A–Z)' },
+    ] },
     fields: [
+      { key: 'imageUrl', label: 'Foto', type: 'image', readOnly: true, listOnly: true },
       { key: 'name', label: 'Nome', type: 'text', required: true, maxLength: 200 },
       { key: 'brandName', label: 'Loja', type: 'text', readOnly: true, listOnly: true },
+      { key: 'categories', label: 'Categorias', type: 'text', readOnly: true, listOnly: true },
+      { key: 'price', label: 'Preço', type: 'text', readOnly: true, listOnly: true },
+      { key: 'discount', label: 'Desconto', type: 'text', readOnly: true, listOnly: true },
+      { key: 'rating', label: 'Nota', type: 'text', readOnly: true, listOnly: true },
+      { key: 'soldCount', label: 'Vendas', type: 'text', readOnly: true, listOnly: true },
+      { key: 'commission', label: 'Comissão', type: 'text', readOnly: true, listOnly: true },
+      { key: 'syncedAt', label: 'Atualizado em', type: 'datetime', readOnly: true, listOnly: true },
       { key: 'status', label: 'Situação', type: 'select', options: productStatuses, required: true, help: '“Oculto” tira o produto da vitrine, das coleções e da busca.' },
       { key: 'categoryIds', label: 'Categorias', type: 'multi', lookup: 'categories', formOnly: true },
-      { key: 'categories', label: 'Categorias', type: 'text', readOnly: true, listOnly: true },
       { key: 'tagIds', label: 'Selos (tags)', type: 'multi', lookup: 'tags', formOnly: true, help: 'Selos aparecem no cartão do produto. “Escolha do editor” é um bom destaque manual.' },
       { key: 'description', label: 'Descrição', type: 'textarea', maxLength: 2000, formOnly: true },
-      { key: 'price', label: 'Preço', type: 'text', readOnly: true, listOnly: true },
-      { key: 'soldCount', label: 'Vendas', type: 'text', readOnly: true, listOnly: true },
-      { key: 'editorialLocked', label: 'Protegido da importação', type: 'boolean', help: 'Ligado, a importação diária não sobrescreve nome, situação, categorias e tags.' },
+      { key: 'editorialLocked', label: 'Protegido', type: 'boolean', help: 'Protegido da importação: ligado, a importação diária não sobrescreve nome, situação, categorias e tags.' },
       { key: 'slug', label: 'Endereço', type: 'text', readOnly: true, formOnly: true },
     ],
   },
