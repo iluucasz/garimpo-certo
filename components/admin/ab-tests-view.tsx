@@ -85,13 +85,18 @@ export function AbTestsView() {
       <h2>Novo teste</h2>
       <div className={styles.grid}>
         <label>Nome do teste<input value={form.name} maxLength={80} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ex.: Título mais direto" required/>{errors.name && <small className={styles.bad}>{errors.name}</small>}</label>
-        <label>Hipótese (opcional)<input value={form.hypothesis} maxLength={300} onChange={(event) => setForm({ ...form, hypothesis: event.target.value })} placeholder="O que você espera que mude e por quê"/></label>
         <label>Título (linha 1) da B<input value={form.title} maxLength={40} onChange={(event) => setForm({ ...form, title: event.target.value })}/>{errors['variantB.title'] && <small className={styles.bad}>{errors['variantB.title']}</small>}</label>
         <label>Título (linha 2, destaque) da B<input value={form.accent} maxLength={40} onChange={(event) => setForm({ ...form, accent: event.target.value })}/></label>
-        <label className={styles.wide}>Texto de apoio da B<textarea rows={2} value={form.text} maxLength={200} onChange={(event) => setForm({ ...form, text: event.target.value })}/></label>
         <label>Botão da B<input value={form.buttonLabel} maxLength={24} onChange={(event) => setForm({ ...form, buttonLabel: event.target.value })}/></label>
-        <label>Visitantes na B: {form.splitB}%<input type="range" min={10} max={90} step={5} value={form.splitB} onChange={(event) => setForm({ ...form, splitB: Number(event.target.value) })}/>{errors.splitB && <small className={styles.bad}>{errors.splitB}</small>}</label>
       </div>
+      <details className={styles.more}>
+        <summary>Mais opções <small>(hipótese, texto de apoio e divisão do tráfego)</small></summary>
+        <div className={styles.grid}>
+        <label>Hipótese (opcional)<input value={form.hypothesis} maxLength={300} onChange={(event) => setForm({ ...form, hypothesis: event.target.value })} placeholder="O que você espera que mude e por quê"/></label>
+        <label className={styles.wide}>Texto de apoio da B<textarea rows={2} value={form.text} maxLength={200} onChange={(event) => setForm({ ...form, text: event.target.value })}/></label>
+        <label>Visitantes na B: {form.splitB}%<input type="range" min={10} max={90} step={5} value={form.splitB} onChange={(event) => setForm({ ...form, splitB: Number(event.target.value) })}/>{errors.splitB && <small className={styles.bad}>{errors.splitB}</small>}</label>
+        </div>
+      </details>
       <p className={styles.help}>Campos em branco ficam iguais à home atual. A variante A é sempre o texto que está no ar.</p>
       <button type="submit" className="btn primary" disabled={busy === 'create'}>Criar teste</button>
     </form>}

@@ -187,3 +187,5 @@
 .fineTune summary small { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
 .fineTune[open] { padding-bottom: 22px; }
 .fineGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; margin-top: 14px; }
+
+.fineTitle { margin: 18px 0 2px; font-size: 14px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: .06em; }

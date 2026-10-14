@@ -42,13 +42,15 @@ const hubs: Record<'Catálogo' | 'Experiência', { label: string; endpoint: stri
         { slug: 'home-builder', label: 'Home e páginas', icon: LayoutTemplate },
         { slug: 'campanhas', label: 'Campanhas', icon: Megaphone, count: 'campanhas' },
       ] },
-      { title: 'Regras de exibição', tabs: [
+      { title: 'Como o site decide', tabs: [
         { slug: 'ranking', label: 'Ranking', icon: ListOrdered },
         { slug: 'regras-catalogo', label: 'Regras do catálogo', icon: Ruler },
         { slug: 'recommendation-slots', label: 'Recomendações', icon: Gauge },
       ] },
-      { title: 'Medir e testar', tabs: [
+      { title: 'Testar', tabs: [
         { slug: 'testes-ab', label: 'Testes A/B', icon: FlaskConical, count: 'testes' },
+      ] },
+      { title: 'Avançado', tabs: [
         { slug: 'segmentos', label: 'Segmentos', icon: Users, count: 'segmentos' },
         { slug: 'experimentos', label: 'Recursos', icon: ToggleRight, count: 'flags' },
       ] },

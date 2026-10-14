@@ -67,6 +67,16 @@ export const rankingPresets: { id: string; title: string; description: string; v
     values: { relevance: 14, affinity: 10, engagement: 8, quality: 12, commercial: 4, price: 8, freshness: 26, similarity: 6, exploration: 25 } },
 ]
 
+/** Estilos prontos das regras do catálogo (mesmos campos do ajuste fino). */
+export const rulesPresets: { id: string; title: string; description: string; values: Record<string, number> }[] = [
+  { id: 'strict', title: 'Mais seleto', description: 'Coleções menores e mais exigentes: só entra o que tem muita venda e nota muito alta.',
+    values: { viralSales: 20000, topSales: 2000, lovedSales: 2000, lovedRating: 4.9, findsPrice: 20, findsRating: 4.8, findsSales: 1000, promoDiscount: 30, heavyDiscount: 50, premiumPrice: 500, topRating: 4.9, perfectRating: 5, valueScore: 90, valuePriceMax: 1000 } },
+  { id: 'default', title: 'Padrão', description: 'O ponto de partida do Garimpo: equilibrado entre variedade e qualidade.',
+    values: { viralSales: 10000, topSales: 1000, lovedSales: 1000, lovedRating: 4.8, findsPrice: 30, findsRating: 4.7, findsSales: 500, promoDiscount: 20, heavyDiscount: 40, premiumPrice: 500, topRating: 4.8, perfectRating: 4.9, valueScore: 85, valuePriceMax: 1500 } },
+  { id: 'broad', title: 'Mais abrangente', description: 'Coleções maiores: entram mais produtos, com exigência menor de venda, nota e desconto.',
+    values: { viralSales: 5000, topSales: 500, lovedSales: 500, lovedRating: 4.6, findsPrice: 50, findsRating: 4.5, findsSales: 250, promoDiscount: 10, heavyDiscount: 30, premiumPrice: 500, topRating: 4.6, perfectRating: 4.8, valueScore: 75, valuePriceMax: 2000 } },
+]
+
 const numberField = (key: string, label: string, min: number, max: number, help?: string, unit?: string, step?: number): SettingField => ({ key, label, type: 'number', min, max, help, unit, ...(step ? { step } : {}) })
 
 export const settingDefinitions: Record<SettingKey, SettingDefinition> = {

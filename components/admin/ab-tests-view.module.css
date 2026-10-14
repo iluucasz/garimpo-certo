@@ -34,3 +34,8 @@ ul.help { padding-left: 18px; display: grid; gap: 4px; }
 .stack details summary::-webkit-details-marker { display: none; }
 .stack details summary small { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
 .stack details[open] summary { margin-bottom: 10px; }
+
+.more { margin: 14px 0 6px; }
+.more summary { cursor: pointer; font-size: 14px; font-weight: 650; }
+.more summary small { font-weight: 400; color: var(--muted-foreground); }
+.more .grid { margin-top: 12px; }
