@@ -25,7 +25,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
       <h1>{config.title}</h1>
       <p>{config.description}</p>
     </div></div>
-    {(config.group === 'Catálogo' || config.group === 'Experiência') && <CatalogHub group={config.group}/>}
+    <CatalogHub group={config.group}/>
     {!allowed(config.slug, true) && view.kind !== 'analytics' && view.kind !== 'events' && view.kind !== 'logs' && <p className="permission-banner" role="note">Você está como {roles.join(', ')} e pode apenas consultar este módulo.</p>}
     {view.kind === 'resource' && <ResourceManager slug={view.resource}/>}
     {view.kind === 'settings' && <SettingsForm settingKey={view.key}/>}

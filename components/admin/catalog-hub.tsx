@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import useSWR from 'swr'
 import { Boxes, DatabaseZap, FileCheck2, FlaskConical, FolderTree, Gauge, Home, Layers, LayoutTemplate, ListOrdered, Megaphone, PackageSearch, Plug, Ruler, Store, Tag, Tags, ToggleRight, Users } from 'lucide-react'
+import type { ModuleGroup } from '@/lib/admin-config'
 import type { LucideIcon } from 'lucide-react'
 import { dateTime, swrFetcher } from '@/lib/admin/client'
 import { useAdminAccess } from './admin-access'
@@ -13,7 +14,8 @@ type Tab = { slug: string; label: string; icon: LucideIcon; count?: string }
 type Section = { title: string; tabs: Tab[] }
 
 /** Menu em abas de cada área do painel: as telas agrupadas por assunto, com a contagem de cada uma. */
-const hubs: Record<'Catálogo' | 'Experiência', { label: string; endpoint: string; sections: Section[] }> = {
+const countsEndpoint = '/api/v1/admin/section-counts'
+const hubs: Record<ModuleGroup, { label: string; endpoint: string; sections: Section[] }> = {
   Catálogo: {
     label: 'Seções do catálogo',
     endpoint: '/api/v1/admin/catalog-overview',
@@ -31,6 +33,76 @@ const hubs: Record<'Catálogo' | 'Experiência', { label: string; endpoint: stri
       { title: 'De onde vem', tabs: [
         { slug: 'imports-jobs', label: 'Importações', icon: DatabaseZap },
         { slug: 'providers', label: 'Provedores', icon: Plug, count: 'providers' },
+      ] },
+    ],
+  },
+  Conteúdo: {
+    label: 'Seções de conteúdo',
+    endpoint: countsEndpoint,
+    sections: [
+      { title: 'Para os visitantes', tabs: [
+        { slug: 'cms', label: 'Artigos', icon: Tag, count: 'artigos' },
+        { slug: 'paginas', label: 'Páginas', icon: LayoutTemplate, count: 'paginas' },
+        { slug: 'cupons', label: 'Cupons', icon: Tag, count: 'cupons' },
+        { slug: 'guias-compra', label: 'Guias de compra', icon: Layers },
+      ] },
+      { title: 'Para os buscadores', tabs: [
+        { slug: 'seo', label: 'SEO', icon: Gauge },
+      ] },
+    ],
+  },
+  Insights: {
+    label: 'Seções de insights',
+    endpoint: countsEndpoint,
+    sections: [
+      { title: 'Resultados', tabs: [
+        { slug: 'analytics', label: 'Analytics', icon: Gauge },
+        { slug: 'funil', label: 'Funil', icon: Layers },
+      ] },
+      { title: 'Em detalhe', tabs: [
+        { slug: 'eventos', label: 'Eventos', icon: ListOrdered },
+      ] },
+    ],
+  },
+  Engine: {
+    label: 'Seções da Engine',
+    endpoint: countsEndpoint,
+    sections: [
+      { title: 'Decide', tabs: [
+        { slug: 'engine', label: 'Engine', icon: Gauge, count: 'propostas' },
+      ] },
+      { title: 'Divulga', tabs: [
+        { slug: 'postagens', label: 'Postagens', icon: Megaphone, count: 'postagens' },
+      ] },
+    ],
+  },
+  Governança: {
+    label: 'Seções de governança',
+    endpoint: countsEndpoint,
+    sections: [
+      { title: 'Pessoas e privacidade', tabs: [
+        { slug: 'usuarios-rbac', label: 'Usuários e papéis', icon: Users },
+        { slug: 'lgpd', label: 'LGPD', icon: FileCheck2, count: 'lgpd' },
+      ] },
+      { title: 'Registros', tabs: [
+        { slug: 'audit-log', label: 'Auditoria', icon: ListOrdered },
+        { slug: 'logs', label: 'Logs', icon: Boxes },
+      ] },
+    ],
+  },
+  Sistema: {
+    label: 'Seções do sistema',
+    endpoint: countsEndpoint,
+    sections: [
+      { title: 'Conexões', tabs: [
+        { slug: 'integracoes', label: 'Integrações', icon: Plug },
+      ] },
+      { title: 'Aparência e medição', tabs: [
+        { slug: 'tema', label: 'Tema', icon: LayoutTemplate },
+        { slug: 'tracking', label: 'Medição', icon: Gauge },
+      ] },
+      { title: 'Proteção', tabs: [
+        { slug: 'seguranca', label: 'Segurança', icon: ToggleRight },
       ] },
     ],
   },
@@ -71,7 +143,7 @@ const importStatus: Record<string, { label: string; tone: 'ok' | 'bad' | 'run' }
   partial: { label: 'parcial', tone: 'bad' },
 }
 
-export function CatalogHub({ group = 'Catálogo' }: { group?: 'Catálogo' | 'Experiência' }) {
+export function CatalogHub({ group = 'Catálogo' }: { group?: ModuleGroup }) {
   const hub = hubs[group]
   const pathname = usePathname()
   const { allowed } = useAdminAccess()
