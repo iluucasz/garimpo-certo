@@ -310,7 +310,7 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     slug: 'segmentos', title: 'Segmentos', singular: 'segmento',
     description: 'Audiências salvas sobre os cliques de compra medidos (só visitas que permitiram a medição). O alcance é calculado na hora, em sessões.',
     read: 'analytics:read', write: 'catalog:write', create: true, remove: 'delete',
-    createLabel: 'Novo segmento', searchPlaceholder: 'Buscar segmento', emptyText: 'Nenhum segmento criado.',
+    createLabel: 'Novo segmento', searchPlaceholder: 'Buscar segmento', emptyText: 'Nenhum segmento criado. Clique em “Novo segmento” e escolha um modelo pronto.',
     fields: [
       { key: 'name', label: 'Nome', type: 'text', required: true, maxLength: 80 },
       { key: 'description', label: 'Descrição', type: 'textarea', maxLength: 240 },

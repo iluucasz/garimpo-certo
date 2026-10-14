@@ -189,3 +189,19 @@
 .fineGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; margin-top: 14px; }
 
 .fineTitle { margin: 18px 0 2px; font-size: 14px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: .06em; }
+
+/* Segmentos: modelos prontos */
+.templates { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.template { display: grid; gap: 4px; align-content: start; text-align: left; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); color: var(--foreground); font: inherit; cursor: pointer; }
+.template:hover { border-color: var(--primary); }
+.template strong { font-size: 14px; }
+.template small { font-size: 12px; line-height: 1.4; color: var(--muted-foreground); }
+
+/* Painéis recolhíveis (convites, matriz de papéis, ledger) */
+.collapse { padding: 0 22px; }
+.collapse > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; cursor: pointer; font-size: 16px; font-weight: 650; list-style: none; }
+.collapse > summary::-webkit-details-marker { display: none; }
+.collapse > summary small { font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
+.collapse[open] { padding-bottom: 22px; }
+.inviteBar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.inviteBar p { margin: 0; }

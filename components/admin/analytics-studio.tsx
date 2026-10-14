@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Download, Filter, Link2 } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { formatPrice } from '@/lib/format'
 import type { ConversionStatus } from '@/lib/analytics/attribution'
 import { CommissionsPanel } from './commissions-panel'
+import styles from './resource.module.css'
 
 type Provider = { id: string; code: string; displayName: string }
 type AttributionReport = {
@@ -15,6 +16,13 @@ type AttributionReport = {
   quality: { highRisk: unknown[]; mediumRisk: unknown[]; unattributed: number }
 }
 
+const statusLabel: Record<string, string> = { pending: 'Pendente', approved: 'Aprovada', paid: 'Paga', rejected: 'Rejeitada', cancelled: 'Cancelada' }
+
+/**
+ * Analytics: comissões reais + resumo dos cliques. Funil: do clique à conversão.
+ * As comissões ficam só no painel de comissões (antes havia uma segunda fileira de números repetidos aqui).
+ * Filtros e ledger ficam recolhidos: a maioria das visitas ao painel só quer o resumo.
+ */
 export function AnalyticsStudio({ mode }: { mode: 'analytics' | 'funil' }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [providerId, setProviderId] = useState(''); const [slot, setSlot] = useState(''); const [status, setStatus] = useState<'' | ConversionStatus>('')
@@ -35,6 +43,57 @@ export function AnalyticsStudio({ mode }: { mode: 'analytics' | 'funil' }) {
 
   if (!report) return <section className="analytics-studio"><p>Carregando…</p></section>
 
-  return <section className="analytics-studio">{mode === 'analytics' && <CommissionsPanel/>}<div className="analytics-filters"><span><Filter/> Filtros de atribuição</span><select aria-label="Provider" value={providerId} onChange={(e) => setProviderId(e.target.value)}><option value="">Todos providers</option>{providers.map((provider) => <option value={provider.id} key={provider.id}>{provider.displayName}</option>)}</select><select aria-label="Slot" value={slot} onChange={(e) => setSlot(e.target.value)}><option value="">Todos slots</option><option>home_trending</option><option>home_for_you</option><option>product_similar</option></select><select aria-label="Status da conversão" value={status} onChange={(e) => setStatus(e.target.value as '' | ConversionStatus)}><option value="">Todos status</option><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="paid">Paga</option><option value="rejected">Rejeitada</option></select><button className="btn secondary" onClick={exportReport}><Download/> Exportar</button></div><div className="attribution-stats"><Metric label="Cliques válidos" value={`${report.metrics.validClicks}`} note={`${report.metrics.invalidTraffic} bloqueados`}/><Metric label="Conversões" value={`${report.metrics.conversions}`} note={`${(report.metrics.conversionRate * 100).toFixed(1)}% dos cliques`}/><Metric label="Comissão estimada" value={formatPrice(report.metrics.estimatedCommission)} note="inclui pendentes"/><Metric label="Comissão aprovada" value={formatPrice(report.metrics.approvedCommission)} note="aprovadas + pagas"/><Metric label="Comissão paga" value={formatPrice(report.metrics.paidCommission)} note="receita realizada"/></div><div className="attribution-grid"><div className="panel"><h2>{mode === 'funil' ? 'Funil de atribuição' : 'Clique → conversão → comissão'}</h2><div className="funnel-viz">{report.funnel.map((item, index) => <div key={item.name}><span>{item.name}</span><i style={{ width: `${Math.max(8, item.value / max * 100)}%` }}/><strong>{item.value}</strong>{index < report.funnel.length - 1 && <small>{Math.round(report.funnel[index + 1].value / Math.max(item.value, 1) * 100)}% avançam</small>}</div>)}</div></div><div className="panel"><h2>Qualidade de tráfego</h2><div className="quality-score"><strong>{Math.round((1 - report.metrics.invalidTraffic / Math.max(report.metrics.clicks, 1)) * 100)}</strong><span>score de confiança</span></div><div className="risk-row"><AlertTriangle/><span><strong>{report.quality.highRisk.length} sinais de alto risco</strong><small>Detecção de fraude ainda não implementada nesta fase.</small></span></div><div className="risk-row"><Link2/><span><strong>{report.quality.unattributed} conversões sem origem</strong><small>Compras de links sem etiqueta (anteriores às etiquetas do site ou gerados fora dele).</small></span></div></div></div><div className="panel attribution-table"><h2>Ledger de conversões</h2><div className="table-scroll"><table className="data-table"><thead><tr><th>Conversão</th><th>Origem</th><th>Provider</th><th>Pedido hash</th><th>Valor</th><th>Comissão</th><th>Status</th></tr></thead><tbody>{report.conversions.map((item) => <tr key={item.id}><td>{item.providerConversionId}</td><td>{item.subIds ?? item.clickId ?? '—'}</td><td>{item.providerId}</td><td><code>{item.orderReferenceHash}</code></td><td>{formatPrice(Number(item.amount))}</td><td>{formatPrice(Number(item.commission))}</td><td><span className="status">{item.status}</span></td></tr>)}</tbody></table></div></div></section>
+  const { metrics, quality } = report
+  const trust = Math.round((1 - metrics.invalidTraffic / Math.max(metrics.clicks, 1)) * 100)
+  const filtered = Boolean(providerId || slot || status)
+
+  const filters = <details className={`panel ${styles.collapse}`} open={filtered}>
+    <summary><span>Filtrar e exportar</span><small>{filtered ? 'filtro ativo' : 'por provedor, posição no site ou situação'}</small></summary>
+    <div className="analytics-filters" style={{ border: 0, padding: 0 }}>
+      <select aria-label="Provedor" value={providerId} onChange={(e) => setProviderId(e.target.value)}><option value="">Todos os provedores</option>{providers.map((provider) => <option value={provider.id} key={provider.id}>{provider.displayName}</option>)}</select>
+      <select aria-label="Posição no site" value={slot} onChange={(e) => setSlot(e.target.value)}><option value="">Todas as posições</option><option value="home_trending">Home: em alta</option><option value="home_for_you">Home: para você</option><option value="product_similar">Produto: parecidos</option></select>
+      <select aria-label="Situação da conversão" value={status} onChange={(e) => setStatus(e.target.value as '' | ConversionStatus)}><option value="">Todas as situações</option><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="paid">Paga</option><option value="rejected">Rejeitada</option></select>
+      <button className="btn secondary" onClick={exportReport}><Download aria-hidden="true"/> Exportar</button>
+    </div>
+  </details>
+
+  const funnel = <div className="panel">
+    <h2>{mode === 'funil' ? 'Do clique à conversão' : 'Cliques que viraram venda'}</h2>
+    <p className={styles.help} style={{ marginBottom: 14 }}>
+      {metrics.validClicks === 0
+        ? 'Ainda não há cliques de compra medidos neste recorte. Só entram visitas que aceitaram a medição.'
+        : <>{metrics.validClicks.toLocaleString('pt-BR')} {metrics.validClicks === 1 ? 'clique válido gerou' : 'cliques válidos geraram'} {metrics.conversions.toLocaleString('pt-BR')} {metrics.conversions === 1 ? 'conversão' : 'conversões'} ({(metrics.conversionRate * 100).toFixed(1)}%).{metrics.invalidTraffic > 0 ? ` ${metrics.invalidTraffic.toLocaleString('pt-BR')} cliques foram bloqueados.` : ''}</>}
+    </p>
+    <div className="funnel-viz">{report.funnel.map((item, index) => <div key={item.name}><span>{item.name}</span><i style={{ width: `${Math.max(8, item.value / max * 100)}%` }}/><strong>{item.value}</strong>{index < report.funnel.length - 1 && <small>{Math.round(report.funnel[index + 1].value / Math.max(item.value, 1) * 100)}% avançam</small>}</div>)}</div>
+  </div>
+
+  const trafficQuality = <div className="panel">
+    <h2>Qualidade do tráfego</h2>
+    <div className="quality-score"><strong>{trust}</strong><span>pontos de confiança (máx. 100)</span></div>
+    <p className={styles.help} style={{ marginTop: 12 }}>
+      {quality.unattributed > 0
+        ? `${quality.unattributed.toLocaleString('pt-BR')} conversões sem origem: compras de links sem etiqueta (anteriores às etiquetas do site ou gerados fora dele).`
+        : 'Todas as conversões têm origem conhecida.'}
+      {quality.highRisk.length > 0 ? ` ${quality.highRisk.length} sinais de alto risco.` : ''}
+    </p>
+  </div>
+
+  const ledger = <details className={`panel ${styles.collapse}`} open={report.conversions.length > 0 && report.conversions.length <= 8}>
+    <summary><span>Conversões registradas</span><small>{report.conversions.length === 0 ? 'nenhuma ainda' : `${report.conversions.length} no recorte`}</small></summary>
+    {report.conversions.length === 0
+      ? <p className={styles.help}>Quando a Shopee confirmar vendas feitas pelos seus links, elas aparecem aqui.</p>
+      : <div className="table-scroll attribution-table"><table className="data-table"><thead><tr><th>Conversão</th><th>Origem</th><th>Valor</th><th>Comissão</th><th>Situação</th></tr></thead><tbody>{report.conversions.map((item) => <tr key={item.id}><td>{item.providerConversionId}</td><td>{item.subIds ?? item.clickId ?? '—'}</td><td>{formatPrice(Number(item.amount))}</td><td>{formatPrice(Number(item.commission))}</td><td><span className="status">{statusLabel[item.status] ?? item.status}</span></td></tr>)}</tbody></table></div>}
+  </details>
+
+  return <section className="analytics-studio">
+    {mode === 'analytics' && <CommissionsPanel/>}
+    {mode === 'funil' && <div className="stat-grid">
+      <div className="stat-card"><span>Cliques válidos</span><strong>{metrics.validClicks.toLocaleString('pt-BR')}</strong><small>{metrics.invalidTraffic.toLocaleString('pt-BR')} bloqueados</small></div>
+      <div className="stat-card"><span>Conversões</span><strong>{metrics.conversions.toLocaleString('pt-BR')}</strong><small>{(metrics.conversionRate * 100).toFixed(1)}% dos cliques</small></div>
+      <div className="stat-card"><span>Comissão estimada</span><strong>{formatPrice(metrics.estimatedCommission)}</strong><small>inclui pendentes</small></div>
+    </div>}
+    {mode === 'funil' ? <div className="attribution-grid">{funnel}{trafficQuality}</div> : funnel}
+    {filters}
+    {ledger}
+  </section>
 }
-function Metric({ label, value, note }: { label: string; value: string; note: string }) { return <article><span>{label}</span><strong>{value}</strong><small>{note}</small></article> }

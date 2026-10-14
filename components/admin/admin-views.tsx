@@ -269,8 +269,8 @@ const roleLabels: Record<AdminRole, string> = {
 function PermissionMatrix() {
   const roles = Object.keys(defaultRolePermissions) as AdminRole[]
   const all = Object.keys(permissionLabels) as Permission[]
-  return <section className="panel">
-    <h2>O que cada papel pode fazer</h2>
+  return <details className={`panel ${styles.collapse}`}>
+    <summary><span>O que cada papel pode fazer</span><small>ver a tabela de permissões</small></summary>
     <div className="table-scroll"><table className={styles.matrix} aria-label="Permissões por papel">
       <thead><tr><th scope="col">Permissão</th>{roles.map((role) => <th scope="col" key={role}>{roleLabels[role]}</th>)}</tr></thead>
       <tbody>{all.map((permission) => <tr key={permission}>
@@ -279,7 +279,7 @@ function PermissionMatrix() {
       </tr>)}</tbody>
     </table></div>
     <p className={styles.help} style={{ marginTop: 10 }}>Esta é a matriz padrão gravada no banco por <code>pnpm db:seed-roles</code>. Contas novas não recebem papel algum.</p>
-  </section>
+  </details>
 }
 
 export function UsersView() {

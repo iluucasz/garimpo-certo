@@ -27,6 +27,7 @@ export function InvitesPanel() {
   const [fields, setFields] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<Created | null>(null)
   const [copied, setCopied] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
 
   if (!canManage) return null
   const allowedRoles = adminRoles.filter((item) => isOwner || (item !== 'OWNER' && item !== 'ADMIN'))
@@ -63,11 +64,18 @@ export function InvitesPanel() {
     try { await navigator.clipboard.writeText(link); setCopied(true) } catch { setCopied(false) }
   }
 
+  const pending = data?.invites.filter((invite) => invite.status === 'pending').length ?? 0
   return <section className="panel" aria-labelledby="invites-title">
-    <h2 id="invites-title">Convidar para a equipe</h2>
-    <p className={styles.lead}>Gere um convite com o papel desejado. A pessoa abre o link, entra (ou cria a conta) com o e-mail convidado e aceita; o papel só vale depois disso. O convite vale por {data?.ttlDays ?? 7} dias.{data && !data.emailEnabled ? ' O envio por e-mail não está ativo: copie o link e envie você mesmo.' : ''}</p>
+    <div className={styles.inviteBar}>
+      <div>
+        <h2 id="invites-title" style={{ marginBottom: 4 }}>Equipe</h2>
+        <p className={styles.help}>Convide alguém com o papel certo: a pessoa abre o link e entra com o e-mail convidado. O convite vale por {data?.ttlDays ?? 7} dias.{pending > 0 ? ` ${pending} pendente${pending > 1 ? 's' : ''}.` : ''}</p>
+      </div>
+      <button type="button" className="btn primary" onClick={() => setFormOpen((open) => !open)} aria-expanded={formOpen}><MailPlus aria-hidden="true"/> {formOpen ? 'Fechar' : 'Convidar pessoa'}</button>
+    </div>
+    {data && !data.emailEnabled && formOpen && <p className={styles.help} style={{ marginTop: 10 }}>O envio por e-mail não está ativo: copie o link e envie você mesmo.</p>}
 
-    <form onSubmit={create} className={styles.actionsRow} noValidate>
+    {formOpen && <form onSubmit={create} className={styles.actionsRow} noValidate style={{ marginTop: 14 }}>
       <label className={styles.field} style={{ flex: '1 1 240px' }}>E-mail
         <input className={`input ${fields.email ? styles.inputError : ''}`} type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="pessoa@exemplo.com" required aria-invalid={fields.email ? true : undefined}/>
         {fields.email && <span className={styles.error} role="alert">{fields.email}</span>}
@@ -79,7 +87,7 @@ export function InvitesPanel() {
         {fields.role && <span className={styles.error} role="alert">{fields.role}</span>}
       </label>
       <button className="btn primary" type="submit" disabled={busy} aria-busy={busy}><MailPlus aria-hidden="true"/> {busy ? 'Criando…' : 'Gerar convite'}</button>
-    </form>
+    </form>}
     {problem && <p className={styles.error} role="alert" style={{ marginTop: 10 }}>{problem}</p>}
 
     {created && <div className={styles.note} role="status" style={{ marginTop: 14, flexDirection: 'column' }}>
@@ -90,9 +98,8 @@ export function InvitesPanel() {
       </span>
     </div>}
 
-    <h3 style={{ margin: '22px 0 8px', fontSize: 16 }}>Convites recentes</h3>
     {error && <p className={styles.error} role="alert">Não foi possível carregar os convites.</p>}
-    {data && data.invites.length === 0 && <p className={styles.help}>Nenhum convite ainda.</p>}
+    {data && data.invites.length > 0 && <h3 style={{ margin: '22px 0 8px', fontSize: 16 }}>Convites recentes</h3>}
     {data && data.invites.length > 0 && <div className="table-scroll"><table className="data-table" aria-label="Convites recentes">
       <thead><tr><th scope="col">E-mail</th><th scope="col">Papel</th><th scope="col">Situação</th><th scope="col">Criado em</th><th scope="col">Por</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
       <tbody>{data.invites.map((invite) => <tr key={invite.id}>

@@ -426,6 +426,14 @@ function ProductPicker({ value, disabled, onChange }: { value: string[]; disable
 type Condition = { type: string; value: string | number }
 type Rules = { windowDays: number; conditions: Condition[] }
 
+/** Modelos prontos: o ponto de partida mais comum para quem não sabe quais regras combinar. */
+const segmentTemplates: { title: string; description: string; windowDays: number; conditions: Condition[] }[] = [
+  { title: 'Quem volta a comprar', description: 'Clicou para comprar 2 vezes ou mais nos últimos 30 dias.', windowDays: 30, conditions: [{ type: 'min_clicks', value: 2 }] },
+  { title: 'Interesse em itens caros', description: 'Clicou em produto a partir de R$ 500.', windowDays: 60, conditions: [{ type: 'min_price', value: 500 }] },
+  { title: 'Caça-pechinchas', description: 'Só clicou em produtos de até R$ 50.', windowDays: 30, conditions: [{ type: 'max_price', value: 50 }] },
+  { title: 'Fãs de tecnologia', description: 'Clicou em produto da categoria tecnologia.', windowDays: 30, conditions: [{ type: 'category', value: 'tecnologia' }] },
+]
+
 function RulesEditor({ value, disabled, onChange, match }: { value: unknown; disabled: boolean; onChange: (value: Rules) => void; match: string }) {
   const rules: Rules = value && typeof value === 'object' && !Array.isArray(value) && 'conditions' in value
     ? { windowDays: Number((value as Rules).windowDays) || 30, conditions: (value as Rules).conditions ?? [] }
@@ -445,6 +453,15 @@ function RulesEditor({ value, disabled, onChange, match }: { value: unknown; dis
 
   const update = (conditions: Condition[]) => onChange({ ...rules, conditions })
   return <div className={styles.rules}>
+    {!disabled && rules.conditions.length === 0 && <div className={styles.field}>
+      <span>Comece por um modelo pronto</span>
+      <div className={styles.templates}>
+        {segmentTemplates.map((template) => <button key={template.title} type="button" className={styles.template} onClick={() => onChange({ windowDays: template.windowDays, conditions: template.conditions })}>
+          <strong>{template.title}</strong>
+          <small>{template.description}</small>
+        </button>)}
+      </div>
+    </div>}
     <label className={styles.field}>Janela de tempo
       <select className="select" disabled={disabled} value={rules.windowDays} onChange={(event) => onChange({ ...rules, windowDays: Number(event.target.value) })}>
         {[7, 14, 30, 60, 90, 180].map((days) => <option key={days} value={days}>Últimos {days} dias</option>)}
