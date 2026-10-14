@@ -36,7 +36,7 @@ export const adminConfigs: ModuleConfig[] = [
 
   { slug: 'home-builder', title: 'Home', description: 'Monte a home e novas páginas por seções, ajuste tema, aviso e rodapé, com prévia, rascunho e publicação.', group: 'Experiência', view: { kind: 'builder', page: 'home' } },
   { slug: 'campanhas', title: 'Campanhas', description: 'Faixa de destaque na home, com início e fim.', group: 'Experiência', view: { kind: 'resource', resource: 'campanhas' } },
-  { slug: 'ranking', title: 'Ranking', description: 'Quanto cada fator pesa na ordem das recomendações.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
+  { slug: 'ranking', title: 'Ranking', description: 'Escolha como os produtos recomendados são ordenados. A prévia mostra o resultado antes de salvar.', group: 'Experiência', view: { kind: 'settings', key: 'ranking' } },
   { slug: 'testes-ab', title: 'Testes A/B', description: 'Compare dois textos do topo da home com visitantes reais e veja qual leva mais gente a clicar em comprar.', group: 'Experiência', view: { kind: 'abtests' } },
   { slug: 'regras-catalogo', title: 'Regras do catálogo', description: 'Os limiares de “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e dos filtros da busca.', group: 'Experiência', view: { kind: 'settings', key: 'rules' } },
   { slug: 'recommendation-slots', title: 'Slots de recomendação', description: 'Onde as recomendações aparecem e quantas mostram.', group: 'Experiência', view: { kind: 'settings', key: 'slots' } },

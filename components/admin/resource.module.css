@@ -173,3 +173,17 @@
 .saveActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .withPreview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); gap: 18px; align-items: start; }
 @media (max-width: 1100px) { .withPreview { grid-template-columns: minmax(0, 1fr); } .sections { grid-template-columns: minmax(0, 1fr); } }
+
+/* Ranking: estilos prontos e ajuste fino recolhido */
+.presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.preset { display: grid; gap: 6px; align-content: start; text-align: left; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--background); color: var(--foreground); font: inherit; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.preset:hover:not(:disabled) { border-color: #c9cdd4; }
+.preset strong { font-size: 16px; }
+.preset span { font-size: 13px; line-height: 1.45; color: var(--muted-foreground); }
+.presetOn { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); background: color-mix(in srgb, var(--primary) 5%, var(--card)); }
+.fineTune { border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 4px 22px; }
+.fineTune summary { display: flex; align-items: baseline; gap: 10px; min-height: 52px; align-items: center; cursor: pointer; font-size: 15px; font-weight: 650; list-style: none; }
+.fineTune summary::-webkit-details-marker { display: none; }
+.fineTune summary small { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.fineTune[open] { padding-bottom: 22px; }
+.fineGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; margin-top: 14px; }

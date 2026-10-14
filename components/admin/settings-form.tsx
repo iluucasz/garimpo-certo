@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import { ArrowDown, ArrowUp, RotateCcw, Save } from 'lucide-react'
-import { contrastWithWhite, rankingFactors, settingDefinitions, type SettingField, type SettingKey } from '@/lib/admin/settings-defs'
+import { contrastWithWhite, rankingFactors, rankingPresets, settingDefinitions, type SettingField, type SettingKey } from '@/lib/admin/settings-defs'
 import { AdminApiError, adminFetch, dateTime, swrFetcher } from '@/lib/admin/client'
 import { generateRecommendations, type ScoringWeights } from '@/lib/recommendation/engine'
 import { useStoreData } from '@/components/store-data-provider'
@@ -76,16 +76,17 @@ export function SettingsForm({ settingKey }: { settingKey: SettingKey }) {
   return <div className={styles.stack}>
     <div className={settingKey === 'ranking' ? styles.withPreview : undefined}>
       <form onSubmit={save} noValidate className={styles.settingsForm}>
-        <p className={styles.lead}>{definition.description}</p>
+        {settingKey !== 'ranking' && <p className={styles.lead}>{definition.description}</p>}
         {!canWrite && <p className={styles.note}>Seu papel só permite consultar esta configuração.</p>}
-        <div className={styles.sections}>
+        {settingKey === 'ranking' && <RankingSimple values={values} fields={definition.fields} disabled={!canWrite} errors={errors} onChange={set} onPreset={(preset) => setValues((current) => ({ ...current, ...preset }))}/>}
+        {settingKey !== 'ranking' && <div className={styles.sections}>
           {groups.map((group) => <section key={group.title} className={styles.sectionCard} aria-label={group.title}>
             {(definition.sections || groups.length > 1) && <header><h2>{group.title}</h2>{group.description && <p>{group.description}</p>}</header>}
             <div className={styles.sectionBody}>
               {group.fields.map((field) => <Control key={field.key} field={field} value={values[field.key]} error={errors[field.key]} disabled={!canWrite} onChange={(value) => set(field.key, value)}/>)}
             </div>
           </section>)}
-        </div>
+        </div>}
         {problem && <p className={styles.error} role="alert">{problem}</p>}
         <div className={`${styles.saveBar} ${dirty ? styles.saveBarDirty : ''}`}>
           <span className={styles.saveStatus} role="status">{dirty ? 'Alterações ainda não salvas.' : data.isDefault ? 'Usando os valores originais do site.' : `Personalizado · salvo em ${dateTime(data.updatedAt)}`}</span>
@@ -220,4 +221,38 @@ function ThemePreview({ values }: { values: Values }) {
       <span className={styles.sample} style={{ background: '#fff', color, border: `1px solid ${color}`, borderRadius: radius }}>Ver detalhes</span>
     </div>
   </section>
+}
+
+/** Ranking simples: escolher um estilo; o ajuste fino (os pesos de cada fator) fica recolhido. */
+function RankingSimple({ values, fields, disabled, errors, onChange, onPreset }: {
+  values: Values; fields: SettingField[]; disabled: boolean; errors: Record<string, string>
+  onChange: (key: string, value: unknown) => void; onPreset: (preset: Record<string, number>) => void
+}) {
+  const matches = (preset: Record<string, number>) => Object.entries(preset).every(([key, value]) => Number(values[key]) === value)
+  const current = rankingPresets.find((preset) => matches(preset.values))
+  return <div className={styles.sections} style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+    <section className={styles.sectionCard} aria-label="Estilo do ranking">
+      <header>
+        <h2>Como ordenar os produtos recomendados</h2>
+        <p>Escolha o estilo que combina com a sua loja. A prévia mostra, ao lado, o resultado com os produtos de hoje; nada muda no site até você salvar.</p>
+      </header>
+      <div className={styles.presets} role="radiogroup" aria-label="Estilo do ranking">
+        {rankingPresets.map((preset) => <button
+          key={preset.id} type="button" role="radio" aria-checked={current?.id === preset.id} disabled={disabled}
+          className={`${styles.preset} ${current?.id === preset.id ? styles.presetOn : ''}`} onClick={() => onPreset(preset.values)}
+        >
+          <strong>{preset.title}</strong>
+          <span>{preset.description}</span>
+        </button>)}
+      </div>
+      {!current && <p className={styles.help}>Os pesos estão <strong>personalizados</strong> (ajuste fino abaixo). Escolher um estilo acima substitui esses valores.</p>}
+    </section>
+    <details className={styles.fineTune}>
+      <summary>Ajuste fino <small>(avançado: o peso de cada fator)</small></summary>
+      <p className={styles.help}>Os pesos são proporcionais: só a relação entre eles importa. Mexer aqui deixa o estilo como “personalizado”.</p>
+      <div className={styles.fineGrid}>
+        {fields.map((field) => <Control key={field.key} field={field} value={values[field.key]} error={errors[field.key]} disabled={disabled} onChange={(value) => onChange(field.key, value)}/>)}
+      </div>
+    </details>
+  </div>
 }

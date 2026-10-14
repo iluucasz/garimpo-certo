@@ -55,6 +55,18 @@ export const rankingFactors = [
   ['similarity', 'Similaridade', 'Parecido com o produto que a pessoa está olhando.'],
 ] as const
 
+/** Estilos prontos do ranking: cada um é só um conjunto de pesos (os mesmos campos do ajuste fino). */
+export const rankingPresets: { id: string; title: string; description: string; values: Record<string, number> }[] = [
+  { id: 'balanced', title: 'Equilibrado', description: 'Mistura qualidade, preço, interesse do visitante e novidades. É o ponto de partida.',
+    values: { relevance: 18, affinity: 15, engagement: 14, quality: 16, commercial: 8, price: 12, freshness: 8, similarity: 9, exploration: 12 } },
+  { id: 'quality', title: 'Os melhores avaliados', description: 'Prioriza nota alta e muitas vendas. Mostra o que já deu certo para outras pessoas.',
+    values: { relevance: 14, affinity: 10, engagement: 20, quality: 30, commercial: 6, price: 8, freshness: 4, similarity: 8, exploration: 8 } },
+  { id: 'price', title: 'Melhor preço', description: 'Prioriza ofertas com preço competitivo frente a produtos parecidos.',
+    values: { relevance: 14, affinity: 10, engagement: 10, quality: 18, commercial: 6, price: 30, freshness: 4, similarity: 8, exploration: 10 } },
+  { id: 'discovery', title: 'Novidades e descobertas', description: 'Dá espaço a ofertas recém-atualizadas e a produtos fora do padrão.',
+    values: { relevance: 14, affinity: 10, engagement: 8, quality: 12, commercial: 4, price: 8, freshness: 26, similarity: 6, exploration: 25 } },
+]
+
 const numberField = (key: string, label: string, min: number, max: number, help?: string, unit?: string, step?: number): SettingField => ({ key, label, type: 'number', min, max, help, unit, ...(step ? { step } : {}) })
 
 export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
