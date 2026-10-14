@@ -2,7 +2,7 @@
 
 import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
-import { ArrowDown, ArrowUp, ExternalLink, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ExternalLink, LayoutGrid, List, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react'
 import { resources, segmentRuleTypes, type Option, type ResourceField, type ResourceSlug } from '@/lib/admin/resource-meta'
 import { AdminApiError, adminFetch, dateTime, fromLocalInput, swrFetcher, toLocalInput } from '@/lib/admin/client'
 import { slugify } from '@/lib/admin/validate'
@@ -27,6 +27,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
   const [filter, setFilter] = useState('')
   const [sort, setSort] = useState(meta.sort?.options[0]?.value ?? '')
   const [page, setPage] = useState(1)
+  const [view, setView] = useState<'table' | 'grid'>('table')
   const [editing, setEditing] = useState<Row | null>(null)
   const [creating, setCreating] = useState(false)
   const [confirming, setConfirming] = useState<Row | null>(null)
@@ -38,6 +39,14 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
     const timer = window.setTimeout(() => { setQuery(q); setPage(1) }, 250)
     return () => window.clearTimeout(timer)
   }, [q])
+  useEffect(() => {
+    if (!meta.gallery) return
+    try { if (window.localStorage.getItem(`garimpo:admin-view:${slug}`) === 'grid') setView('grid') } catch { /* sem armazenamento: fica na tabela */ }
+  }, [meta.gallery, slug])
+  const chooseView = (next: 'table' | 'grid') => {
+    setView(next)
+    try { window.localStorage.setItem(`garimpo:admin-view:${slug}`, next) } catch { /* idem */ }
+  }
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer) }, [toast])
 
   const pageSize = 25
@@ -71,6 +80,11 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
 
   return <div className="panel">
     {intro}
+    {data?.summary && data.summary.length > 0 && <ul className={styles.summary} aria-label="Resumo">
+      {data.summary.map((item) => <li key={item.label} className={item.tone === 'warn' ? styles.summaryWarn : undefined}>
+        <span>{item.label}</span><strong>{item.value}</strong>{item.hint && <small>{item.hint}</small>}
+      </li>)}
+    </ul>}
     <div className="admin-toolbar">
       {meta.searchPlaceholder && <div className="header-search"><Search aria-hidden="true"/><input value={q} onChange={(event) => setQ(event.target.value)} placeholder={meta.searchPlaceholder} aria-label={meta.searchPlaceholder}/></div>}
       <div className="toolbar-actions">
@@ -80,6 +94,10 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
             {meta.filter.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>}
+        {meta.gallery && <div className={styles.viewToggle} role="group" aria-label="Modo de exibição">
+          <button type="button" aria-pressed={view === 'table'} onClick={() => chooseView('table')}><List aria-hidden="true"/> Tabela</button>
+          <button type="button" aria-pressed={view === 'grid'} onClick={() => chooseView('grid')}><LayoutGrid aria-hidden="true"/> Grade</button>
+        </div>}
         {meta.sort && <label className="select-wrap"><span className="sr-only">{meta.sort.label}</span>
           <select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1) }}>
             {meta.sort.options.map((option) => <option key={option.value} value={option.value}>{meta.sort!.label}: {option.label}</option>)}
@@ -89,15 +107,58 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
         {meta.create && <button className="btn primary" disabled={!canWrite} onClick={() => setCreating(true)} title={canWrite ? undefined : 'Seu papel não permite criar'}><Plus aria-hidden="true"/> {meta.createLabel}</button>}
       </div>
     </div>
-    {data?.summary && data.summary.length > 0 && <ul className={styles.summary} aria-label="Resumo">
-      {data.summary.map((item) => <li key={item.label} className={item.tone === 'warn' ? styles.summaryWarn : undefined}>
-        <span>{item.label}</span><strong>{item.value}</strong>{item.hint && <small>{item.hint}</small>}
-      </li>)}
-    </ul>}
     {!canWrite && meta.fields.some((field) => !field.readOnly) && <p className={styles.note}>Seu papel só permite consultar este módulo.</p>}
     {error && <p className={`${styles.note} ${styles.warn}`} role="alert">{userFacingError(error)}</p>}
 
-    <div className="table-scroll">
+    {meta.layout === 'cards' && meta.card && <ul className={styles.cards}>
+      {rows.map((row) => {
+        const card = meta.card!
+        const link = linkFor(row)
+        const badgeField = card.badge ? meta.fields.find((field) => field.key === card.badge) : undefined
+        const metric = card.metric ? row[card.metric.key] : undefined
+        return <li key={row.id} className={styles.card}>
+          <header>
+            <h3>{link ? <a href={link} target="_blank" rel="noreferrer noopener">{title(row)} <ExternalLink aria-hidden="true" size={14}/></a> : title(row)}</h3>
+            {badgeField && row[badgeField.key] != null && <span className={`${styles.badge} ${isPositive(row[badgeField.key]) ? styles.badgeOn : ''}`}>{badgeField.options?.find((option) => option.value === row[badgeField.key])?.label ?? String(row[badgeField.key])}</span>}
+          </header>
+          {card.subtitle && row[card.subtitle] != null && <p className={styles.cardSub}>{card.subtitlePrefix ?? ''}{String(row[card.subtitle])}</p>}
+          {metric !== undefined && <p className={styles.cardMetric}><strong>{Number(metric).toLocaleString('pt-BR')}</strong><span>{card.metric!.label}</span></p>}
+          {card.lines && <dl className={styles.cardLines}>{card.lines.map((line) => row[line.key] != null && <div key={line.key}><dt>{line.label}</dt><dd>{String(row[line.key])}</dd></div>)}</dl>}
+          <footer className="row-actions">
+            {(editable && canWrite) || !editable ? <button aria-label={`${editable ? 'Editar' : 'Ver detalhes de'} ${title(row)}`} onClick={() => setEditing(row)}>{editable ? <Pencil aria-hidden="true"/> : <Search aria-hidden="true"/>}</button> : null}
+            {meta.remove && canWrite && <button aria-label={`Excluir ${title(row)}`} onClick={() => { setProblem(''); setConfirming(row) }}><Trash2 aria-hidden="true"/></button>}
+          </footer>
+        </li>
+      })}
+      {!isLoading && rows.length === 0 && <li className={styles.cardEmpty}>{query || filter ? 'Nada encontrado.' : meta.emptyText}</li>}
+    </ul>}
+    {meta.gallery && view === 'grid' && <ul className={styles.gallery}>
+      {rows.map((row) => {
+        const g = meta.gallery!
+        const link = linkFor(row)
+        const statusField = g.status ? meta.fields.find((field) => field.key === g.status) : undefined
+        return <li key={row.id} className={styles.galleryItem}>
+          <div className={styles.galleryImage}>
+            {row[g.image] ? <img src={String(row[g.image])} alt="" loading="lazy" decoding="async"/> : <span>sem foto</span>}
+            {g.badge && row[g.badge] ? <b className={styles.galleryBadge}>{String(row[g.badge])}</b> : null}
+          </div>
+          <div className={styles.galleryBody}>
+            <h3 title={title(row)}>{link ? <a href={link} target="_blank" rel="noreferrer noopener">{title(row)}</a> : title(row)}</h3>
+            {g.subtitle && <p className={styles.cardSub}>{String(row[g.subtitle] ?? '')}</p>}
+            <p className={styles.galleryPrice}>{g.price ? String(row[g.price] ?? '—') : ''}</p>
+            <p className={styles.galleryFacts}>{g.facts?.map((fact) => row[fact.key] != null && row[fact.key] !== '—' ? <span key={fact.key}>{String(row[fact.key])} {fact.label}</span> : null)}</p>
+          </div>
+          <footer>
+            {statusField && row[statusField.key] != null && <span className={`${styles.badge} ${isPositive(row[statusField.key]) ? styles.badgeOn : ''}`}>{statusField.options?.find((option) => option.value === row[statusField.key])?.label ?? String(row[statusField.key])}</span>}
+            <span className="row-actions">
+              <button aria-label={`Editar ${title(row)}`} onClick={() => setEditing(row)}><Pencil aria-hidden="true"/></button>
+              {meta.remove && canWrite && <button aria-label={`Ocultar ${title(row)}`} onClick={() => { setProblem(''); setConfirming(row) }}><Trash2 aria-hidden="true"/></button>}
+            </span>
+          </footer>
+        </li>
+      })}
+    </ul>}
+    {meta.layout !== 'cards' && !(meta.gallery && view === 'grid') && <div className="table-scroll">
       <table className="data-table" aria-label={meta.title}>
         <thead><tr>{columns.map((field) => <th scope="col" key={field.key} className={field.type === 'image' ? styles.thumbCell : field.key === titleKey ? styles.titleCell : undefined}>{field.type === 'image' ? <span className="sr-only">{field.label}</span> : field.label}</th>)}<th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
         <tbody>
@@ -112,7 +173,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
           {isLoading && rows.length === 0 && <tr><td colSpan={columns.length + 1}>Carregando…</td></tr>}
         </tbody>
       </table>
-    </div>
+    </div>}
     <div className={styles.pager}>
       <span>{data ? `${data.total.toLocaleString('pt-BR')} ${data.total === 1 ? meta.singular : 'registros'}` : ''}</span>
       {totalPages > 1 && <span className="toolbar-actions">

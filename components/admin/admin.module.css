@@ -271,6 +271,10 @@
 .healthItemWarning strong { color: #b45309; }
 .healthItemCritical strong { color: #b42318; }
 
+/* Barras de ferramentas quebram de linha em vez de alargar a página. */
+.workspace :global(.admin-toolbar), .workspace :global(.toolbar-actions) { flex-wrap: wrap; }
+.workspace :global(.toolbar-actions) { justify-content: flex-end; }
+
 /* Fator de tamanho por largura da tela: telas grandes ganham mais, notebooks pequenos quase nada. */
 @media (min-width: 2200px) { .workspace:global(.admin-shell) { --admin-zoom: 1.5; } }
 @media (min-width: 1700px) and (max-width: 2199px) { .workspace:global(.admin-shell) { --admin-zoom: 1.3; } }

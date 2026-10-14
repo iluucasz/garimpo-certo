@@ -10,6 +10,7 @@ import { AbTestsView } from './ab-tests-view'
 import { SettingsForm } from './settings-form'
 import { SocialPostsView } from './social-posts-view'
 import { SiteBuilder } from './site-builder/editor'
+import { CatalogHub } from './catalog-hub'
 
 /** Cabeçalho do módulo e a tela correspondente à sua `view`. O servidor aplica as mesmas permissões em cada chamada. */
 export function ModuleScreen({ config }: { config: ModuleConfig }) {
@@ -24,6 +25,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
       <h1>{config.title}</h1>
       <p>{config.description}</p>
     </div></div>
+    {config.group === 'Catálogo' && <CatalogHub/>}
     {!allowed(config.slug, true) && view.kind !== 'analytics' && view.kind !== 'events' && view.kind !== 'logs' && <p className="permission-banner" role="note">Você está como {roles.join(', ')} e pode apenas consultar este módulo.</p>}
     {view.kind === 'resource' && <ResourceManager slug={view.resource}/>}
     {view.kind === 'settings' && <SettingsForm settingKey={view.key}/>}

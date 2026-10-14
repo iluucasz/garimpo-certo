@@ -12,7 +12,6 @@ const WIDTH = { desktop: 1280, mobile: 390 } as const
 const INJECTED_CSS = `
 [data-cms-section] { cursor: pointer; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color .12s; }
 [data-cms-section]:hover { outline-color: #93c5fd; }
-[data-cms-section][data-cms-selected] { outline-color: #2563eb; }
 [data-cms-global] { cursor: pointer; }
 [data-cms-global]:hover { outline: 2px dashed #93c5fd; outline-offset: -2px; }
 a, button { cursor: pointer; }
@@ -66,25 +65,29 @@ export function Preview({ src, device, zoom, token, selectedId, onSelect, onGlob
   const width = WIDTH[device]
   const scale = zoom === 'fit' ? Math.min(1, available > 0 ? available / width : 1) : zoom / 100
 
+  /** Realça a seção escolhida por uma regra de CSS (nunca por atributo): mexer no HTML da página antes de ela hidratar quebra a hidratação. */
   const mark = useCallback(() => {
     const doc = frame.current?.contentDocument
     if (!doc) return
-    doc.querySelectorAll('[data-cms-selected]').forEach((node) => node.removeAttribute('data-cms-selected'))
-    if (!selectedId) return
-    const target = Array.from(doc.querySelectorAll('[data-cms-section]')).find((node) => node.getAttribute('data-cms-section') === selectedId)
-    target?.setAttribute('data-cms-selected', '')
+    let style = doc.getElementById('cms-editor-selected')
+    if (!style) {
+      style = doc.createElement('style')
+      style.id = 'cms-editor-selected'
+      doc.head.appendChild(style)
+    }
+    style.textContent = selectedId ? `[data-cms-section="${selectedId.replace(/[^\w-]/g, '')}"] { outline-color: #2563eb !important; }` : ''
   }, [selectedId])
 
   /** Rola até a seção escolhida na lista, se ela não estiver à vista. */
   useEffect(() => {
     mark()
     const doc = frame.current?.contentDocument
-    const target = doc?.querySelector('[data-cms-selected]')
+    const target = selectedId ? doc?.querySelector(`[data-cms-section="${selectedId.replace(/[^\w-]/g, '')}"]`) : null
     if (!doc || !target) return
     const rect = target.getBoundingClientRect()
     const height = doc.defaultView?.innerHeight ?? 0
     if (rect.height > 0 && (rect.bottom < 0 || rect.top > height)) target.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [mark])
+  }, [mark, selectedId])
 
   /** Depois de cada salvamento a página é recarregada; a rolagem volta para onde estava. */
   useEffect(() => {

@@ -80,6 +80,14 @@ function Shell({ children }: { children: React.ReactNode }) {
           const isCurrentGroup = currentModule?.group === group
           const isOpen = Boolean(query.trim()) || (expanded[`${pathname}:${group}`] ?? (isCurrentGroup || (!currentModule && group === 'Catálogo')))
           const id = `nav-${normalize(group)}`
+          // O catálogo tem 8 telas; elas aparecem como abas dentro da própria tela, então o menu mostra um item só.
+          if (group === 'Catálogo' && !query.trim()) {
+            return <div className={styles.navGroup} key={group}>
+              <Link href="/admin/produtos" className={`${styles.groupTrigger} ${isCurrentGroup ? styles.currentGroup : ''}`} aria-current={isCurrentGroup ? 'page' : undefined} onClick={closeNavigation}>
+                <Icon aria-hidden="true"/><span>{group}</span>
+              </Link>
+            </div>
+          }
           return <div className={styles.navGroup} key={group}>
             <button className={`${styles.groupTrigger} ${isCurrentGroup ? styles.currentGroup : ''}`} aria-expanded={isOpen} aria-controls={id} onClick={() => setExpanded((previous) => ({ ...previous, [`${pathname}:${group}`]: !isOpen }))}>
               <Icon aria-hidden="true"/><span>{group}</span><ChevronDown className={isOpen ? styles.chevronOpen : styles.chevron} aria-hidden="true"/>

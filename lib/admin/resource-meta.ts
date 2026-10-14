@@ -56,6 +56,11 @@ export type ResourceMeta = {
   titleKey?: string
   /** Ordenações oferecidas na tabela; a primeira é a padrão. */
   sort?: { label: string; options: Option[] }
+  /** `cards`: mostra cada item como um cartão (poucos itens, com um número em destaque) em vez de linha de tabela. */
+  layout?: 'cards'
+  /** Visão em grade (foto grande) além da tabela; o usuário alterna e a escolha fica no navegador. */
+  gallery?: { image: string; subtitle?: string; price?: string; badge?: string; status?: string; facts?: { key: string; label: string }[] }
+  card?: { subtitle?: string; subtitlePrefix?: string; metric?: { key: string; label: string }; badge?: string; lines?: { key: string; label: string }[] }
   emptyText: string
 }
 
@@ -86,6 +91,7 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     filter: { key: 'status', label: 'Situação', options: productStatuses },
     publicPath: '/produto/{slug}',
     titleKey: 'name',
+    gallery: { image: 'imageUrl', subtitle: 'brandName', price: 'price', badge: 'discount', status: 'status', facts: [{ key: 'rating', label: 'nota' }, { key: 'soldCount', label: 'vendas' }] },
     sort: { label: 'Ordenar', options: [
       { value: 'relevance', label: 'Ativos primeiro, mais vendidos' },
       { value: 'recent', label: 'Atualizados há pouco' },
@@ -121,14 +127,27 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     read: 'catalog:read', write: 'catalog:write', create: false, remove: false,
     createLabel: '', searchPlaceholder: 'Buscar por produto ou loja', emptyText: 'Nenhuma oferta encontrada.',
     filter: { key: 'status', label: 'Situação', options: [{ value: 'active', label: 'Ativa' }, { value: 'inactive', label: 'Inativa' }, { value: 'removed', label: 'Removida' }] },
+    publicPath: '/produto/{slug}',
+    titleKey: 'productName',
+    sort: { label: 'Ordenar', options: [
+      { value: 'recent', label: 'Atualizadas há pouco' },
+      { value: 'sold', label: 'Mais vendidas' },
+      { value: 'commission', label: 'Maior comissão' },
+      { value: 'price_desc', label: 'Maior preço' },
+      { value: 'price_asc', label: 'Menor preço' },
+    ] },
     fields: [
+      { key: 'imageUrl', label: 'Foto', type: 'image', readOnly: true, listOnly: true },
       { key: 'productName', label: 'Produto', type: 'text', readOnly: true },
-      { key: 'providerName', label: 'Origem', type: 'text', readOnly: true },
       { key: 'sellerName', label: 'Loja', type: 'text', readOnly: true },
       { key: 'price', label: 'Preço', type: 'text', readOnly: true },
+      { key: 'discount', label: 'Desconto', type: 'text', readOnly: true, listOnly: true },
+      { key: 'soldCount', label: 'Vendas', type: 'text', readOnly: true, listOnly: true },
       { key: 'commission', label: 'Comissão', type: 'text', readOnly: true },
-      { key: 'status', label: 'Situação', type: 'select', required: true, options: [{ value: 'active', label: 'Ativa' }, { value: 'inactive', label: 'Inativa' }, { value: 'removed', label: 'Removida' }], help: 'Inativa ou removida tira a oferta do site sem apagar o histórico.' },
-      { key: 'syncedAt', label: 'Sincronizada em', type: 'datetime', readOnly: true },
+      { key: 'externalUrl', label: 'Na Shopee', type: 'url', readOnly: true, listOnly: true },
+      { key: 'providerName', label: 'Origem', type: 'text', readOnly: true, formOnly: true },
+      { key: 'status', label: 'Situação', type: 'select', required: true, options: [{ value: 'active', label: 'Ativa' }, { value: 'inactive', label: 'Inativa' }, { value: 'removed', label: 'Removida' }], help: 'Inativa ou removida tira a oferta do site; a próxima importação pode reativá-la.' },
+      { key: 'syncedAt', label: 'Atualizada em', type: 'datetime', readOnly: true },
     ],
   },
   providers: {
@@ -150,6 +169,9 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     read: 'catalog:read', write: 'catalog:write', create: true, remove: 'delete',
     createLabel: 'Nova categoria', searchPlaceholder: 'Buscar categoria', emptyText: 'Nenhuma categoria. Elas nascem da importação ou podem ser criadas aqui.',
     publicPath: '/categorias/{slug}',
+    titleKey: 'name',
+    layout: 'cards',
+    card: { subtitle: 'slug', subtitlePrefix: '/categorias/', metric: { key: 'products', label: 'produtos ativos' }, lines: [{ key: 'sortOrder', label: 'Posição no menu' }] },
     fields: [
       { key: 'name', label: 'Nome', type: 'text', required: true, maxLength: 60 },
       { key: 'slug', label: 'Endereço (slug)', type: 'text', required: true, maxLength: 60, help: 'Só letras minúsculas, números e hífen. Vira /categorias/<slug>.', createOnly: true },
@@ -160,6 +182,7 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
   marcas: {
     slug: 'marcas', title: 'Lojas e marcas', singular: 'marca',
     description: 'Na Shopee a “marca” é a loja que vende. Duplicidades podem ser unificadas.',
+    sort: { label: 'Ordenar', options: [{ value: 'products', label: 'Mais produtos ativos' }, { value: 'name', label: 'Nome (A–Z)' }] },
     read: 'catalog:read', write: 'catalog:write', create: true, remove: 'delete',
     createLabel: 'Nova marca', searchPlaceholder: 'Buscar marca ou loja', emptyText: 'Nenhuma marca cadastrada.',
     fields: [
@@ -173,6 +196,9 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     description: 'Sinais que aparecem nos cartões de produto e alimentam filtros. Alguns nascem dos números da Shopee a cada importação.',
     read: 'catalog:read', write: 'catalog:write', create: true, remove: 'delete',
     createLabel: 'Novo selo', searchPlaceholder: 'Buscar selo', emptyText: 'Nenhum selo cadastrado.',
+    titleKey: 'label',
+    layout: 'cards',
+    card: { subtitle: 'code', metric: { key: 'products', label: 'produtos com o selo' } },
     fields: [
       { key: 'label', label: 'Texto exibido', type: 'text', required: true, maxLength: 40 },
       { key: 'code', label: 'Código', type: 'text', required: true, maxLength: 40, createOnly: true, help: 'Identificador interno, em minúsculas e sem espaços.' },
@@ -186,6 +212,9 @@ export const resources: Record<ResourceSlug, ResourceMeta> = {
     createLabel: 'Nova coleção', searchPlaceholder: 'Buscar coleção', emptyText: 'Nenhuma coleção manual ainda. As coleções automáticas aparecem em /colecoes.',
     filter: { key: 'status', label: 'Situação', options: publishStatuses },
     publicPath: '/colecoes/{slug}',
+    titleKey: 'title',
+    layout: 'cards',
+    card: { subtitle: 'tone', metric: { key: 'count', label: 'produtos na coleção' }, badge: 'status', lines: [{ key: 'slug', label: 'Endereço' }] },
     fields: [
       { key: 'title', label: 'Título', type: 'text', required: true, maxLength: 80 },
       { key: 'slug', label: 'Endereço (slug)', type: 'text', required: true, maxLength: 60, createOnly: true },

@@ -1,0 +1,32 @@
+/* Navegação do catálogo: três grupos de abas, com contagem, acima de cada tela do catálogo. */
+.hub { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 28px; margin-bottom: 22px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.groups { display: flex; flex-wrap: wrap; gap: 14px 18px; }
+.group { display: grid; gap: 8px; min-width: 0; }
+.group header { display: flex; align-items: baseline; gap: 10px; }
+.group header strong { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--foreground); }
+.group header span { font-size: 12px; color: var(--muted-foreground); }
+.group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.tab { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); color: var(--foreground); font-size: 14px; font-weight: 600; text-decoration: none; transition: background-color .15s, border-color .15s; }
+.tab:hover { border-color: #c9cdd4; background: #fff; }
+.tab svg { display: none; }
+.tab { padding: 0 12px; }
+.tab b { min-width: 24px; padding: 2px 8px; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); font-size: 12px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.active { background: var(--foreground); border-color: var(--foreground); color: #fff; }
+.active:hover { background: var(--foreground); border-color: var(--foreground); }
+.active svg { color: #fff; }
+.active b { background: rgb(255 255 255 / 18%); color: #fff; }
+
+.sync { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 13px; color: var(--muted-foreground); }
+.sync svg { width: 16px; height: 16px; }
+.sync strong { color: var(--foreground); font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca1aa; }
+.ok { background: #1a7f4f; }
+.bad { background: #b42318; }
+.run { background: #b54708; }
+
+@media (max-width: 700px) {
+  .hub { padding: 14px; }
+  .group header span { display: none; }
+  .tab { min-height: 42px; padding: 0 12px; font-size: 14px; }
+}

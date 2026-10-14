@@ -91,9 +91,9 @@
 
 /* Resumo no alto da lista (cartões com números do módulo) */
 .summary { list-style: none; margin: 0 0 22px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
-.summary li { display: grid; gap: 4px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.summary li { display: grid; gap: 3px; align-content: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
 .summary span { font-size: 13px; color: var(--muted-foreground); }
-.summary strong { font-size: 28px; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.summary strong { font-size: 26px; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .summary small { font-size: 12px; color: var(--muted-foreground); line-height: 1.35; }
 .summaryWarn { border-color: #f3c9a7 !important; background: #fff8f1 !important; }
 .summaryWarn strong { color: #b54708; }
@@ -106,3 +106,50 @@
 /* Nome do item: nunca estreito a ponto de quebrar palavras no meio. */
 .titleCell { min-width: 260px; }
 @media (max-width: 700px) { .titleCell { min-width: 200px; } }
+
+/* Itens como cartões (categorias, selos, coleções) */
+.cards { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.card { display: grid; align-content: start; gap: 10px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); transition: border-color .15s, box-shadow .15s; }
+.card:hover { border-color: #c9cdd4; box-shadow: 0 6px 20px -14px rgb(23 38 66 / 30%); }
+.card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.card h3 { margin: 0; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+.card h3 a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+.card h3 a svg { flex: none; color: var(--muted-foreground); }
+.card h3 a:hover { text-decoration: underline; }
+.cardSub { margin: 0; font-size: 13px; color: var(--muted-foreground); overflow-wrap: anywhere; }
+.cardMetric { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 0; }
+.cardMetric strong { font-size: 34px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cardMetric span { font-size: 13px; color: var(--muted-foreground); }
+.cardLines { display: grid; gap: 6px; margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--border); }
+.cardLines div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.cardLines dt { color: var(--muted-foreground); }
+.cardLines dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; text-align: right; }
+.card footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; }
+.cardEmpty { grid-column: 1 / -1; padding: 28px; border: 1px dashed var(--border); border-radius: 14px; text-align: center; color: var(--muted-foreground); }
+
+/* Importações: texto à esquerda, ação à direita */
+.importHero { display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+.importHero h2 { margin: 0 0 6px; }
+.importHero .lead { margin: 0; max-width: 80ch; }
+
+/* Alternar tabela/grade */
+.viewToggle { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card); }
+.viewToggle button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.viewToggle button[aria-pressed='true'] { background: var(--foreground); color: #fff; }
+.viewToggle svg { width: 16px; height: 16px; }
+
+/* Grade de produtos */
+.gallery { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.galleryItem { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--card); transition: border-color .15s, box-shadow .15s; }
+.galleryItem:hover { border-color: #c9cdd4; box-shadow: 0 8px 22px -16px rgb(23 38 66 / 35%); }
+.galleryImage { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; background: #fff; border-bottom: 1px solid var(--border); }
+.galleryImage img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+.galleryImage span { font-size: 12px; color: var(--muted-foreground); }
+.galleryBadge { position: absolute; top: 10px; left: 10px; padding: 3px 9px; border-radius: 999px; background: #1a7f4f; color: #fff; font-size: 12px; font-weight: 700; }
+.galleryBody { display: grid; gap: 4px; padding: 14px 16px 6px; flex: 1; align-content: start; }
+.galleryBody h3 { margin: 0; font-size: 15px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.galleryBody h3 a { color: inherit; text-decoration: none; }
+.galleryBody h3 a:hover { text-decoration: underline; }
+.galleryPrice { margin: 4px 0 0; font-size: 20px; font-weight: 750; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.galleryFacts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 12.5px; color: var(--muted-foreground); }
+.galleryItem footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px 14px; }

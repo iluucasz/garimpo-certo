@@ -18,9 +18,11 @@ const number = new Intl.NumberFormat('pt-BR')
 export function ImportsView() {
   const [refresh, setRefresh] = useState(0)
   return <div className={styles.stack}>
-    <section className="panel">
-      <h2>Importar agora</h2>
-      <p className={styles.lead}>Busca as ofertas atuais na Shopee, atualiza preço e vendas e arquiva o que saiu da seleção (só quando a importação cobre pelo menos 70% do catálogo atual). Produtos que você editou mantêm nome, categoria e selos. A importação automática roda todo dia às 06:00 (Brasília), no worker da VPS; cada execução aparece na lista abaixo.</p>
+    <section className={`panel ${styles.importHero}`}>
+      <div>
+        <h2>Atualizar o catálogo agora</h2>
+        <p className={styles.lead}>Busca as ofertas atuais na Shopee, atualiza preço, nota e vendas e arquiva o que saiu da seleção. O arquivamento só acontece quando a importação cobre pelo menos 70% do catálogo atual. Produtos que você editou mantêm nome, categoria e selos. A importação automática roda todo dia às 06:00 (Brasília), no worker da VPS.</p>
+      </div>
       <CatalogImportButton onDone={() => setRefresh((value) => value + 1)}/>
     </section>
     <ResourceManager key={refresh} slug="importacoes"/>

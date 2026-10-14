@@ -193,6 +193,34 @@ const productsHandler: Handler = {
 }
 
 // ---------------------------------------------------------------- ofertas
+const offerSorts: Record<string, ReturnType<typeof sql>[]> = {
+  sold: [sql`${offers.soldCount} desc nulls last`],
+  commission: [sql`${offers.commissionRate} desc nulls last`],
+  price_desc: [sql`${offers.price} desc`],
+  price_asc: [sql`${offers.price} asc`],
+}
+
+async function offersSummary(): Promise<SummaryItem[]> {
+  const result = await db.execute(sql`
+    select count(*) filter (where o.status = 'active' and p.status = 'active')::int as active,
+      count(*) filter (where o.status <> 'active' or p.status <> 'active')::int as inactive,
+      avg(o.commission_rate) filter (where o.status = 'active' and p.status = 'active')::float as commission,
+      count(*) filter (where o.status = 'active' and p.status = 'active' and (o.affiliate_url is null or o.affiliate_url = ''))::int as no_link,
+      count(*) filter (where o.status = 'active' and p.status = 'active' and o.price_max is not null and o.price_max > o.price)::int as ranged,
+      max(o.last_synced_at) as last
+    from offers o join products p on p.id = o.product_id`)
+  const row = result.rows[0] as Record<string, number | string | null>
+  const n = (key: string) => Number(row[key] ?? 0)
+  const synced = row.last ? new Date(String(row.last)).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : '—'
+  return [
+    { label: 'Ofertas ativas', value: n('active').toLocaleString('pt-BR'), hint: `${n('inactive').toLocaleString('pt-BR')} inativas ou de produtos ocultos` },
+    { label: 'Comissão média', value: row.commission === null ? '—' : `${(Number(row.commission) * 100).toFixed(1).replace('.', ',')}%`, hint: 'das ofertas ativas' },
+    { label: 'Com faixa de preço', value: n('ranged').toLocaleString('pt-BR'), hint: 'a loja vende variações com preços diferentes' },
+    { label: 'Sem link de afiliado', value: n('no_link').toLocaleString('pt-BR'), hint: 'ofertas sem comissão rastreada', tone: n('no_link') > 0 ? 'warn' : undefined },
+    { label: 'Última atualização', value: synced, hint: 'horário de Brasília' },
+  ]
+}
+
 const offersHandler: Handler = {
   revalidate: ['catalog'],
   async list(params) {
@@ -202,22 +230,32 @@ const offersHandler: Handler = {
       like ? or(ilike(products.name, like), ilike(offers.sellerName, like)) : undefined,
       status ? eq(offers.status, status) : undefined,
     )
-    const [rows, count] = await Promise.all([
+    const [rows, count, summary] = await Promise.all([
       db.select({
-        id: offers.id, productName: products.name, providerName: providers.displayName, sellerName: offers.sellerName,
+        id: offers.id, productName: products.name, productSlug: products.slug, providerName: providers.displayName, sellerName: offers.sellerName,
         price: offers.price, priceMax: offers.priceMax, commissionRate: offers.commissionRate, status: offers.status, syncedAt: offers.lastSyncedAt,
+        soldCount: offers.soldCount, discount: offers.discountPercentage, externalUrl: offers.externalUrl,
+        imageUrl: sql<string | null>`(select i.source_url from product_images i where i.product_id = ${products.id} order by i.is_primary desc, i.position asc limit 1)`,
       }).from(offers).innerJoin(products, eq(products.id, offers.productId)).innerJoin(providers, eq(providers.id, offers.providerId))
-        .where(where).orderBy(desc(offers.lastSyncedAt)).limit(page(params).limit).offset(page(params).offset),
+        .where(where).orderBy(...(offerSorts[params.sort ?? ''] ?? [desc(offers.lastSyncedAt)])).limit(page(params).limit).offset(page(params).offset),
       total(db.select({ n: sql<number>`count(*)::int` }).from(offers).innerJoin(products, eq(products.id, offers.productId)).where(where)),
+      offersSummary(),
     ])
     return {
       total: count,
-      rows: rows.map((row) => ({
-        id: row.id, productName: row.productName, providerName: row.providerName, sellerName: row.sellerName ?? '—',
-        price: row.priceMax && Number(row.priceMax) > Number(row.price) ? `${money(row.price)} a ${money(row.priceMax)}` : money(row.price),
-        commission: row.commissionRate === null ? '—' : `${(Number(row.commissionRate) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`,
-        status: row.status, syncedAt: row.syncedAt,
-      })),
+      summary,
+      rows: rows.map((row) => {
+        const ranged = row.priceMax && Number(row.priceMax) > Number(row.price)
+        return {
+          id: row.id, productName: row.productName, slug: row.productSlug, imageUrl: row.imageUrl, providerName: row.providerName, sellerName: row.sellerName ?? '—',
+          price: ranged ? `${money(row.price)} a ${money(row.priceMax)}` : money(row.price),
+          // O percentual da API só vale com preço único; com faixa ele se refere a outra variação.
+          discount: !ranged && row.discount && Number(row.discount) > 0 ? `−${Math.round(Number(row.discount))}%` : null,
+          soldCount: row.soldCount === null ? '—' : Number(row.soldCount).toLocaleString('pt-BR'),
+          commission: row.commissionRate === null ? '—' : `${(Number(row.commissionRate) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`,
+          externalUrl: row.externalUrl, status: row.status, syncedAt: row.syncedAt,
+        }
+      }),
     }
   },
   async get(id) {
@@ -268,7 +306,7 @@ const categoriesHandler: Handler = {
     const where = like ? or(ilike(categories.name, like), ilike(categories.slug, like)) : undefined
     const rows = await db.select({
       id: categories.id, name: categories.name, slug: categories.slug, sortOrder: categories.sortOrder,
-      products: sql<number>`(select count(*)::int from product_categories pc join products p on p.id = pc.product_id where pc.category_id = ${categories.id} and p.status = 'active')`,
+      products: sql<number>`(select count(*)::int from product_categories pc join products p on p.id = pc.product_id where pc.category_id = "categories"."id" and p.status = 'active')`,
     }).from(categories).where(where).orderBy(asc(categories.sortOrder), asc(categories.name))
     return { rows, total: rows.length }
   },
@@ -313,8 +351,10 @@ const brandsHandler: Handler = {
     const [rows, count] = await Promise.all([
       db.select({
         id: brands.id, name: brands.name, slug: brands.slug,
-        products: sql<number>`(select count(*)::int from products p where p.brand_id = ${brands.id} and p.status = 'active')`,
-      }).from(brands).where(where).orderBy(asc(brands.name)).limit(page(params).limit).offset(page(params).offset),
+        products: sql<number>`(select count(*)::int from products p where p.brand_id = "brands"."id" and p.status = 'active')`,
+      }).from(brands).where(where)
+        .orderBy(...(params.sort === 'name' ? [asc(brands.name)] : [sql`(select count(*) from products p where p.brand_id = "brands"."id" and p.status = 'active') desc`, asc(brands.name)]))
+        .limit(page(params).limit).offset(page(params).offset),
       total(db.select({ n: sql<number>`count(*)::int` }).from(brands).where(where)),
     ])
     return { rows, total: count }
@@ -353,7 +393,7 @@ const tagsHandler: Handler = {
     const where = like ? or(ilike(tags.label, like), ilike(tags.code, like)) : undefined
     const rows = await db.select({
       id: tags.id, label: tags.label, code: tags.code,
-      products: sql<number>`(select count(*)::int from product_tags pt where pt.tag_id = ${tags.id})`,
+      products: sql<number>`(select count(*)::int from product_tags pt join products p on p.id = pt.product_id where pt.tag_id = "tags"."id" and p.status = 'active')`,
     }).from(tags).where(where).orderBy(asc(tags.label))
     return { rows, total: rows.length }
   },
@@ -898,18 +938,46 @@ const duration = (start: string, end: string | null) => {
 }
 const runStatus: Record<string, string> = { running: 'Em andamento', succeeded: 'Concluída', failed: 'Falhou', partial: 'Parcial' }
 
+async function importsSummary(): Promise<SummaryItem[]> {
+  const result = await db.execute(sql`
+    with runs as (
+      select r.*, j.job_type from sync_job_runs r join sync_jobs j on j.id = r.sync_job_id where j.job_type = 'catalog_import'
+    )
+    select
+      (select to_char(started_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from runs order by started_at desc limit 1) as last_at,
+      (select status::text from runs order by started_at desc limit 1) as last_status,
+      (select created_count from runs order by started_at desc limit 1) as last_created,
+      (select updated_count from runs order by started_at desc limit 1) as last_updated,
+      (select avg(extract(epoch from (finished_at - started_at)))::float from (select * from runs where finished_at is not null order by started_at desc limit 7) x) as avg_seconds,
+      (select count(*)::int from runs where status::text <> 'succeeded' and started_at > now() - interval '7 days') as failures,
+      (select count(*)::int from runs where started_at > now() - interval '7 days') as total_7d`)
+  const row = result.rows[0] as Record<string, number | string | null>
+  const when = row.last_at ? new Date(String(row.last_at)).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : '—'
+  const avg = row.avg_seconds === null ? '—' : Number(row.avg_seconds) >= 60 ? `${Math.floor(Number(row.avg_seconds) / 60)} min ${Math.round(Number(row.avg_seconds) % 60)} s` : `${Math.round(Number(row.avg_seconds))} s`
+  const failures = Number(row.failures ?? 0)
+  return [
+    { label: 'Última importação', value: when, hint: row.last_status === 'succeeded' ? 'concluída com sucesso' : String(row.last_status ?? 'sem execuções'), tone: row.last_status && row.last_status !== 'succeeded' ? 'warn' : undefined },
+    { label: 'Próxima automática', value: '06:00', hint: 'todo dia, no worker da VPS (horário de Brasília)' },
+    { label: 'Novos / atualizados', value: `${Number(row.last_created ?? 0).toLocaleString('pt-BR')} / ${Number(row.last_updated ?? 0).toLocaleString('pt-BR')}`, hint: 'na última importação' },
+    { label: 'Duração média', value: avg, hint: 'das últimas 7 execuções' },
+    { label: 'Falhas em 7 dias', value: failures.toLocaleString('pt-BR'), hint: `${Number(row.total_7d ?? 0)} execuções no período`, tone: failures > 0 ? 'warn' : undefined },
+  ]
+}
+
 const importsHandler: Handler = {
   async list(params) {
-    const [rows, count] = await Promise.all([
+    const [rows, count, summary] = await Promise.all([
       db.select({
         id: syncJobRuns.id, jobType: syncJobs.jobType, startedAt: syncJobRuns.startedAt, finishedAt: syncJobRuns.finishedAt, status: syncJobRuns.status,
         processed: syncJobRuns.processedCount, created: syncJobRuns.createdCount, updated: syncJobRuns.updatedCount, rejected: syncJobRuns.rejectedCount,
         error: sql<string | null>`(select e.error_message from sync_errors e where e.sync_job_run_id = ${syncJobRuns.id} order by e.created_at desc limit 1)`,
       }).from(syncJobRuns).innerJoin(syncJobs, eq(syncJobs.id, syncJobRuns.syncJobId)).orderBy(desc(syncJobRuns.startedAt)).limit(page(params).limit).offset(page(params).offset),
       total(db.select({ n: sql<number>`count(*)::int` }).from(syncJobRuns)),
+      importsSummary(),
     ])
     return {
       total: count,
+      summary,
       rows: rows.map((row) => ({
         id: row.id, startedAt: row.startedAt, kind: row.jobType === 'conversion_sync' ? 'Comissões' : 'Catálogo',
         duration: duration(row.startedAt, row.finishedAt), status: runStatus[row.status] ?? row.status,
