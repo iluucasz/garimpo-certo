@@ -52,7 +52,9 @@ export function Preview({ src, device, zoom, token, selectedId, onSelect, onGlob
     if (!element) return
     const measure = () => {
       setAvailable(element.clientWidth)
-      setViewport(Math.max(480, Math.min(window.innerHeight - 250, 960)))
+      // O painel pode estar ampliado (zoom CSS): a altura útil em px do painel é a da janela dividida pelo fator.
+      const zoom = Number.parseFloat(getComputedStyle(element).getPropertyValue('--editor-zoom')) || 1
+      setViewport(Math.max(480, Math.min((window.innerHeight - 250) / zoom, 960)))
     }
     measure()
     const observer = new ResizeObserver(measure)

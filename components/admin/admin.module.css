@@ -1,4 +1,8 @@
 .workspace:global(.admin-shell) {
+  /* Tamanho do painel: tudo (texto, cartões, espaços) cresce junto com este fator, conforme a largura da tela. */
+  --admin-zoom: 1.3;
+  zoom: var(--admin-zoom);
+  min-height: calc(100vh / var(--admin-zoom));
   --background: #f8f9fb;
   --foreground: #25282e;
   --card: #fff;
@@ -14,7 +18,7 @@
 .workspace :global(.admin-sidebar) {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: calc(100dvh / var(--admin-zoom));
   overflow: hidden;
   padding: 0 14px;
   background: #fcfcfd;
@@ -52,13 +56,13 @@
 .accountCopy { min-width: 0; display: flex; flex-direction: column; }
 .accountCopy strong { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .accountCopy small { font-size: 11px; color: var(--muted-foreground); }
-.workspace :global(.admin-header) { height: 64px; background: #fff; padding: 0 36px; backdrop-filter: none; }
+.workspace :global(.admin-header) { height: 64px; background: #fff; padding: 0 40px; backdrop-filter: none; }
 .workspace :global(.breadcrumbs) { gap: 12px; font-size: 12px; font-weight: 400; }
 .workspace :global(.breadcrumbs) svg { color: #a8adb5; width: 12px; }
 .workspace :global(.breadcrumbs) [aria-current] { font-weight: 550; }
 .storeLink { display: inline-flex; align-items: center; gap: 12px; padding: 7px 11px; border: 1px solid #e2e4e8; border-radius: 6px; font-size: 12px; font-weight: 550; background: #fff; }
 .storeLink:hover { background: #f5f5f6; }
-.workspace :global(.admin-content) { max-width: 1600px; margin-inline: auto; padding: 34px 36px; }
+.workspace :global(.admin-content) { max-width: none; margin: 0; padding: 34px 40px 56px; }
 .workspace :global(.admin-title) { align-items: center; margin-bottom: 28px; }
 .workspace :global(.admin-title) h1 { font-family: var(--font-body), sans-serif; font-size: 30px; font-weight: 650; letter-spacing: -1.1px; line-height: 1.3; }
 .workspace :global(.admin-title) p { margin: 8px 0 0; font-size: 13px; }
@@ -209,7 +213,7 @@
   .wordmark { font-size: 21px; }
   .brandMark { width: 28px; height: 28px; }
   .workspace :global(.admin-sidebar-toggle) { width: 34px; height: 34px; border-radius: 6px; }
-  .workspace :global(.admin-nav.open) { display: flex !important; max-height: calc(100dvh - 90px); margin-top: 0; padding-top: 15px; }
+  .workspace :global(.admin-nav.open) { display: flex !important; max-height: calc((100dvh - 90px) / var(--admin-zoom)); margin-top: 0; padding-top: 15px; }
   .workspace :global(.admin-nav) a { min-height: 40px; }
   .groupTrigger { min-height: 42px; }
   .sidebarAccount { display: none; }
@@ -266,3 +270,14 @@
 .health li span { color: var(--muted-foreground); }
 .healthItemWarning strong { color: #b45309; }
 .healthItemCritical strong { color: #b42318; }
+
+/* Fator de tamanho por largura da tela: telas grandes ganham mais, notebooks pequenos quase nada. */
+@media (min-width: 2200px) { .workspace:global(.admin-shell) { --admin-zoom: 1.5; } }
+@media (min-width: 1700px) and (max-width: 2199px) { .workspace:global(.admin-shell) { --admin-zoom: 1.3; } }
+@media (min-width: 1400px) and (max-width: 1699px) { .workspace:global(.admin-shell) { --admin-zoom: 1.2; } }
+@media (min-width: 1100px) and (max-width: 1399px) { .workspace:global(.admin-shell) { --admin-zoom: 1.1; } }
+@media (max-width: 1099px) { .workspace:global(.admin-shell) { --admin-zoom: 1; } }
+
+/* A primeira coluna das tabelas (nome) nunca fica estreita a ponto de quebrar palavras no meio. */
+.workspace :global(.data-table) th:first-child, .workspace :global(.data-table) td:first-child { min-width: 240px; }
+@media (max-width: 700px) { .workspace :global(.data-table) th:first-child, .workspace :global(.data-table) td:first-child { min-width: 200px; } }
