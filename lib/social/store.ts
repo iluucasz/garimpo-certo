@@ -7,7 +7,7 @@ import { toSubId } from '@/lib/providers/shopee/links'
 import { deepseekConfig } from '@/lib/ai/deepseek'
 import { composePost, type PostFacts } from './compose'
 import { rewriteWithAi } from './rewrite'
-import { defaultPickOptions, rankCandidates, type PostCandidate, type Ranked } from './picker'
+import { adaptiveCooldown, defaultPickOptions, eligible, rankCandidates, type PostCandidate, type Ranked } from './picker'
 import { recheckOffer, type OfferNow } from './recheck'
 import { brasiliaDay, missingSlots } from './schedule'
 import { sendTelegramPost, telegramConfig, TelegramError } from './telegram'
@@ -40,7 +40,7 @@ export async function loadSocialSettings(): Promise<SocialSettings> {
   const number = (key: string, fallback: number) => { const value = Number(merged[key]); return Number.isFinite(value) ? value : fallback }
   return {
     mode: merged.mode === 'on' ? 'on' : 'off',
-    dailyLimit: Math.min(Math.max(Math.round(number('dailyLimit', 4)), 1), 10),
+    dailyLimit: Math.min(Math.max(Math.round(number('dailyLimit', 15)), 1), 30),
     startHour: number('startHour', 9),
     endHour: number('endHour', 21),
     requireApproval: merged.requireApproval !== false,
@@ -142,7 +142,15 @@ export async function planToday(settings: SocialSettings, now = Date.now(), user
   if (slots.length === 0) return { created: 0, ranked: [], reason: 'A cota de hoje já está completa ou os horários de hoje passaram.' }
 
   const candidates = await loadCandidates()
-  const ranked = rankCandidates(candidates, { ...defaultPickOptions, now, limit: slots.length })
+  // Com cota alta, uma por categoria não basta e 14 dias de intervalo esgotariam a lista: ajusta os dois pelo tamanho real da lista.
+  const base = { ...defaultPickOptions, now, limit: slots.length }
+  const pool = candidates.filter((candidate) => eligible(candidate, { ...base, cooldownDays: 0 }))
+  const categories = new Set(pool.map((candidate) => candidate.category)).size || 1
+  const ranked = rankCandidates(candidates, {
+    ...base,
+    perCategory: Math.max(base.perCategory, Math.ceil(slots.length / categories)),
+    cooldownDays: adaptiveCooldown(pool.length, settings.dailyLimit, base.cooldownDays),
+  })
   if (ranked.length === 0) return { created: 0, ranked, reason: 'Nenhuma oferta atende aos critérios (nota, vendas, imagem e intervalo entre repetições).' }
 
   let created = 0

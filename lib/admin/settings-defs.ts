@@ -196,11 +196,11 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
   social: {
     key: 'social',
     title: 'Postagens no Telegram',
-    description: 'Quantas ofertas vão ao canal por dia e em que horário. O texto usa só números reais da oferta e leva o aviso de link de afiliado. Com “exigir aprovação”, nada é publicado sem o seu OK. Comece com 3 a 5 boas ofertas por dia e meça quais geram clique.',
+    description: 'Quantas ofertas vão ao canal por dia e em que horário. O texto usa só números reais da oferta. Com “exigir aprovação”, nada é publicado sem o seu OK. Comece com 3 a 5 boas ofertas por dia e meça quais geram clique.',
     permission: 'catalog:write',
     fields: [
       { key: 'mode', label: 'Postagens', type: 'select', options: [{ value: 'off', label: 'Desligadas' }, { value: 'on', label: 'Ligadas' }] },
-      numberField('dailyLimit', 'Ofertas por dia', 1, 10, 'Poucas e boas rendem mais do que muitas.', 'por dia'),
+      numberField('dailyLimit', 'Ofertas por dia', 1, 30, 'Espalhadas entre a primeira e a última postagem. Com muitas por dia, a Engine reduz sozinha o intervalo para repetir um produto, para a lista não acabar.', 'por dia'),
       numberField('startHour', 'Primeira postagem a partir de', 6, 20, 'Horário de Brasília.', 'h'),
       numberField('endHour', 'Última postagem até', 10, 23, 'Horário de Brasília.', 'h'),
       { key: 'requireApproval', label: 'Exigir a minha aprovação antes de publicar', type: 'boolean', help: 'Recomendado. Desligado, o que a Engine escolher é publicado no horário.' },
@@ -208,7 +208,7 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       { key: 'useAi', label: 'Usar IA para variar o texto das postagens novas', type: 'boolean', help: 'A IA só muda o tom e a estrutura. Preço, nota, vendas e link vêm dos dados; qualquer texto que invente número, desconto ou urgência é descartado e vale o modelo fixo.' },
       { key: 'campaign', label: 'Nome da campanha (etiqueta do link)', type: 'text', maxLength: 24, help: 'Só letras e números. Aparece em Analytics como telegram › campanha, para separar o que rende.' },
     ],
-    defaults: { mode: 'off', dailyLimit: 4, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, useAi: false, campaign: 'ofertas' },
+    defaults: { mode: 'off', dailyLimit: 15, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, useAi: false, campaign: 'ofertas' },
   },
   guides: {
     key: 'guides',

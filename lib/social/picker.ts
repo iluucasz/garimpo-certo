@@ -40,6 +40,15 @@ export type PickOptions = {
 
 export const defaultPickOptions: Omit<PickOptions, 'now' | 'limit'> = { cooldownDays: 14, minRating: 4.5, minSold: 100, minPrice: 10, perCategory: 1 }
 
+/**
+ * Dias sem repetir um produto. O padrão é 14, mas com muitas postagens por dia a lista de elegíveis acabaria:
+ * o intervalo encolhe para que sempre sobrem ~2 dias de folga (nunca abaixo de 3 dias, nunca acima do padrão).
+ */
+export function adaptiveCooldown(poolSize: number, dailyLimit: number, preferred = 14) {
+  if (dailyLimit <= 0) return preferred
+  return Math.max(3, Math.min(preferred, Math.floor(poolSize / dailyLimit) - 2))
+}
+
 export type Ranked = { candidate: PostCandidate; score: number; reasons: string[] }
 
 const dayMs = 86_400_000

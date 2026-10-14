@@ -123,3 +123,14 @@ describe('horários', () => {
     expect(missingSlots({ now, dailyLimit: 2, startHour: 9, endHour: 21, existing: [brasiliaTime(day, 10), brasiliaTime(day, 18)] })).toEqual([])
   })
 })
+
+describe('intervalo adaptativo para repetir produto', () => {
+  it('mantém 14 dias quando a lista aguenta e encolhe quando a cota é alta', async () => {
+    const { adaptiveCooldown } = await import('@/lib/social/picker')
+    expect(adaptiveCooldown(250, 4)).toBe(14)
+    expect(adaptiveCooldown(250, 15)).toBe(14)
+    expect(adaptiveCooldown(250, 30)).toBe(6)
+    expect(adaptiveCooldown(60, 30)).toBe(3)
+    expect(adaptiveCooldown(250, 0)).toBe(14)
+  })
+})
