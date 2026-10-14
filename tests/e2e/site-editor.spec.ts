@@ -55,7 +55,15 @@ test('monta uma página: adiciona, desfaz, refaz, reordena, publica e abre no si
   // Arrastar "Perguntas frequentes" para antes do texto.
   const faqRow = rows.filter({ hasText: 'Perguntas frequentes' })
   const textRow = rows.filter({ hasText: 'Texto' }).first()
-  await faqRow.locator('span[class*="grip"]').dragTo(textRow, { targetPosition: { x: 60, y: 4 } })
+  // Arrasto com o mouse em passos: o dragTo direto às vezes solta antes de o navegador abrir o arrasto com a máquina ocupada.
+  const grip = await faqRow.locator('span[class*="grip"]').boundingBox()
+  const target = await textRow.boundingBox()
+  if (!grip || !target) throw new Error('Linhas da lista não encontradas para arrastar.')
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(grip.x + grip.width / 2 + 4, grip.y + 4, { steps: 4 })
+  await page.mouse.move(target.x + 60, target.y + 4, { steps: 16 })
+  await page.mouse.up()
   await expect(rows.nth(1)).toContainText('Perguntas frequentes')
 
   // O salvamento automático grava o rascunho.
@@ -87,6 +95,8 @@ test('clicar numa seção da prévia seleciona a seção na lista', async ({ pag
   const preview = page.frameLocator('iframe[title^="Prévia da página"]')
   const guides = preview.locator('[data-cms-section="guides"]')
   await expect(guides).toBeAttached({ timeout: 30_000 })
+  // O editor liga o clique da prévia quando a página termina de carregar; clicar antes disso não seleciona nada.
+  await expect(preview.locator('#cms-editor-style')).toBeAttached({ timeout: 30_000 })
   await guides.scrollIntoViewIfNeeded()
   await guides.click({ position: { x: 8, y: 8 }, force: true })
 

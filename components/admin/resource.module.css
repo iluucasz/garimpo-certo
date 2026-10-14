@@ -153,3 +153,23 @@
 .galleryPrice { margin: 4px 0 0; font-size: 20px; font-weight: 750; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .galleryFacts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 12.5px; color: var(--muted-foreground); }
 .galleryItem footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px 14px; }
+
+/* Telas de configuração: seções em cartões, campos compactos e barra de salvar fixa */
+.settingsForm { display: grid; gap: 18px; min-width: 0; }
+.sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+.sectionCard { border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 20px 22px; display: grid; gap: 16px; }
+.sectionCard header h2 { margin: 0; font-size: 17px; }
+.sectionCard header p { margin: 4px 0 0; font-size: 13px; color: var(--muted-foreground); line-height: 1.4; }
+.sectionBody { display: grid; gap: 20px; }
+.numberField { display: grid; gap: 8px; }
+.numberHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.numberHead label { font-size: 14px; font-weight: 650; }
+.numberHead output { flex: none; padding: 2px 10px; border-radius: 999px; background: var(--muted); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.numberField input[type='range'] { width: 100%; accent-color: var(--primary); }
+.saveBar { position: sticky; bottom: 12px; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(10px); box-shadow: 0 10px 28px -18px rgb(23 38 66 / 40%); }
+.saveBarDirty { border-color: var(--primary); }
+.saveStatus { font-size: 13px; color: var(--muted-foreground); }
+.saveBarDirty .saveStatus { color: var(--foreground); font-weight: 600; }
+.saveActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.withPreview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); gap: 18px; align-items: start; }
+@media (max-width: 1100px) { .withPreview { grid-template-columns: minmax(0, 1fr); } .sections { grid-template-columns: minmax(0, 1fr); } }

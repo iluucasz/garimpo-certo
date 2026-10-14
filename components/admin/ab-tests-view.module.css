@@ -28,3 +28,9 @@ ul.help { padding-left: 18px; display: grid; gap: 4px; }
 @media (max-width: 720px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Explicação recolhida: abre só quando a pessoa quer ler. */
+.stack details summary { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 17px; font-weight: 650; list-style: none; }
+.stack details summary::-webkit-details-marker { display: none; }
+.stack details summary small { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.stack details[open] summary { margin-bottom: 10px; }

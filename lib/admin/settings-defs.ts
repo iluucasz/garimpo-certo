@@ -21,12 +21,17 @@ export type SettingField =
 
 export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social'
 
+/** Agrupamento opcional dos campos na tela: cada seção vira um cartão com título e explicação curta. */
+export type SettingSection = { title: string; description?: string; keys: string[] }
+
 export type SettingDefinition = {
   key: SettingKey
   title: string
   description: string
   permission: Permission
   fields: SettingField[]
+  /** Sem seções, todos os campos ficam num cartão só. */
+  sections?: SettingSection[]
   defaults: Record<string, unknown>
 }
 
@@ -124,6 +129,11 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       ...rankingFactors.map(([key, label, help]) => numberField(key, label, 0, 100, help)),
       numberField('exploration', 'Exploração', 0, 40, 'Parte das recomendações reservada a itens fora do padrão, para descobrir produtos novos.', '%'),
     ],
+    sections: [
+      { title: 'O produto em si', description: 'Sinais que vêm do cadastro e da Shopee.', keys: ['relevance', 'quality', 'commercial', 'price', 'freshness', 'similarity'] },
+      { title: 'O comportamento de quem visita', description: 'Sinais medidos no próprio site, só com permissão do visitante.', keys: ['affinity', 'engagement'] },
+      { title: 'Descoberta', description: 'Espaço para o que foge do padrão.', keys: ['exploration'] },
+    ],
     defaults: { relevance: 18, affinity: 15, engagement: 14, quality: 16, commercial: 8, price: 12, freshness: 8, similarity: 9, exploration: 12 },
   },
   slots: {
@@ -135,6 +145,7 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       { key: 'similarEnabled', label: 'Mostrar “Você também pode gostar” na página do produto', type: 'boolean' },
       numberField('similarLimit', 'Quantidade de itens', 1, 8, 'Itens exibidos na faixa de produtos relacionados.'),
     ],
+    sections: [{ title: 'Página do produto', description: 'A faixa de produtos relacionados abaixo do produto.', keys: ['similarEnabled', 'similarLimit'] }],
     defaults: { similarEnabled: true, similarLimit: 4 },
   },
   tracking: {
@@ -168,6 +179,13 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('perfectRating', 'Nota máxima: nota mínima', 4, 5, undefined, 'estrelas', 0.1),
       numberField('valueScore', 'Bom custo-benefício: Índice Garimpo mínimo', 50, 100, 'Vale para a coleção e para o filtro da busca.'),
       numberField('valuePriceMax', 'Bom custo-benefício: preço máximo', 100, 10000, undefined, 'R$', 50),
+    ],
+    sections: [
+      { title: 'Em alta', description: 'Quantas vendas a Shopee informa para entrar.', keys: ['viralSales', 'topSales'] },
+      { title: 'Queridinhos', description: 'Vendas e nota juntas.', keys: ['lovedSales', 'lovedRating'] },
+      { title: 'Achadinhos', description: 'Baratos e bem avaliados.', keys: ['findsPrice', 'findsRating', 'findsSales'] },
+      { title: 'Preço e desconto', description: 'Em relação ao preço anterior informado pela Shopee.', keys: ['promoDiscount', 'heavyDiscount', 'premiumPrice'] },
+      { title: 'Qualidade', description: 'Nota e custo-benefício.', keys: ['topRating', 'perfectRating', 'valueScore', 'valuePriceMax'] },
     ],
     defaults: { ...defaultCatalogRules },
   },

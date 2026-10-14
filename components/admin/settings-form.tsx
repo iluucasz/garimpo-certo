@@ -66,24 +66,38 @@ export function SettingsForm({ settingKey }: { settingKey: SettingKey }) {
     }
   }
 
+  const groups = definition.sections
+    ? definition.sections.map((section) => ({ title: section.title, description: section.description, fields: section.keys.flatMap((key) => definition.fields.filter((field) => field.key === key)) }))
+    : [{ title: 'Configurações', description: undefined as string | undefined, fields: definition.fields }]
+
   if (error) return <div className="panel"><p className={styles.error} role="alert">Não foi possível carregar a configuração.</p></div>
   if (!data) return <div className="panel" role="status">Carregando…</div>
 
   return <div className={styles.stack}>
-    <form className="panel" onSubmit={save} noValidate>
-      <p className={styles.lead}>{definition.description}</p>
-      {!canWrite && <p className={styles.note}>Seu papel só permite consultar esta configuração.</p>}
-      <div className="form-stack" style={{ marginTop: 0 }}>
-        {definition.fields.map((field) => <Control key={field.key} field={field} value={values[field.key]} error={errors[field.key]} disabled={!canWrite} onChange={(value) => set(field.key, value)}/>)}
-      </div>
-      {problem && <p className={styles.error} role="alert" style={{ marginTop: 12 }}>{problem}</p>}
-      <div className={styles.actionsRow} style={{ marginTop: 18 }}>
-        <button className="btn primary" type="submit" disabled={!canWrite || saving || !dirty}><Save aria-hidden="true"/> {saving ? 'Salvando…' : 'Salvar'}</button>
-        <button className="btn secondary" type="button" onClick={reset} disabled={!canWrite || saving || data.isDefault}><RotateCcw aria-hidden="true"/> Restaurar padrão</button>
-        <span className={styles.help}>{data.isDefault ? 'Usando os valores originais do site.' : `Personalizado · salvo em ${dateTime(data.updatedAt)}`}</span>
-      </div>
-    </form>
-    {settingKey === 'ranking' && <RankingPreview values={values}/>}
+    <div className={settingKey === 'ranking' ? styles.withPreview : undefined}>
+      <form onSubmit={save} noValidate className={styles.settingsForm}>
+        <p className={styles.lead}>{definition.description}</p>
+        {!canWrite && <p className={styles.note}>Seu papel só permite consultar esta configuração.</p>}
+        <div className={styles.sections}>
+          {groups.map((group) => <section key={group.title} className={styles.sectionCard} aria-label={group.title}>
+            {(definition.sections || groups.length > 1) && <header><h2>{group.title}</h2>{group.description && <p>{group.description}</p>}</header>}
+            <div className={styles.sectionBody}>
+              {group.fields.map((field) => <Control key={field.key} field={field} value={values[field.key]} error={errors[field.key]} disabled={!canWrite} onChange={(value) => set(field.key, value)}/>)}
+            </div>
+          </section>)}
+        </div>
+        {problem && <p className={styles.error} role="alert">{problem}</p>}
+        <div className={`${styles.saveBar} ${dirty ? styles.saveBarDirty : ''}`}>
+          <span className={styles.saveStatus} role="status">{dirty ? 'Alterações ainda não salvas.' : data.isDefault ? 'Usando os valores originais do site.' : `Personalizado · salvo em ${dateTime(data.updatedAt)}`}</span>
+          <span className={styles.saveActions}>
+            <button className="btn secondary" type="button" onClick={reset} disabled={!canWrite || saving || data.isDefault}><RotateCcw aria-hidden="true"/> Restaurar padrão</button>
+            {dirty && <button className="btn secondary" type="button" onClick={() => data && setValues(data.value)} disabled={saving}>Descartar</button>}
+            <button className="btn primary" type="submit" disabled={!canWrite || saving || !dirty}><Save aria-hidden="true"/> {saving ? 'Salvando…' : 'Salvar'}</button>
+          </span>
+        </div>
+      </form>
+      {settingKey === 'ranking' && <RankingPreview values={values}/>}
+    </div>
     {settingKey === 'theme' && <ThemePreview values={values}/>}
     {toast && <div className="toast" role="status">{toast}</div>}
   </div>
@@ -124,11 +138,10 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
   }
   if (field.type === 'number') {
     const number = Number(value ?? field.min)
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
-      <div className={styles.range}>
-        <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 1} value={number} disabled={disabled} onChange={(event) => onChange(Number(event.target.value))} aria-describedby={describedBy}/>
-        <output htmlFor={id}>{number}{field.unit ? ` ${field.unit}` : ''}</output>
-      </div>{help}{err}</div>
+    return <div className={styles.numberField}>
+      <div className={styles.numberHead}><label htmlFor={id}>{field.label}</label><output htmlFor={id}>{number.toLocaleString('pt-BR')}{field.unit ? ` ${field.unit}` : ''}</output></div>
+      <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 1} value={number} disabled={disabled} onChange={(event) => onChange(Number(event.target.value))} aria-describedby={describedBy}/>
+      {help}{err}</div>
   }
   if (field.type === 'color') {
     const color = String(value ?? '#000000')

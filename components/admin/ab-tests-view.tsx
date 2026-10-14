@@ -69,13 +69,15 @@ export function AbTestsView() {
 
   return <div className={styles.stack}>
     <section className="panel">
-      <h2><FlaskConical aria-hidden="true"/> Como funciona</h2>
+      <details>
+        <summary><FlaskConical aria-hidden="true"/> Como funciona <small>(abrir)</small></summary>
       <ul className={styles.help}>
         <li>Metade dos visitantes (ou a parte que você escolher) vê o texto novo no topo da home; os outros veem o atual. Cada pessoa vê sempre a mesma versão.</li>
         <li>Só entra no teste quem permitiu a medição de uso. Sem a permissão a pessoa vê o texto atual e nada é guardado.</li>
         <li>O que se mede é a parte das visitas que clicou em um botão de compra. Não é venda: a Shopee não informa de qual visita veio o pedido.</li>
         <li>Espere pelo menos {MIN_PER_VARIANT} visitas em cada variante antes de decidir. Parar cedo porque “parece que ganhou” costuma enganar.</li>
       </ul>
+      </details>
       {message && <p className={failed ? styles.bad : styles.ok} role={failed ? 'alert' : 'status'}>{message}</p>}
     </section>
 

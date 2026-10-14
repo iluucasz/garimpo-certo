@@ -281,6 +281,16 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
     else if (type && type in sectionTypes) add(type, beforeId)
   }
 
+  /** Onde soltar, calculado do próprio evento (não do estado, que pode estar um passo atrás): metade de cima = antes da linha; metade de baixo = antes da próxima. */
+  function dropTarget(event: React.DragEvent): string | null {
+    const row = (event.target as HTMLElement).closest<HTMLElement>('li[data-section-id]')
+    if (!row) return dropBefore === undefined ? null : dropBefore
+    const rect = row.getBoundingClientRect()
+    const id = row.dataset.sectionId ?? null
+    const next = row.dataset.nextId || null
+    return event.clientY > rect.top + rect.height / 2 ? next : id
+  }
+
   /** Posição de soltar: metade de cima do item = antes dele; metade de baixo = antes do próximo (ou no fim). */
   function overRow(event: React.DragEvent, id: string, nextId: string | null) {
     if (!dragId && !dragType) return
@@ -489,7 +499,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
                 className={styles.tree}
                 onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropBefore(undefined) }}
                 onDragOver={(event) => { if (dragId || dragType) { event.preventDefault(); if ((event.target as HTMLElement) === event.currentTarget) setDropBefore(null) } }}
-                onDrop={(event) => dropOn(dropBefore === undefined ? null : dropBefore, event)}
+                onDrop={(event) => dropOn(dropTarget(event), event)}
               >
                 <li className={selected === PAGE_ITEM ? styles.current : undefined}>
                   <button type="button" className={styles.pick} onClick={() => setSelected(PAGE_ITEM)} aria-current={selected === PAGE_ITEM ? 'true' : undefined}>
@@ -501,6 +511,8 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
                   const nextId = active[position + 1]?.id ?? null
                   return <li
                     key={section.id}
+                    data-section-id={section.id}
+                    data-next-id={nextId ?? ''}
                     className={[section.id === selected ? styles.current : '', dropBefore === section.id ? styles.dropBefore : '', dragId === section.id ? styles.dragging : ''].filter(Boolean).join(' ')}
                     draggable={canWrite}
                     onDragStart={(event) => { event.dataTransfer.setData(SECTION_MIME, section.id); event.dataTransfer.effectAllowed = 'move'; setDragId(section.id) }}
