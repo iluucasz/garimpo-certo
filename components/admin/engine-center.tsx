@@ -7,13 +7,14 @@ import { AlertTriangle, ArrowRight, Check, CircleDot, Clock, Play, Send, Sparkle
 import { AdminApiError, adminFetch, dateTime, swrFetcher } from '@/lib/admin/client'
 import { formatPrice } from '@/lib/format'
 import type { ActivityItem, EngineOverview, EngineTask, PostView, ProposalView, TaskState } from '@/lib/engine/overview'
+import { changePercent, type Pair, type WeeklyDigest } from '@/lib/engine/digest'
 import { useAdminAccess } from './admin-access'
 import { CatalogImportButton } from './catalog-import-button'
 import { SettingsForm } from './settings-form'
 import styles from './engine-center.module.css'
 
 type ShadowData = { shadow: ProposalView[] }
-type Tab = 'geral' | 'aprovacoes' | 'importacao' | 'aprendizado' | 'ajustes' | 'historico'
+type Tab = 'geral' | 'aprovacoes' | 'semana' | 'importacao' | 'aprendizado' | 'ajustes' | 'historico'
 
 const number = new Intl.NumberFormat('pt-BR')
 
@@ -106,6 +107,7 @@ export function EngineCenter() {
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'geral', label: 'Visão geral' },
     { id: 'aprovacoes', label: 'Aprovações', count: waiting },
+    { id: 'semana', label: 'Resumo da semana' },
     { id: 'importacao', label: 'Importação' },
     { id: 'aprendizado', label: 'Aprendizado' },
     { id: 'ajustes', label: 'Modo e regras' },
@@ -144,6 +146,7 @@ export function EngineCenter() {
 
     {tab === 'geral' && <Overview data={data} goTo={setTab}/>}
     {tab === 'aprovacoes' && <Approvals data={data} shadow={shadowData?.shadow ?? []} canDecide={canDecide} busy={busy} onProposal={decideProposal} onPost={decidePost} onApproveAll={approveAllPosts}/>}
+    {tab === 'semana' && <WeekTab/>}
     {tab === 'importacao' && <ImportTab data={data}/>}
     {tab === 'aprendizado' && <LearningTab data={data}/>}
     {tab === 'ajustes' && <div className={styles.stack}>
@@ -281,6 +284,82 @@ function Approvals({ data, shadow, canDecide, busy, onProposal, onPost, onApprov
         </li>)}
       </ul>
     </details>}
+  </div>
+}
+
+// ---------------------------------------------------------------- resumo da semana
+
+const channelLabel: Record<string, string> = { site: 'Site', telegram: 'Telegram', whatsapp: 'WhatsApp', unknown: 'Sem etiqueta' }
+
+function Delta({ pair }: { pair: Pair }) {
+  const change = changePercent(pair)
+  if (change === null) return <small>{pair.previous === 0 && pair.current > 0 ? 'sem base na semana anterior' : 'sem base de comparação'}</small>
+  const tone = change > 0 ? styles.up : change < 0 ? styles.down : ''
+  return <small>{change > 0 ? '+' : ''}{change}% <span className={tone}>{change > 0 ? 'a mais' : change < 0 ? 'a menos' : 'igual'}</span> que na semana anterior ({number.format(pair.previous)})</small>
+}
+
+/** O que mudou nos últimos 7 dias contra os 7 anteriores, o que a Engine fez e quanto rendeu. */
+function WeekTab() {
+  const { data, error } = useSWR<WeeklyDigest>('/api/v1/admin/engine/digest', swrFetcher, { revalidateOnFocus: false })
+  if (error) return <section className="panel"><p role="alert">Não foi possível montar o resumo da semana.</p></section>
+  if (!data) return <section className="panel" role="status">Montando o resumo…</section>
+  const { site, commissions, engine, posts, catalog } = data
+  return <div className={styles.stack}>
+    {!data.measured && <section className="panel"><p className={styles.help}>Ainda não há visitas nem cliques medidos nas duas últimas semanas. Só contam visitantes que permitiram a medição de uso; os números abaixo aparecem conforme o site recebe tráfego. O que a Engine fez e as comissões já valem.</p></section>}
+
+    <div className={styles.kpis}>
+      <div className={styles.kpi}><span>Cliques de compra</span><strong>{number.format(site.clicks.current)}</strong><Delta pair={site.clicks}/></div>
+      <div className={styles.kpi}><span>Visitas a produtos</span><strong>{number.format(site.views.current)}</strong><Delta pair={site.views}/></div>
+      <div className={styles.kpi}><span>Favoritos novos</span><strong>{number.format(site.favorites.current)}</strong><Delta pair={site.favorites}/></div>
+      <div className={styles.kpi}><span>Sessões medidas</span><strong>{number.format(site.sessions.current)}</strong><Delta pair={site.sessions}/></div>
+    </div>
+
+    <div className={styles.twoCols}>
+      <section className="panel" aria-labelledby="wk-products">
+        <h3 id="wk-products" className={styles.sectionTitle}>Produtos que mais geraram cliques</h3>
+        {data.topProducts.length === 0 ? <p className={styles.empty}>Nenhum clique de compra medido nos últimos {data.days} dias.</p>
+          : <ol className={styles.rank}>{data.topProducts.map((item) => <li key={item.id}>
+            <Link href={`/produto/${item.slug}`} target="_blank" rel="noreferrer">{item.name}</Link>
+            <span>{item.category ?? 'Sem categoria'} · <strong>{number.format(item.clicks)}</strong> {item.clicks === 1 ? 'clique' : 'cliques'}</span>
+          </li>)}</ol>}
+      </section>
+      <section className="panel" aria-labelledby="wk-cats">
+        <h3 id="wk-cats" className={styles.sectionTitle}>Categorias que mais renderam</h3>
+        {data.topCategories.length === 0 ? <p className={styles.empty}>Nenhum clique por categoria nos últimos {data.days} dias.</p>
+          : <ol className={styles.rank}>{data.topCategories.map((item) => <li key={item.slug}>
+            <strong>{item.name}</strong>
+            <span><strong>{number.format(item.clicks)}</strong> {item.clicks === 1 ? 'clique' : 'cliques'} · semana anterior {number.format(item.previous)}</span>
+          </li>)}</ol>}
+      </section>
+    </div>
+
+    <div className={styles.twoCols}>
+      <section className="panel" aria-labelledby="wk-engine">
+        <h3 id="wk-engine" className={styles.sectionTitle}>O que a Engine fez</h3>
+        <dl className={styles.summary}>
+          <div><dt>Produtos novos na vitrine</dt><dd>{number.format(catalog.added)}</dd></div>
+          <div><dt>Produtos que saíram</dt><dd>{number.format(catalog.removed)}</dd></div>
+          <div><dt>Sugestões criadas</dt><dd>{number.format(engine.created)}</dd></div>
+          <div><dt>Sugestões aplicadas</dt><dd>{number.format(engine.applied)}</dd></div>
+          <div><dt>Sugestões recusadas</dt><dd>{number.format(engine.rejected)}</dd></div>
+          <div><dt>Esperando você agora</dt><dd>{number.format(engine.pending)}</dd></div>
+          <div><dt>Postagens enviadas</dt><dd>{number.format(posts.sent)}</dd></div>
+          <div><dt>Postagens com falha ou canceladas</dt><dd>{number.format(posts.failed + posts.cancelled)}</dd></div>
+        </dl>
+      </section>
+      <section className="panel" aria-labelledby="wk-money">
+        <h3 id="wk-money" className={styles.sectionTitle}>Quanto rendeu</h3>
+        <dl className={styles.summary}>
+          <div><dt>Vendas pelos seus links</dt><dd>{number.format(commissions.conversions)}</dd></div>
+          <div><dt>Comissão prevista</dt><dd>{formatPrice(commissions.pending)}</dd></div>
+          <div><dt>Comissão confirmada</dt><dd>{formatPrice(commissions.confirmed)}</dd></div>
+          <div><dt>Cancelada ou rejeitada</dt><dd>{formatPrice(commissions.lost)}</dd></div>
+        </dl>
+        {commissions.byChannel.length > 0
+          ? <ul className={styles.channels} aria-label="Comissão por canal">{commissions.byChannel.map((item) => <li key={item.channel}><span>{channelLabel[item.channel] ?? item.channel}</span><strong>{formatPrice(item.commission)}</strong><small>{item.conversions} {item.conversions === 1 ? 'venda' : 'vendas'}</small></li>)}</ul>
+          : <p className={styles.help}>Nenhuma venda pelos seus links nos últimos {data.days} dias. A Shopee só informa as vendas depois de concluídas; o relatório aparece aqui sozinho.</p>}
+      </section>
+    </div>
   </div>
 }
 

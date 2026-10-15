@@ -50,3 +50,19 @@ describe('central da Engine', () => {
     expect(workerState({ at: new Date(now - 3 * 3_600_000).toISOString(), startedAt: '', importAt: null }, now)).toBe('offline')
   })
 })
+
+describe('resumo da semana (banco real)', () => {
+  it('monta o resumo sem erro e com números coerentes', async () => {
+    const { getWeeklyDigest } = await import('@/lib/engine/digest')
+    const digest = await getWeeklyDigest()
+    expect(digest.days).toBe(7)
+    expect(digest.catalog.total).toBeGreaterThan(0)
+    for (const pair of Object.values(digest.site)) {
+      expect(pair.current).toBeGreaterThanOrEqual(0)
+      expect(pair.previous).toBeGreaterThanOrEqual(0)
+    }
+    expect(digest.topProducts.length).toBeLessThanOrEqual(5)
+    for (const item of digest.topCategories) expect(item.clicks).toBeGreaterThan(0)
+    expect(digest.commissions.byChannel.every((row) => row.commission >= 0)).toBe(true)
+  })
+})

@@ -65,3 +65,13 @@ describe('escolha das postagens com reforço por categoria', () => {
     expect(boosted[0].reasons).toContain('categoria que mais gera cliques')
   })
 })
+
+describe('resumo da semana', () => {
+  it('calcula a variação em % e não inventa base de comparação', async () => {
+    const { changePercent } = await import('@/lib/engine/digest')
+    expect(changePercent({ current: 150, previous: 100 })).toBe(50)
+    expect(changePercent({ current: 50, previous: 100 })).toBe(-50)
+    expect(changePercent({ current: 10, previous: 10 })).toBe(0)
+    expect(changePercent({ current: 12, previous: 0 })).toBeNull()
+  })
+})

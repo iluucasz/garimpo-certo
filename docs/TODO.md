@@ -1,6 +1,6 @@
 # TODO — acompanhamento
 
-Atualizado em 2026-10-13. Legenda: ✅ feito · 🔄 em andamento · ⏳ a fazer · 🙋 depende de você · 🚫 bloqueado por limitação externa · ⏸ parado de propósito.
+Atualizado em 2026-10-14. Legenda: ✅ feito · 🔄 em andamento · ⏳ a fazer · 🙋 depende de você · 🚫 bloqueado por limitação externa · ⏸ parado de propósito.
 O que já é real está em `CLAUDE.md`; a visão da IA está em `docs/ENGINE.md`; o detalhe de cada lacuna, em `docs/BACKLOG.md`.
 
 ## 1. Dinheiro e medição (base da Engine)
@@ -50,6 +50,19 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 | ✅ | Fila de postagens + publicação no Telegram (3–5 ofertas/dia, com aprovação) | Painel → Postagens. Pronta e testada com envio simulado; só publica quando `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` existirem. Desligada por padrão. |
 | ✅ | IA para redação (DeepSeek) nas postagens | Opcional ("Usar IA para variar o texto" em Postagens → Ajustes, ou o botão "Reescrever com IA"). Só vê dados públicos da oferta; texto que inventar número, desconto ou urgência é descartado. Testado com a API real. |
 | ✅ | Personalização por visitante (no aparelho) | A aba "Para você" aprende com o que a pessoa viu, favoritou e comparou, além dos interesses salvos; só com a personalização permitida e calculado no navegador, sem enviar nada. Personalização com perfil no servidor não foi feita de propósito (LGPD). |
+| ✅ | **Central da Engine** (Painel → Engine: visão geral, aprovações, resumo da semana, importação, aprendizado, modo e regras, histórico) | Mostra o que a Engine faz, quando rodou, o que vem a seguir e o que espera você. Tudo com dado real do banco. |
+| ✅ | **Aprender com os cliques** | Categorias que rendem acima da média pedem +10 produtos na importação (com seu OK) e ganham prioridade suave nas postagens. Só age com 50+ cliques em 30 dias; hoje o site mede 0, então espera dados. |
+| ✅ | **Números da importação no painel** (por categoria, nota, vendas, por loja, liga/desliga) | Engine → Importação. O worker lê do banco a cada importação. |
+| ✅ | **Resumo da semana** (7 dias contra os 7 anteriores, o que a Engine fez, comissão por canal) | Aba "Resumo da semana". Ainda não é enviado por e-mail/Telegram: só aparece no painel. |
+| ✅ | Sinal de vida do worker no painel | Online / atrasado / parado. |
+| 🙋 | **Reconstruir e trocar o worker na VPS** (`worker/README.md`) | Sem isso o painel mostra "worker sem sinal", o liga/desliga da importação não vale e as comissões/Engine só rodam pelos botões. |
+| ⏳ | **Resumo semanal enviado** (e-mail pelo Brevo e/ou Telegram) | Hoje só no painel. Falta decidir o canal: o Brevo precisa do remetente confirmado; o bot do Telegram, do token. |
+| ⏳ | **Medir cada decisão** (antes × depois de cada sugestão aplicada) | Fechar o ciclo de aprendizado: cliques da categoria nas semanas depois de uma cota, vendas por termo sazonal. |
+| ⏳ | **Ações editoriais**: sugerir coleções, destaques da home e textos a partir dos números | Entra na fila de aprovação (nunca publica sozinha). Reaproveita `curated_collections`. |
+| ⏳ | **Radar por clima, notícias e buscas** | Hoje só calendário comercial. Clima (Open-Meteo, sem chave) é o próximo candidato; notícias e Trends exigem fonte confiável. |
+| ⏳ | **Conteúdo para Instagram/TikTok/WhatsApp** (legenda, roteiro e imagem prontos na fila, um humano publica) | Reaproveita o compositor de postagens e a validação anti-invenção. |
+| ⏳ | **Comportamento do público agregado** (faixa de preço, horário, dispositivo, origem) | Para a Engine decidir por faixa de preço e não só por categoria. Usa `analytics_events`; rollups ainda não existem. |
+| ⏳ | **Alerta de queda de preço por e-mail/Telegram** | Depende do Brevo ou do bot. A queda já aparece no site (favoritos). |
 | ⏸ | Extensão de navegador | Parada por decisão sua. |
 | 🙋 | WhatsApp: decidir entre grupo manual com aprovação ou API não oficial | Recomendação: manual com aprovação. |
 | 🙋 | Confirmar com o programa de afiliados o enquadramento de "site de ofertas" e as regras sobre extensões | Não encontrei os termos completos nem regra sobre extensões; veja `docs/ENGINE.md`. |

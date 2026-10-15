@@ -120,3 +120,24 @@
   .hero h2 { font-size: 22px; }
   .cardActions { flex-direction: row; flex-wrap: wrap; }
 }
+
+/* Resumo da semana */
+.up { color: var(--success, #166534); font-weight: 600; }
+.down { color: #b42318; font-weight: 600; }
+.twoCols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.twoCols > * { min-width: 0; }
+.rank { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: rank; }
+.rank li { display: grid; gap: 2px; padding-left: 34px; position: relative; counter-increment: rank; font-size: 14px; }
+.rank li::before { content: counter(rank); position: absolute; left: 0; top: 0; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--muted); font-size: 12px; font-weight: 700; }
+.rank li > a { font-weight: 600; color: var(--foreground); text-decoration: none; overflow-wrap: anywhere; }
+.rank li > a:hover { text-decoration: underline; }
+.rank li > span { color: var(--muted-foreground); font-size: 13px; }
+.summary { margin: 0; display: grid; gap: 0; }
+.summary > div { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.summary > div:last-child { border-bottom: 0; }
+.summary dt { color: var(--muted-foreground); }
+.summary dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.channels { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.channels li { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+.channels li span { flex: 1; }
+.channels li small { color: var(--muted-foreground); }
