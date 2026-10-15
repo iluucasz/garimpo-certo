@@ -11,6 +11,7 @@ export type ModuleView =
   | { kind: 'builder'; page: 'home' }
   | { kind: 'engine' }
   | { kind: 'posts' }
+  | { kind: 'content' }
   | { kind: 'abtests' }
   | { kind: 'analytics'; mode: 'analytics' | 'funil' }
   | { kind: 'events' }
@@ -55,6 +56,7 @@ export const adminConfigs: ModuleConfig[] = [
 
   { slug: 'engine', title: 'Engine', description: 'O centro de comando: o que a Engine faz (importar, sincronizar comissões, sugerir, aprender e postar), o que espera você e o que já fez.', group: 'Engine', view: { kind: 'engine' } },
 
+  { slug: 'redes-sociais', title: 'Instagram e TikTok', description: 'Posts diários prontos para publicar: legenda, roteiro, hashtags, imagem e link de afiliado com etiqueta do canal. Você publica na rede e marca como publicado.', group: 'Engine', view: { kind: 'content' } },
   { slug: 'postagens', title: 'Postagens', description: 'Ofertas que vão ao canal do Telegram: o texto sai de números reais, você aprova, ajusta o horário e acompanha o que foi enviado.', group: 'Engine', view: { kind: 'posts' } },
 
   { slug: 'usuarios-rbac', title: 'Usuários e papéis', description: 'Quem tem acesso e o que cada papel pode fazer.', group: 'Governança', view: { kind: 'users' } },

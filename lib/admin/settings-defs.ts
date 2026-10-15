@@ -19,7 +19,7 @@ export type SettingField =
   | { key: string; label: string; type: 'order'; help?: string; items: { id: string; label: string }[] }
   | { key: string; label: string; type: 'checklist'; help?: string }
 
-export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social' | 'import'
+export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social' | 'import' | 'content'
 
 /** Agrupamento opcional dos campos na tela: cada seção vira um cartão com título e explicação curta. */
 export type SettingSection = { title: string; description?: string; keys: string[] }
@@ -276,6 +276,28 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       { key: 'campaign', label: 'Nome da campanha (etiqueta do link)', type: 'text', maxLength: 24, help: 'Só letras e números. Aparece em Analytics como telegram › campanha, para separar o que rende.' },
     ],
     defaults: { mode: 'off', dailyLimit: 15, startHour: 9, endHour: 21, requireApproval: true, autoPlan: true, useAi: false, campaign: 'ofertas' },
+  },
+  content: {
+    key: 'content',
+    title: 'Conteúdo para Instagram e TikTok',
+    description: 'Quantos posts por dia a Engine prepara para cada rede. Cada um vem com legenda, roteiro, hashtags, imagem e o link de afiliado com etiqueta do canal; você publica na rede e marca como publicado. O texto usa só números reais da oferta.',
+    permission: 'catalog:write',
+    fields: [
+      numberField('instagramDaily', 'Posts de Instagram por dia', 0, 5, '0 desliga o canal.', 'por dia'),
+      numberField('tiktokDaily', 'Vídeos de TikTok por dia', 0, 5, '0 desliga o canal.', 'por dia'),
+      numberField('startHour', 'Horário sugerido a partir de', 6, 20, 'Horário de Brasília. É só uma sugestão: nada é publicado sozinho.', 'h'),
+      numberField('endHour', 'Horário sugerido até', 10, 23, 'Horário de Brasília.', 'h'),
+      { key: 'autoPlan', label: 'A Engine prepara os posts do dia sozinha', type: 'boolean', help: 'Cria os posts de hoje a partir das melhores ofertas ainda não divulgadas na rede. Você também pode criar à mão.' },
+      { key: 'disclosure', label: 'Identificar como publicidade (#publi e aviso de afiliado)', type: 'boolean', help: 'Recomendado: o Instagram e o TikTok exigem identificar conteúdo com link de afiliado, e a publicidade no Brasil também.' },
+      { key: 'hashtags', label: 'Hashtags fixas da marca', type: 'text', maxLength: 120, help: 'Separadas por espaço. As da categoria do produto são somadas sozinhas.' },
+      { key: 'campaign', label: 'Nome da campanha (etiqueta do link)', type: 'text', maxLength: 24, help: 'Só letras e números. Aparece em Analytics como instagram › campanha ou tiktok › campanha.' },
+    ],
+    sections: [
+      { title: 'Quanto por dia', description: 'Zero desliga a rede.', keys: ['instagramDaily', 'tiktokDaily', 'autoPlan'] },
+      { title: 'Horário sugerido', keys: ['startHour', 'endHour'] },
+      { title: 'Texto e etiquetas', keys: ['disclosure', 'hashtags', 'campaign'] },
+    ],
+    defaults: { instagramDaily: 1, tiktokDaily: 1, startHour: 10, endHour: 20, autoPlan: true, disclosure: true, hashtags: '#garimpou #achadinhos', campaign: 'redes' },
   },
   guides: {
     key: 'guides',

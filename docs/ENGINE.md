@@ -16,6 +16,7 @@ Anotação de visão, registrada em 2026-10-13 a pedido do dono. **Nada aqui est
 | IA (DeepSeek) para redação das postagens | ✅ com validação rígida; sugestões editoriais por IA ficam para depois |
 | Personalização por visitante | ✅ no aparelho, sem perfil no servidor |
 | Postagens no Telegram | ✅ fila, texto com dados reais, horários e aprovação prontos; falta só o bot |
+| Conteúdo diário para Instagram e TikTok (legenda, roteiro, imagem, link por canal; publicação manual) | ✅ feito (2026-10-15) |
 | Extensão de navegador | ⏸ parada |
 
 ## Em uma frase

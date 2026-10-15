@@ -60,7 +60,9 @@ Detalhes em `docs/ENGINE.md`. Ordem sugerida: medição → fila de aprovação 
 | ⏳ | **Medir cada decisão** (antes × depois de cada sugestão aplicada) | Fechar o ciclo de aprendizado: cliques da categoria nas semanas depois de uma cota, vendas por termo sazonal. |
 | ⏳ | **Ações editoriais**: sugerir coleções, destaques da home e textos a partir dos números | Entra na fila de aprovação (nunca publica sozinha). Reaproveita `curated_collections`. |
 | ⏳ | **Radar por clima, notícias e buscas** | Hoje só calendário comercial. Clima (Open-Meteo, sem chave) é o próximo candidato; notícias e Trends exigem fonte confiável. |
-| ⏳ | **Conteúdo para Instagram/TikTok/WhatsApp** (legenda, roteiro e imagem prontos na fila, um humano publica) | Reaproveita o compositor de postagens e a validação anti-invenção. |
+| ✅ | **Conteúdo diário para Instagram e TikTok** (legenda, roteiro, hashtags, imagem 4:5 e 9:16 e link com etiqueta do canal) | Painel → Engine → Instagram e TikTok. A Engine prepara 1 post por rede por dia (ajustável); você publica na rede e marca como publicado. Publicação direta pela API ainda não: exige aprovar um app na Meta e no TikTok. |
+| ⏳ | Conteúdo para WhatsApp | Segue a decisão de grupo manual com aprovação. |
+| ⏳ | Reescrita por IA da legenda/roteiro de Instagram e TikTok | Hoje são modelos fixos com variação; a IA entraria com a mesma validação anti-invenção das postagens do Telegram. |
 | ⏳ | **Comportamento do público agregado** (faixa de preço, horário, dispositivo, origem) | Para a Engine decidir por faixa de preço e não só por categoria. Usa `analytics_events`; rollups ainda não existem. |
 | ⏳ | **Alerta de queda de preço por e-mail/Telegram** | Depende do Brevo ou do bot. A queda já aparece no site (favoritos). |
 | ⏸ | Extensão de navegador | Parada por decisão sua. |

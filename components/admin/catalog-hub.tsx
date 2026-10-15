@@ -72,7 +72,8 @@ const hubs: Record<ModuleGroup, { label: string; endpoint: string; sections: Sec
         { slug: 'engine', label: 'Engine', icon: Gauge, count: 'propostas' },
       ] },
       { title: 'Divulga', tabs: [
-        { slug: 'postagens', label: 'Postagens', icon: Megaphone, count: 'postagens' },
+        { slug: 'postagens', label: 'Telegram', icon: Megaphone, count: 'postagens' },
+        { slug: 'redes-sociais', label: 'Instagram e TikTok', icon: Megaphone, count: 'conteudo' },
       ] },
     ],
   },

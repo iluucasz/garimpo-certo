@@ -9,6 +9,7 @@ import { EngineCenter } from './engine-center'
 import { AbTestsView } from './ab-tests-view'
 import { SettingsForm } from './settings-form'
 import { SocialPostsView } from './social-posts-view'
+import { ContentPostsView } from './content-posts-view'
 import { SiteBuilder } from './site-builder/editor'
 import { CatalogHub } from './catalog-hub'
 
@@ -32,6 +33,7 @@ export function ModuleScreen({ config }: { config: ModuleConfig }) {
     {view.kind === 'builder' && <SiteBuilder pageKey={view.page}/>}
     {view.kind === 'engine' && <EngineCenter/>}
     {view.kind === 'posts' && <SocialPostsView/>}
+    {view.kind === 'content' && <ContentPostsView/>}
     {view.kind === 'abtests' && <AbTestsView/>}
     {view.kind === 'analytics' && <AnalyticsStudio mode={view.mode}/>}
     {view.kind === 'events' && <EventsView/>}

@@ -185,7 +185,7 @@ export async function planToday(settings: SocialSettings, now = Date.now(), user
 // ---------------------------------------------------------------- consulta e edição
 
 export async function listPosts(options: { statuses?: PostStatus[]; limit?: number } = {}) {
-  const where = options.statuses?.length ? inArray(socialPosts.status, options.statuses) : undefined
+  const where = and(eq(socialPosts.channel, 'telegram'), options.statuses?.length ? inArray(socialPosts.status, options.statuses) : undefined)
   return db.select().from(socialPosts).where(where).orderBy(desc(socialPosts.createdAt)).limit(options.limit ?? 100)
 }
 
@@ -194,7 +194,7 @@ export async function updatePost(id: string, patch: { text?: string; scheduledFo
     ...(patch.text !== undefined ? { text: patch.text } : {}),
     ...(patch.scheduledFor !== undefined ? { scheduledFor: patch.scheduledFor } : {}),
     updatedAt: new Date().toISOString(),
-  }).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).returning()
+  }).where(and(eq(socialPosts.id, id), eq(socialPosts.channel, 'telegram'), inArray(socialPosts.status, ['pending', 'approved']))).returning()
   return row ?? null
 }
 
@@ -202,7 +202,7 @@ type StoredFacts = PostFacts & { originalText?: string; ai?: { rewritten: boolea
 
 /** Reescreve o texto com a IA. Guarda o texto anterior para dar para voltar. Só mexe em pendente ou agendada. */
 export async function rewritePost(id: string) {
-  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
+  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), eq(socialPosts.channel, 'telegram'), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
   if (!row) return { ok: false as const, reason: 'Só postagens pendentes ou agendadas podem ser reescritas.', status: 409 }
   const config = deepseekConfig()
   if (!config) return { ok: false as const, reason: 'A chave da IA não está configurada (DEEPSEEK_API_KEY).', status: 409 }
@@ -216,7 +216,7 @@ export async function rewritePost(id: string) {
 }
 
 export async function restoreOriginalText(id: string) {
-  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
+  const [row] = await db.select().from(socialPosts).where(and(eq(socialPosts.id, id), eq(socialPosts.channel, 'telegram'), inArray(socialPosts.status, ['pending', 'approved']))).limit(1)
   const facts = row?.facts as StoredFacts | undefined
   if (!row || !facts?.originalText) return null
   const { originalText, ...rest } = facts
@@ -228,13 +228,13 @@ export async function approvePost(id: string, userId: string | null, scheduledFo
   const [row] = await db.update(socialPosts).set({
     status: 'approved', approvedBy: userId, updatedAt: new Date().toISOString(),
     ...(scheduledFor ? { scheduledFor } : {}),
-  }).where(and(eq(socialPosts.id, id), eq(socialPosts.status, 'pending'))).returning()
+  }).where(and(eq(socialPosts.id, id), eq(socialPosts.channel, 'telegram'), eq(socialPosts.status, 'pending'))).returning()
   return row ?? null
 }
 
 export async function cancelPost(id: string) {
   const [row] = await db.update(socialPosts).set({ status: 'cancelled', updatedAt: new Date().toISOString() })
-    .where(and(eq(socialPosts.id, id), inArray(socialPosts.status, ['pending', 'approved', 'failed']))).returning()
+    .where(and(eq(socialPosts.id, id), eq(socialPosts.channel, 'telegram'), inArray(socialPosts.status, ['pending', 'approved', 'failed']))).returning()
   return row ?? null
 }
 
@@ -259,6 +259,7 @@ export type DeliverResult = { ok: true; messageId: string } | { ok: false; error
 
 /** Envia uma postagem aprovada. Marca como enviada ou registra a falha; só tenta de novo erro passageiro. */
 export async function deliverPost(row: PostRow, fetchImpl: typeof fetch = fetch): Promise<DeliverResult> {
+  if (row.channel !== 'telegram') return { ok: false, error: 'Só postagens do Telegram são enviadas pelo painel; Instagram e TikTok são publicados à mão.', retry: false }
   const config = telegramConfig()
   if (!config) return { ok: false, error: 'O bot do Telegram não está configurado (TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID).', retry: false }
   // Confere a oferta de agora contra o que o texto afirma. Só lê: nada é reservado nem enviado se a leitura falhar.
@@ -302,7 +303,7 @@ export async function deliverPost(row: PostRow, fetchImpl: typeof fetch = fetch)
 /** Envia o que venceu. Passou de 3 h do horário: falha com motivo (não posta fora de hora). */
 export async function deliverDue(now = Date.now(), fetchImpl: typeof fetch = fetch, scope: { campaign?: string } = {}) {
   const due = await db.select().from(socialPosts)
-    .where(and(eq(socialPosts.status, 'approved'), lt(socialPosts.scheduledFor, new Date(now).toISOString()), scope.campaign ? eq(socialPosts.campaign, scope.campaign) : undefined))
+    .where(and(eq(socialPosts.channel, 'telegram'), eq(socialPosts.status, 'approved'), lt(socialPosts.scheduledFor, new Date(now).toISOString()), scope.campaign ? eq(socialPosts.campaign, scope.campaign) : undefined))
   const summary = { sent: 0, failed: 0, expired: 0 }
   for (const row of due) {
     if (row.scheduledFor && now - new Date(row.scheduledFor).getTime() > MAX_LATE_MS) {
@@ -321,6 +322,6 @@ export async function deliverDue(now = Date.now(), fetchImpl: typeof fetch = fet
 export async function expireOldPending(now = Date.now(), scope: { campaign?: string } = {}) {
   const cutoff = new Date(now - MAX_LATE_MS).toISOString()
   const rows = await db.update(socialPosts).set({ status: 'cancelled', error: 'Venceu sem aprovação.', updatedAt: new Date().toISOString() })
-    .where(and(eq(socialPosts.status, 'pending'), lt(socialPosts.scheduledFor, cutoff), scope.campaign ? eq(socialPosts.campaign, scope.campaign) : undefined)).returning({ id: socialPosts.id })
+    .where(and(eq(socialPosts.channel, 'telegram'), eq(socialPosts.status, 'pending'), lt(socialPosts.scheduledFor, cutoff), scope.campaign ? eq(socialPosts.campaign, scope.campaign) : undefined)).returning({ id: socialPosts.id })
   return rows.length
 }

@@ -6,7 +6,7 @@ import { workerState } from '@/lib/engine/heartbeat'
 describe('central da Engine', () => {
   it('monta a visão geral com tudo o que ela faz', async () => {
     const overview = await getEngineOverview()
-    expect(overview.tasks.map((task) => task.id)).toEqual(['import', 'commissions', 'engine', 'learn', 'social'])
+    expect(overview.tasks.map((task) => task.id)).toEqual(['import', 'commissions', 'engine', 'learn', 'social', 'content'])
     expect(['off', 'shadow', 'approval', 'auto']).toContain(overview.master.engine)
     expect(overview.catalog.products).toBeGreaterThan(0)
     expect(Array.isArray(overview.approvals.proposals)).toBe(true)

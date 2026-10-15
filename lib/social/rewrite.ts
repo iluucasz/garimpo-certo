@@ -11,7 +11,7 @@ const money = (value: number) => value.toLocaleString('pt-BR', { minimumFraction
 
 /** Frases que prometem o que não sabemos: urgência, escassez, garantia, "menor preço". */
 const unicodeWord = (source: string) => new RegExp(String.raw`(?<![\p{L}\p{N}])(?:${source})(?![\p{L}\p{N}])`, 'iu')
-const bannedClaims = [
+export const bannedClaims = [
   'só hoje', 'acaba(?:m)? (?:hoje|amanhã|em)', 'últimas? unidades?', 'estoque (?:limitado|acabando)', 'corr(?:a|e)', 'não perca',
   'garantid[oa]', 'menor preço', 'melhor preço', 'preço histórico', 'imperdível', 'frete grátis', 'cupom', 'de graça', 'grátis',
 ].map(unicodeWord).concat(/100 ?%/)

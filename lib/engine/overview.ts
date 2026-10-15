@@ -4,6 +4,7 @@ import { countCatalog } from '@/lib/db/repositories/catalog-import'
 import { getCommissionReport } from '@/lib/db/repositories/commissions'
 import { getOpsHealth, type HealthCheck } from '@/lib/ops/health'
 import { loadSocialSettings, readSocialState } from '@/lib/social/store'
+import { contentToday, loadContentSettings } from '@/lib/social/content-store'
 import { telegramConfig } from '@/lib/social/telegram'
 import { readHeartbeat, workerState } from './heartbeat'
 import { categoryBoosts, categoryPerformance, type CategoryPerformance } from './rules'
@@ -17,7 +18,7 @@ import { activeCategoryBonuses, kindLabels, listProposals, loadCategoryStats, lo
 export type TaskState = 'ok' | 'attention' | 'idle' | 'off'
 
 export type EngineTask = {
-  id: 'import' | 'commissions' | 'engine' | 'learn' | 'social'
+  id: 'import' | 'commissions' | 'engine' | 'learn' | 'social' | 'content'
   title: string
   /** O que ela faz, em uma frase. */
   what: string
@@ -83,12 +84,12 @@ function lastRun(rows: RunRow[], type: string, summary: (row: RunRow) => string)
 }
 
 export async function getEngineOverview(now = Date.now()): Promise<EngineOverview> {
-  const [engine, importSettings, social, engineState, socialState, beat] = await Promise.all([
-    loadEngineSettings(), loadImportSettings(), loadSocialSettings(), readRunState(), readSocialState(), readHeartbeat(),
+  const [engine, importSettings, social, engineState, socialState, beat, contentSettings] = await Promise.all([
+    loadEngineSettings(), loadImportSettings(), loadSocialSettings(), readRunState(), readSocialState(), readHeartbeat(), loadContentSettings(),
   ])
   const telegramConfigured = Boolean(telegramConfig())
 
-  const [runs, postToday, pendingPosts, nextPost, catalog, commissions, stats, bonuses, pendingProposals, health, doneRuns, donePosts, doneProposals] = await Promise.all([
+  const [runs, postToday, pendingPosts, nextPost, catalog, commissions, stats, bonuses, pendingProposals, health, doneRuns, donePosts, doneProposals, contentSummary] = await Promise.all([
     db.execute(sql`
       select distinct on (j.job_type) j.job_type, r.status::text as status, r.started_at, r.finished_at,
              r.processed_count, r.created_count, r.updated_count, r.rejected_count
@@ -126,6 +127,7 @@ export async function getEngineOverview(now = Date.now()): Promise<EngineOvervie
       select title, status, decided_at, decision_note, kind from engine_proposals
       where status in ('applied', 'rejected', 'failed') and decided_at is not null
       order by decided_at desc limit 25`),
+    contentToday(contentSettings),
   ])
 
   const runRows = runs.rows as RunRow[]
@@ -201,6 +203,16 @@ export async function getEngineOverview(now = Date.now()): Promise<EngineOvervie
       schedule: 'Planeja o dia e envia o que venceu, a cada 5 minutos', last: socialLast, nextAt: today.nextPostAt,
       note: social.mode !== 'on' ? 'Desligada. Ligue em Postagens quando o canal estiver pronto.' : !telegramConfigured ? 'O bot do Telegram não está configurado: as postagens ficam na fila, sem envio.' : null,
       href: 'postagens',
+    },
+    {
+      id: 'content', title: 'Preparar posts de Instagram e TikTok',
+      what: `Prepara a cada dia ${contentSettings.instagramDaily} post(s) de Instagram e ${contentSettings.tiktokDaily} de TikTok, com legenda, roteiro, hashtags, imagem e link com etiqueta do canal. Você publica na rede e marca como publicado.`,
+      enabled: contentSettings.instagramDaily + contentSettings.tiktokDaily > 0,
+      state: contentSettings.instagramDaily + contentSettings.tiktokDaily === 0 ? 'off' : contentSummary.every((row) => row.planned === 0 || row.published >= row.planned) ? 'ok' : 'attention',
+      schedule: 'A cada execução da rotina de postagens (planeja os posts do dia)', last: null, nextAt: null,
+      note: contentSettings.instagramDaily + contentSettings.tiktokDaily === 0 ? 'Desligado. Ajuste a quantidade por dia em Instagram e TikTok.'
+        : contentSummary.map((row) => `${row.channel === 'instagram' ? 'Instagram' : 'TikTok'}: ${row.published} de ${row.planned} publicado(s) hoje`).join(' · '),
+      href: 'redes-sociais',
     },
   ]
 
