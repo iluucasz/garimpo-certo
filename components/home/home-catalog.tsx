@@ -67,7 +67,7 @@ export function HomeCatalog({ activeFilter = 'trending' }: { activeFilter?: Filt
       <div className={styles.categoryList}>{categories.map((category) => {
         const items = products.filter((product) => product.category === category.slug)
         return <Link href={`/categorias/${category.slug}`} className={styles.category} key={category.id}>
-          <span className={styles.categoryImage}><Image src={items[0]?.image ?? '/placeholder.jpg'} alt="" fill sizes="48px"/></span>
+          <span className={styles.categoryImage}><Image src={items[0]?.image ?? '/placeholder.jpg'} alt="" fill sizes="56px"/></span>
           <span className={styles.categoryText}><strong>{category.name}</strong><span>{items.length} {items.length === 1 ? 'produto' : 'produtos'}</span></span>
         </Link>
       })}</div>
