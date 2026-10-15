@@ -74,7 +74,9 @@ export function SocialPostsView() {
 
   const groups: Record<Tab, Post[]> = {
     pending: data.posts.filter((post) => post.status === 'pending'),
-    approved: data.posts.filter((post) => post.status === 'approved'),
+    // Agendadas: a próxima a sair primeiro; sem horário vai para o fim.
+    approved: data.posts.filter((post) => post.status === 'approved').sort((a, b) =>
+      (a.scheduledFor ? new Date(a.scheduledFor).getTime() : Infinity) - (b.scheduledFor ? new Date(b.scheduledFor).getTime() : Infinity)),
     sent: data.posts.filter((post) => post.status === 'sent'),
     other: data.posts.filter((post) => post.status === 'failed' || post.status === 'cancelled'),
   }
