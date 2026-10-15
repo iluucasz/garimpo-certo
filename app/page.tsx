@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, BadgeCheck, ExternalLink, RefreshCw } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BadgeCheck, ExternalLink, GitCompareArrows, RefreshCw } from 'lucide-react'
 import { CampaignBanner } from '@/components/home/campaign-banner'
 import { PageBlock } from '@/components/home/page-block'
 import { SectionFrame } from '@/components/home/section-frame'
@@ -74,10 +74,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
               control={{ title: s.title ?? '', accent: s.accent ?? '', text: s.text ?? '', buttonLabel: s.buttonLabel ?? '' }}
               experiment={running ? { key: running.key, splitB: running.splitB, variantB: running.variantB } : null}
               ctaHref={hasCatalog ? '#ofertas' : '/buscar'}/>
-            <ul className={styles.trust} aria-label="Como o Garimpo trabalha">
-              <li><ExternalLink aria-hidden="true"/>Você compra na Shopee, não aqui</li>
-              <li><RefreshCw aria-hidden="true"/>Preços e vendas da última sincronização</li>
-              <li><BadgeCheck aria-hidden="true"/>Links de afiliado sempre sinalizados</li>
+            <ul className={styles.trust} aria-label="Vantagens do Garimpo">
+              <li><BadgeCheck aria-hidden="true"/>Só entram produtos com nota 4,5+ e vendas comprovadas</li>
+              <li><RefreshCw aria-hidden="true"/>Preços atualizados todo dia, com histórico de preço</li>
+              <li><GitCompareArrows aria-hidden="true"/>Compare lado a lado e salve seus favoritos</li>
+              <li><ExternalLink aria-hidden="true"/>Grátis e sem cadastro: você finaliza a compra na Shopee</li>
             </ul>
           </div>
           <FeaturedProducts/>

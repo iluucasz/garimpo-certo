@@ -16,8 +16,8 @@
 .heroButton:active { background: var(--primary-active); box-shadow: none; }
 .heroLink { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; color: var(--foreground); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 5px; transition: text-decoration-color .15s var(--ease), color .15s var(--ease); }
 .heroLink:hover { color: var(--primary-ink); text-decoration-color: currentColor; }
-.trust { list-style: none; padding: 20px 0 0; margin: 28px 0 0; border-top: 1px solid var(--border); display: grid; gap: 10px; width: 100%; max-width: 440px; }
-.trust li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted-foreground); }
+.trust { list-style: none; padding: 20px 0 0; margin: 28px 0 0; border-top: 1px solid var(--border); display: grid; gap: 12px; width: 100%; max-width: 480px; }
+.trust li { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.4; color: var(--foreground); }
 .trust svg { width: 16px; height: 16px; color: var(--success); flex-shrink: 0; }
 
 /* Categorias */
