@@ -36,6 +36,8 @@ export type PickOptions = {
   limit: number
   /** Máximo por categoria no mesmo lote, para a vitrine do canal não ficar monotemática. */
   perCategory: number
+  /** Multiplicador (1 a 1,25) da nota por categoria que rende acima da média, aprendido com os cliques reais. */
+  categoryBoost?: Record<string, number>
 }
 
 export const defaultPickOptions: Omit<PickOptions, 'now' | 'limit'> = { cooldownDays: 14, minRating: 4.5, minSold: 100, minPrice: 10, perCategory: 1 }
@@ -77,7 +79,11 @@ export function eligible(candidate: PostCandidate, options: PickOptions) {
 /** Melhores candidatos, com no máximo `perCategory` por categoria no lote. */
 export function rankCandidates(candidates: PostCandidate[], options: PickOptions): Ranked[] {
   const ranked = candidates.filter((candidate) => eligible(candidate, options))
-    .map((candidate) => ({ candidate, ...scoreCandidate(candidate) }))
+    .map((candidate) => {
+      const base = scoreCandidate(candidate)
+      const boost = options.categoryBoost?.[candidate.category] ?? 1
+      return { candidate, score: base.score * boost, reasons: boost > 1 ? [...base.reasons, 'categoria que mais gera cliques'] : base.reasons }
+    })
     .sort((a, b) => b.score - a.score || b.candidate.soldCount - a.candidate.soldCount)
   const perCategory = new Map<string, number>()
   const chosen: Ranked[] = []

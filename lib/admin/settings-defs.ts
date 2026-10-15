@@ -19,7 +19,7 @@ export type SettingField =
   | { key: string; label: string; type: 'order'; help?: string; items: { id: string; label: string }[] }
   | { key: string; label: string; type: 'checklist'; help?: string }
 
-export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social'
+export type SettingKey = 'seo' | 'theme' | 'home' | 'ranking' | 'slots' | 'tracking' | 'rules' | 'guides' | 'engine' | 'social' | 'import'
 
 /** Agrupamento opcional dos campos na tela: cada seção vira um cartão com título e explicação curta. */
 export type SettingSection = { title: string; description?: string; keys: string[] }
@@ -230,8 +230,35 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('maxSharePercent', 'Parte máxima do catálogo por execução', 1, 30, undefined, '%'),
       { key: 'seasonalEnabled', label: 'Sugerir termos de datas comerciais (Dia das Mães, Black Friday…)', type: 'boolean' },
       numberField('lookaheadDays', 'Antecedência máxima do calendário', 7, 90, undefined, 'dias'),
+      { key: 'learnEnabled', label: 'Aprender com os cliques (importar mais do que rende e priorizar nas postagens)', type: 'boolean', help: 'Só age com cliques suficientes no site. Antes disso, não muda nada.' },
+      numberField('minSiteClicks', 'Cliques mínimos para aprender', 20, 2000, 'Abaixo disso a Engine não compara categorias: poucos cliques não provam nada.', 'cliques'),
+      numberField('quotaExtra', 'Produtos a mais por categoria que rende', 5, 40, 'Soma-se à quantidade normal por categoria, por 30 dias, depois que você aprova.', 'produtos'),
     ],
-    defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40 },
+    sections: [
+      { title: 'Modo', description: 'Quanto a Engine pode fazer sozinha.', keys: ['mode'] },
+      { title: 'Faxina do catálogo', description: 'Quando sugerir tirar um produto da vitrine.', keys: ['windowDays', 'minSiteViews', 'minAgeDays', 'maxPerRun', 'maxSharePercent'] },
+      { title: 'Datas comerciais', description: 'Termos de busca para as datas que se aproximam.', keys: ['seasonalEnabled', 'lookaheadDays'] },
+      { title: 'Aprender com os cliques', description: 'Mais produtos nas categorias que rendem e prioridade a elas nas postagens.', keys: ['learnEnabled', 'minSiteClicks', 'quotaExtra'] },
+    ],
+    defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40, learnEnabled: true, minSiteClicks: 50, quotaExtra: 10 },
+  },
+  import: {
+    key: 'import',
+    title: 'Importação de produtos',
+    description: 'Como a importação diária da Shopee escolhe e quantos produtos traz. As faixas de preço e as categorias continuam as do sistema; aqui ficam os números que mais mudam o resultado.',
+    permission: 'catalog:write',
+    fields: [
+      { key: 'enabled', label: 'Importação diária ligada', type: 'boolean', help: 'Desligada, o worker não importa às 6h. Dá para importar à mão em Importações.' },
+      numberField('perCategory', 'Produtos por categoria', 10, 80, 'Com 11 categorias, 40 dá cerca de 440 produtos. Quanto maior, mais tempo a importação leva.', 'produtos'),
+      numberField('minRating', 'Nota mínima', 4, 5, 'Só entra produto com nota igual ou maior.', 'estrelas', 0.1),
+      numberField('minSales', 'Vendas mínimas (faixa até R$ 99)', 10, 500, 'As faixas mais caras usam proporções menores: itens caros vendem menos.', 'vendas'),
+      numberField('maxPerShop', 'Máximo por loja, em cada categoria', 1, 5, 'Evita uma vitrine dominada por um vendedor só.', 'produtos'),
+    ],
+    sections: [
+      { title: 'Rotina', description: 'Liga ou desliga a importação das 6h.', keys: ['enabled'] },
+      { title: 'Quanto e com que qualidade', description: 'O que decide quantos produtos entram e quais passam do corte.', keys: ['perCategory', 'minRating', 'minSales', 'maxPerShop'] },
+    ],
+    defaults: { enabled: true, perCategory: 40, minRating: 4.5, minSales: 50, maxPerShop: 2 },
   },
   social: {
     key: 'social',

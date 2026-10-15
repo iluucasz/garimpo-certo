@@ -49,6 +49,8 @@ export type ImportOptions = {
   dryRun?: boolean
   /** Termos extras por categoria (datas comerciais aprovadas na Engine). Somam-se às buscas de `categoryGroups`. */
   extraKeywords?: { category: string; keyword: string }[]
+  /** Produtos a mais por categoria (slug), aprovados na Engine para as que rendem acima da média. */
+  categoryBonus?: Record<string, number>
 }
 
 type Counted = { offers: ShopeeProductOffer[]; failed: boolean }
@@ -66,7 +68,7 @@ async function search(query: Parameters<typeof fetchAllProductOffers>[0], total:
 }
 
 export async function importShopeeCatalog(options: ImportOptions = {}) {
-  const { perCategory = 40, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [] } = options
+  const { perCategory = 40, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [], categoryBonus = {} } = options
   const providerId = dryRun ? '' : await getOrCreateProvider('shopee', 'Shopee')
   const categoryNames = Object.fromEntries(categoryGroups.map((group) => [group.slug, group.name]))
   const state: SelectionState = { seen: new Set<string>(), perShop: new Map<number, number>() }
@@ -91,7 +93,7 @@ export async function importShopeeCatalog(options: ImportOptions = {}) {
     const candidates: Candidate[] = results.flatMap((item, index) => item.offers.map((offer) => ({ offer, source: queries[index].source })))
 
     const result = selectForCategory(candidates, {
-      perCategory, minRating, maxPerShop, minSales: minSalesByTier,
+      perCategory: Math.min(80, perCategory + (categoryBonus[group.slug] ?? 0)), minRating, maxPerShop, minSales: minSalesByTier,
       mix: group.mix === 'highTicket' ? highTicketMix : defaultMix,
     }, state)
     selected.push(...result.offers.map((offer) => toCatalogItem(offer, group.slug)))

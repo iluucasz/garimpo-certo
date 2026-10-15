@@ -53,7 +53,7 @@ export const adminConfigs: ModuleConfig[] = [
   { slug: 'funil', title: 'Funil', description: 'Onde as pessoas avançam ou abandonam.', group: 'Insights', view: { kind: 'analytics', mode: 'funil' } },
   { slug: 'eventos', title: 'Eventos', description: 'O que o site mediu: volumes, nomes e retenção.', group: 'Insights', view: { kind: 'events' } },
 
-  { slug: 'engine', title: 'Engine', description: 'O que a Engine sugere (faxina do catálogo e termos de datas comerciais), com o motivo e os números. Nada é aplicado sem a sua aprovação, exceto no modo automático.', group: 'Engine', view: { kind: 'engine' } },
+  { slug: 'engine', title: 'Engine', description: 'O centro de comando: o que a Engine faz (importar, sincronizar comissões, sugerir, aprender e postar), o que espera você e o que já fez.', group: 'Engine', view: { kind: 'engine' } },
 
   { slug: 'postagens', title: 'Postagens', description: 'Ofertas que vão ao canal do Telegram: o texto sai de números reais, você aprova, ajusta o horário e acompanha o que foi enviado.', group: 'Engine', view: { kind: 'posts' } },
 

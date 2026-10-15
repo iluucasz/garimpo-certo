@@ -17,6 +17,8 @@
  * · `--check` (valida a configuração).
  */
 import { runEngine } from '@/lib/engine/run'
+import { writeHeartbeat } from '@/lib/engine/heartbeat'
+import { loadImportSettings } from '@/lib/engine/store'
 import { runSocialQueue } from '@/lib/social/run'
 import { runConversionSync } from '@/lib/providers/shopee/conversions-run'
 import { runCatalogImport } from '@/lib/providers/shopee/run'
@@ -97,6 +99,17 @@ async function socialLoop(everyMinutes: number, isStopping: () => boolean) {
   }
 }
 
+const bootedAt = new Date().toISOString()
+
+/** Grava o sinal de vida a cada minuto: é como o painel sabe que o worker está de pé. */
+async function heartbeatLoop(isStopping: () => boolean) {
+  while (!isStopping()) {
+    try { await writeHeartbeat({ at: new Date().toISOString(), startedAt: bootedAt, importAt: process.env.IMPORT_AT ?? '06:00' }) }
+    catch (error) { log('heartbeat_failed', { error: error instanceof Error ? error.message : String(error) }) }
+    await sleep(60_000)
+  }
+}
+
 async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
   while (!isStopping()) {
     await sleep(everyMinutes * 60_000)
@@ -106,6 +119,15 @@ async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
 
 async function runOnce() {
   const startedAt = Date.now()
+  // A importação diária pode ser desligada no painel (Engine → Importação); o resto da rotina segue.
+  const settings = await loadImportSettings().catch(() => null)
+  if (settings && !settings.enabled) {
+    log('import_disabled')
+    await syncConversions('after_import')
+    await runEngineStep()
+    await notifySite()
+    return true
+  }
   log('import_started')
   try {
     const result = await runCatalogImport()
@@ -151,6 +173,7 @@ async function main() {
 
   const everyMinutes = Number(process.env.CONVERSIONS_EVERY_MIN ?? 180)
   log('worker_started', { importAt: process.env.IMPORT_AT ?? '06:00', tz: process.env.TZ ?? 'sistema', conversionsEveryMin: everyMinutes > 0 ? everyMinutes : 'desligado' })
+  void heartbeatLoop(() => stopping)
   if (Number.isFinite(everyMinutes) && everyMinutes > 0) void conversionLoop(everyMinutes, () => stopping)
   const socialEvery = Number(process.env.SOCIAL_EVERY_MIN ?? 5)
   if (Number.isFinite(socialEvery) && socialEvery > 0) void socialLoop(socialEvery, () => stopping)

@@ -1,6 +1,6 @@
 import { closeRun, openRun } from '@/lib/providers/shopee/job-runs'
-import { expireStale, importerKeywords, loadEngineSettings, loadSignals, persistDrafts, saveRunState, applyProposal, AUTO_KINDS, type RunState } from './store'
-import { pruneProposals, seasonalProposals, type EngineConfig } from './rules'
+import { expireStale, importerKeywords, loadCategoryStats, loadEngineSettings, loadSignals, persistDrafts, saveRunState, applyProposal, AUTO_KINDS, type RunState } from './store'
+import { pruneProposals, quotaProposals, seasonalProposals, type EngineConfig, type ProposalDraft } from './rules'
 import { engineProposals } from '@/lib/db/schema'
 import { db } from '@/lib/db/client'
 import { and, eq, inArray } from 'drizzle-orm'
@@ -25,9 +25,12 @@ async function execute(now: Date): Promise<RunState> {
     const { signals, siteViews } = await loadSignals(config.windowDays)
     const prune = pruneProposals(signals, siteViews, config, now.getTime())
     const seasonal = seasonalProposals(todayInSaoPaulo(now), config, importerKeywords())
+    // Aprender com os cliques: uma falha na leitura das categorias não pode derrubar a faxina nem o radar.
+    const quota = await loadCategoryStats(config.windowDays).then((stats) => quotaProposals(stats, config, now.getTime()))
+      .catch(() => ({ proposals: [] as ProposalDraft[], note: null as string | null }))
 
     const expired = await expireStale(now)
-    const persisted = await persistDrafts([...prune.proposals, ...seasonal], settings.mode, now.getTime())
+    const persisted = await persistDrafts([...prune.proposals, ...seasonal, ...quota.proposals], settings.mode, now.getTime())
 
     // Automático: só os tipos reversíveis. O resto continua esperando a equipe.
     let applied = 0
@@ -42,7 +45,7 @@ async function execute(now: Date): Promise<RunState> {
       }
     }
 
-    const notes = [prune.note, seasonal.length === 0 && config.seasonalEnabled ? 'Nenhuma data comercial nova pede termos agora.' : null].filter(Boolean)
+    const notes = [prune.note, seasonal.length === 0 && config.seasonalEnabled ? 'Nenhuma data comercial nova pede termos agora.' : null, quota.note].filter(Boolean)
     const state: RunState = { ...base, created: persisted.created, refreshed: persisted.refreshed, expired, applied, note: notes.join(' ') || null, coverage: prune.coverage }
     await saveRunState(state)
     await closeRun(runId, { status: 'succeeded', processed: signals.length, created: persisted.created, updated: persisted.refreshed, rejected: expired }, ENGINE_JOB_TYPE)

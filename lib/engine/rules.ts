@@ -18,10 +18,17 @@ export type EngineConfig = {
   maxShare: number
   seasonalEnabled: boolean
   lookaheadDays: number
+  /** Aprender com os cliques: sugere importar mais das categorias que rendem e prioriza-as nas postagens. */
+  learnEnabled: boolean
+  /** Cliques de compra no site inteiro, na janela, abaixo dos quais comparar categorias não faz sentido. */
+  minSiteClicks: number
+  /** Quantos produtos a mais por categoria uma sugestão de cota pede. */
+  quotaExtra: number
 }
 
 export const defaultEngineConfig: EngineConfig = {
   windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxShare: 0.1, seasonalEnabled: true, lookaheadDays: 40,
+  learnEnabled: true, minSiteClicks: 50, quotaExtra: 10,
 }
 
 export type ProductSignal = {
@@ -39,8 +46,8 @@ export type ProductSignal = {
 }
 
 export type ProposalDraft = {
-  kind: 'archive_product' | 'import_term'
-  subjectType: 'product' | 'term'
+  kind: 'archive_product' | 'import_term' | 'category_quota'
+  subjectType: 'product' | 'term' | 'category'
   subjectId: string
   title: string
   reason: string
@@ -119,4 +126,83 @@ export function seasonalProposals(today: string, config: EngineConfig, known: Se
     }
   }
   return drafts
+}
+
+// ---------------------------------------------------------------- aprender com os cliques
+
+export type CategoryStat = {
+  slug: string
+  name: string
+  /** Produtos ativos cuja categoria principal é esta. */
+  products: number
+  views: number
+  clicks: number
+  conversions: number
+}
+
+export type CategoryPerformance = CategoryStat & {
+  /** Parte dos cliques do site que veio da categoria (0–1). */
+  clickShare: number
+  /** Parte dos produtos ativos que ela tem (0–1). */
+  productShare: number
+  /** Cliques reais ÷ cliques esperados pelo tamanho da categoria. 1 = na média. */
+  ratio: number
+}
+
+/** Compara cada categoria com a média: quem tem mais cliques do que o seu tamanho "merece" rende acima do esperado. */
+export function categoryPerformance(stats: CategoryStat[]): { totalClicks: number; categories: CategoryPerformance[] } {
+  const totalClicks = stats.reduce((sum, item) => sum + item.clicks, 0)
+  const totalProducts = stats.reduce((sum, item) => sum + item.products, 0)
+  const categories = stats.map((item): CategoryPerformance => {
+    const productShare = totalProducts > 0 ? item.products / totalProducts : 0
+    const clickShare = totalClicks > 0 ? item.clicks / totalClicks : 0
+    return { ...item, clickShare, productShare, ratio: productShare > 0 ? clickShare / productShare : 0 }
+  })
+  return { totalClicks, categories: categories.sort((a, b) => b.ratio - a.ratio) }
+}
+
+export type QuotaResult = { proposals: ProposalDraft[]; note: string | null; totalClicks: number; categories: CategoryPerformance[] }
+
+const MAX_QUOTA_PROPOSALS = 3
+const QUOTA_EFFECT_DAYS = 30
+
+/**
+ * Cota de importação: categorias que rendem bem acima da média pedem mais produtos na próxima importação.
+ * Só age com cliques suficientes no site inteiro; com pouco dado, "rende mais" seria sorte.
+ */
+export function quotaProposals(stats: CategoryStat[], config: EngineConfig, now = Date.now()): QuotaResult {
+  const { totalClicks, categories } = categoryPerformance(stats)
+  if (!config.learnEnabled) return { proposals: [], note: null, totalClicks, categories }
+  if (totalClicks < config.minSiteClicks) {
+    return {
+      proposals: [], totalClicks, categories,
+      note: `Poucos cliques para comparar categorias: ${totalClicks} nos últimos ${config.windowDays} dias, e a Engine só aprende com ${config.minSiteClicks}. Só contam visitantes que permitiram a medição.`,
+    }
+  }
+  const until = new Date(now + QUOTA_EFFECT_DAYS * dayMs)
+  const proposals = categories
+    .filter((item) => item.clicks >= 5 && item.ratio >= 1.5)
+    .slice(0, MAX_QUOTA_PROPOSALS)
+    .map((item): ProposalDraft => ({
+      kind: 'category_quota', subjectType: 'category', subjectId: item.slug,
+      title: `Importar +${config.quotaExtra} produtos em ${item.name}`,
+      reason: `${item.name} tem ${Math.round(item.clickShare * 100)}% dos cliques com ${Math.round(item.productShare * 100)}% dos produtos (${item.ratio.toFixed(1).replace('.', ',')}× a média) nos últimos ${config.windowDays} dias. Mais opções nela tendem a render mais.`,
+      evidence: { windowDays: config.windowDays, clicks: item.clicks, conversions: item.conversions, siteClicks: totalClicks, clickShare: Math.round(item.clickShare * 100), productShare: Math.round(item.productShare * 100) },
+      payload: { category: item.slug, extra: config.quotaExtra, until: until.toISOString().slice(0, 10) },
+      expiresAt: `${until.toISOString().slice(0, 10)}T23:59:59.000Z`,
+    }))
+  return { proposals, totalClicks, categories, note: proposals.length === 0 ? 'Nenhuma categoria rende acima da média o bastante para pedir mais produtos.' : null }
+}
+
+/** Multiplicador (1 a 1,25) que a escolha das postagens aplica à nota de cada categoria que rende acima da média. */
+export function categoryBoosts(stats: CategoryStat[], config: Pick<EngineConfig, 'learnEnabled' | 'minSiteClicks'>): Record<string, number> {
+  if (!config.learnEnabled) return {}
+  const { totalClicks, categories } = categoryPerformance(stats)
+  if (totalClicks < config.minSiteClicks) return {}
+  const boosts: Record<string, number> = {}
+  for (const item of categories) {
+    if (item.clicks < 5 || item.ratio <= 1) continue
+    boosts[item.slug] = Math.round((1 + Math.min(0.25, (item.ratio - 1) * 0.12)) * 1000) / 1000
+  }
+  return boosts
 }

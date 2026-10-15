@@ -19,6 +19,9 @@ atualizar o cache (`POST /api/v1/cron/revalidate`). Substitui o cron da Vercel.
 | `CRON_SECRET` | recomendada | O **mesmo** valor definido na Vercel; autoriza o aviso ao site |
 | `IMPORT_AT` | não | `HH:MM` no fuso do contêiner (padrão `06:00`) |
 | `RUN_ON_START` | não | `1` roda uma importação ao subir o contêiner |
+
+O worker grava um sinal de vida a cada minuto (`global_settings.worker_heartbeat`); é com ele que Painel → Engine diz se a rotina está de pé. A importação das 6h pode ser desligada em Engine → Importação (o resto da rotina continua). Depois de atualizar o código, reconstrua a imagem e troque o contêiner para o sinal aparecer.
+
 | `SOCIAL_EVERY_MIN` | não | Intervalo, em minutos, do planejamento e envio das postagens do Telegram; padrão `5`, `0` desliga |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | só para postar | Token do bot (@BotFather) e canal (`@nome` ou `-100…`). Sem os dois as postagens ficam na fila, sem envio |
 | `CONVERSIONS_EVERY_MIN` | não | Intervalo, em minutos, da sincronização de comissões (`conversionReport`); padrão `180`, `0` desliga |

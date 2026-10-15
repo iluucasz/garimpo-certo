@@ -4,7 +4,7 @@ import { engineProposals, globalSettings, offers, products } from '@/lib/db/sche
 import { categoryGroups } from '@/lib/providers/shopee/import'
 import { settingDefinitions } from '@/lib/admin/settings-defs'
 import { recordAudit } from '@/lib/admin/audit'
-import { defaultEngineConfig, type EngineConfig, type ProductSignal, type ProposalDraft } from './rules'
+import { defaultEngineConfig, type CategoryStat, type EngineConfig, type ProductSignal, type ProposalDraft } from './rules'
 
 /**
  * Persistência e aplicação das propostas da Engine. Sem imports do Next (`next/cache`): o worker da VPS também
@@ -17,11 +17,12 @@ export type ProposalStatus = 'shadow' | 'pending' | 'applied' | 'rejected' | 'fa
 export type ProposalRow = typeof engineProposals.$inferSelect
 
 /** Tipos que o modo automático aplica sozinho: só o que é reversível e não esconde produto da vitrine. */
-export const AUTO_KINDS = ['import_term'] as const
+export const AUTO_KINDS = ['import_term', 'category_quota'] as const
 
 export const kindLabels: Record<string, string> = {
   archive_product: 'Tirar produto da vitrine',
   import_term: 'Importar termo de busca',
+  category_quota: 'Importar mais de uma categoria',
 }
 
 const REJECT_COOLDOWN_DAYS = 30
@@ -46,7 +47,82 @@ export async function loadEngineSettings(): Promise<EngineSettings> {
     maxShare: number('maxSharePercent', defaultEngineConfig.maxShare * 100) / 100,
     seasonalEnabled: merged.seasonalEnabled !== false,
     lookaheadDays: number('lookaheadDays', defaultEngineConfig.lookaheadDays),
+    learnEnabled: merged.learnEnabled !== false,
+    minSiteClicks: number('minSiteClicks', defaultEngineConfig.minSiteClicks),
+    quotaExtra: number('quotaExtra', defaultEngineConfig.quotaExtra),
   }
+}
+
+export type ImportSettings = { enabled: boolean; perCategory: number; minRating: number; minSales: number; maxPerShop: number }
+
+/** Lê `global_settings.import` direto (o worker não tem o cache do Next) por cima dos padrões. */
+export async function loadImportSettings(): Promise<ImportSettings> {
+  const defaults = settingDefinitions.import.defaults as Record<string, unknown>
+  const [row] = await db.select({ value: globalSettings.value }).from(globalSettings).where(eq(globalSettings.key, 'import')).limit(1)
+  const stored = row?.value && typeof row.value === 'object' ? row.value as Record<string, unknown> : {}
+  const merged = { ...defaults, ...stored }
+  const number = (key: string, min: number, max: number, fallback: number) => {
+    const value = Number(merged[key])
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback
+  }
+  return {
+    enabled: merged.enabled !== false,
+    perCategory: Math.round(number('perCategory', 10, 80, 40)),
+    minRating: number('minRating', 4, 5, 4.5),
+    minSales: Math.round(number('minSales', 10, 500, 50)),
+    maxPerShop: Math.round(number('maxPerShop', 1, 5, 2)),
+  }
+}
+
+/** Visitas, cliques e compras por categoria principal, na janela. Base das regras que aprendem com os cliques. */
+export async function loadCategoryStats(windowDays: number): Promise<CategoryStat[]> {
+  const days = Math.min(Math.max(Math.trunc(windowDays) || 30, 1), 365)
+  const result = await db.execute(sql`
+    with pcat as (
+      select distinct on (pc.product_id) pc.product_id, c.slug, c.name
+      from product_categories pc
+      join categories c on c.id = pc.category_id
+      join products p on p.id = pc.product_id and p.status = 'active'
+      order by pc.product_id, pc.is_primary desc
+    )
+    select s.slug, s.name, s.products,
+           coalesce(k.clicks, 0)::int as clicks, coalesce(v.views, 0)::int as views, coalesce(cv.conversions, 0)::int as conversions
+    from (select slug, name, count(*)::int as products from pcat group by slug, name) s
+    left join (
+      select pcat.slug, count(*)::int as clicks
+      from affiliate_clicks ac join offers o on o.id = ac.offer_id join pcat on pcat.product_id = o.product_id
+      where ac.created_at > now() - (${days} * interval '1 day') group by pcat.slug
+    ) k on k.slug = s.slug
+    left join (
+      select pcat.slug, count(*)::int as views
+      from analytics_events e join pcat on pcat.product_id = e.product_id
+      where e.event_name in ('product_view', 'page_view') and e."timestamp" > now() - (${days} * interval '1 day') group by pcat.slug
+    ) v on v.slug = s.slug
+    left join (
+      select pcat.slug, count(distinct i.conversion_id)::int as conversions
+      from affiliate_conversion_items i
+      join affiliate_conversions cvv on cvv.id = i.conversion_id and cvv.status in ('pending', 'approved', 'paid')
+      join offers o on o.id = i.offer_id join pcat on pcat.product_id = o.product_id
+      where coalesce(cvv.converted_at, cvv.synced_at) > now() - interval '180 days' group by pcat.slug
+    ) cv on cv.slug = s.slug
+    order by s.products desc`)
+  return (result.rows as { slug: string; name: string; products: number; clicks: number; views: number; conversions: number }[]).map((row) => ({
+    slug: row.slug, name: row.name, products: Number(row.products), clicks: Number(row.clicks), views: Number(row.views), conversions: Number(row.conversions),
+  }))
+}
+
+/** Produtos a mais por categoria que a equipe (ou o modo automático) aprovou e ainda estão dentro da validade. */
+export async function activeCategoryBonuses(now = new Date()): Promise<Record<string, number>> {
+  const rows = await db.select({ payload: engineProposals.payload }).from(engineProposals)
+    .where(and(eq(engineProposals.kind, 'category_quota'), eq(engineProposals.status, 'applied')))
+  const bonuses: Record<string, number> = {}
+  for (const row of rows) {
+    const payload = row.payload as { category?: string; extra?: number; until?: string }
+    if (!payload.category || !payload.until || !Number.isFinite(Number(payload.extra))) continue
+    if (new Date(`${payload.until}T23:59:59Z`).getTime() < now.getTime()) continue
+    bonuses[payload.category] = Math.max(bonuses[payload.category] ?? 0, Math.min(40, Math.max(0, Math.round(Number(payload.extra)))))
+  }
+  return bonuses
 }
 
 export type RunState = {
@@ -202,6 +278,12 @@ export async function applyProposal(row: ProposalRow, actorUserId: string | null
     if (!payload.category || !payload.keyword) return { ok: false, error: 'Proposta sem categoria ou termo.' }
     await recordAudit({ actorUserId, action: 'engine.import_term', entityType: 'termo', entityId: row.subjectId, after: { ...payload, proposal: row.id } })
     return { ok: true, result: { effectiveUntil: payload.until ?? null, note: 'O termo entra na próxima importação do catálogo.' }, invalidate: [] }
+  }
+  if (row.kind === 'category_quota') {
+    const payload = row.payload as { category?: string; extra?: number; until?: string }
+    if (!payload.category || !payload.extra) return { ok: false, error: 'Proposta sem categoria ou quantidade.' }
+    await recordAudit({ actorUserId, action: 'engine.category_quota', entityType: 'categoria', entityId: row.subjectId, after: { ...payload, proposal: row.id } })
+    return { ok: true, result: { effectiveUntil: payload.until ?? null, extra: payload.extra, note: `A categoria traz ${payload.extra} produtos a mais na próxima importação, até ${payload.until ?? 'o fim da validade'}.` }, invalidate: [] }
   }
   return { ok: false, error: `Tipo de proposta desconhecido: ${row.kind}.` }
 }

@@ -5,6 +5,8 @@ import { settingDefinitions } from '@/lib/admin/settings-defs'
 import { generateShortLink } from '@/lib/providers/shopee/client'
 import { toSubId } from '@/lib/providers/shopee/links'
 import { deepseekConfig } from '@/lib/ai/deepseek'
+import { categoryBoosts } from '@/lib/engine/rules'
+import { loadCategoryStats, loadEngineSettings } from '@/lib/engine/store'
 import { composePost, type PostFacts } from './compose'
 import { rewriteWithAi } from './rewrite'
 import { adaptiveCooldown, defaultPickOptions, eligible, rankCandidates, type PostCandidate, type Ranked } from './picker'
@@ -61,6 +63,15 @@ export async function saveSocialState(state: SocialState) {
 export async function readSocialState(): Promise<SocialState | null> {
   const [row] = await db.select({ value: globalSettings.value }).from(globalSettings).where(eq(globalSettings.key, 'social_state')).limit(1)
   return (row?.value as SocialState | undefined) ?? null
+}
+
+// ---------------------------------------------------------------- aprendizado
+
+/** Reforço por categoria, aprendido com os cliques reais da Engine. Vazio quando desligado ou com poucos dados. */
+export async function loadCategoryBoost(): Promise<Record<string, number>> {
+  const config = await loadEngineSettings()
+  if (config.mode === 'off' || !config.learnEnabled) return {}
+  return categoryBoosts(await loadCategoryStats(config.windowDays), config)
 }
 
 // ---------------------------------------------------------------- candidatos
@@ -142,6 +153,8 @@ export async function planToday(settings: SocialSettings, now = Date.now(), user
   if (slots.length === 0) return { created: 0, ranked: [], reason: 'A cota de hoje já está completa ou os horários de hoje passaram.' }
 
   const candidates = await loadCandidates()
+  // Aprende com os cliques reais: categorias que rendem acima da média ganham um empurrão suave. Falhar aqui nunca impede de postar.
+  const categoryBoost = await loadCategoryBoost().catch(() => ({}))
   // Com cota alta, uma por categoria não basta e 14 dias de intervalo esgotariam a lista: ajusta os dois pelo tamanho real da lista.
   const base = { ...defaultPickOptions, now, limit: slots.length }
   const pool = candidates.filter((candidate) => eligible(candidate, { ...base, cooldownDays: 0 }))
@@ -150,6 +163,7 @@ export async function planToday(settings: SocialSettings, now = Date.now(), user
     ...base,
     perCategory: Math.max(base.perCategory, Math.ceil(slots.length / categories)),
     cooldownDays: adaptiveCooldown(pool.length, settings.dailyLimit, base.cooldownDays),
+    categoryBoost,
   })
   if (ranked.length === 0) return { created: 0, ranked, reason: 'Nenhuma oferta atende aos critérios (nota, vendas, imagem e intervalo entre repetições).' }
 

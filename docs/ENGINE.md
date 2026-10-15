@@ -9,6 +9,9 @@ Anotação de visão, registrada em 2026-10-13 a pedido do dono. **Nada aqui est
 | Fila de propostas, modos (desligada, sombra, aprovação, automático), auditoria | ✅ feito (Painel → Engine) |
 | Faxina do catálogo | ✅ regra pronta; só age com tráfego suficiente |
 | Radar de tendências por calendário comercial | ✅ feito; termos aprovados alimentam o importador |
+| Central da Engine (visão geral, aprovações, importação, aprendizado, histórico, sinal de vida do worker) | ✅ feito (2026-10-14) |
+| Aprender com os cliques (cota extra por categoria que rende e prioridade nas postagens) | ✅ feito; só age com cliques suficientes (padrão 50 em 30 dias) |
+| Números da importação editáveis no painel (qtd. por categoria, nota, vendas, por loja, liga/desliga) | ✅ feito |
 | Radar por clima, notícias e buscas | ⏳ |
 | IA (DeepSeek) para redação das postagens | ✅ com validação rígida; sugestões editoriais por IA ficam para depois |
 | Personalização por visitante | ✅ no aparelho, sem perfil no servidor |
