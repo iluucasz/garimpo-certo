@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import { useVisitorState } from '@/components/visitor-state-provider'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { ProductGrid } from '@/components/product/product-card'
+import { CategoryRail } from './category-rail'
 import { useStoreData } from '@/components/store-data-provider'
 import { currentPrice, offerDiscount } from '@/lib/catalog/signals'
 import { buildProfile, MIN_SIGNALS, rankForYou } from '@/lib/personalization/affinity'
@@ -62,16 +62,7 @@ export function HomeCatalog({ activeFilter = 'trending' }: { activeFilter?: Filt
   }
 
   return <>
-    <section className={`${styles.categories} container`} id="categorias" aria-labelledby="home-categories-title">
-      <div className={styles.categoryIntro}><h2 id="home-categories-title">Por onde começamos?</h2><Link href="/buscar">Todo o catálogo <ArrowRight aria-hidden="true"/></Link></div>
-      <div className={styles.categoryList}>{categories.map((category) => {
-        const items = products.filter((product) => product.category === category.slug)
-        return <Link href={`/categorias/${category.slug}`} className={styles.category} key={category.id}>
-          <span className={styles.categoryImage}><Image src={items[0]?.image ?? '/placeholder.jpg'} alt="" fill sizes="56px"/></span>
-          <span className={styles.categoryText}><strong>{category.name}</strong><span>{items.length} {items.length === 1 ? 'produto' : 'produtos'}</span></span>
-        </Link>
-      })}</div>
-    </section>
+    <CategoryRail/>
 
     <section className={`${styles.featured} container`} id="ofertas" aria-labelledby="featured-title">
       <div className={styles.sectionHeading}>
