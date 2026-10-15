@@ -41,6 +41,8 @@ export type SectionSettings = {
   height?: number
   items?: SectionItem[]
   collection?: string
+  /** Quantos produtos o bloco de coleção mostra (4 ou 8; sem valor, 8). */
+  count?: number
   imageSide?: 'left' | 'right'
   imageFit?: 'cover' | 'contain'
   /** Aparência (vale para qualquer seção). */
@@ -72,6 +74,8 @@ export type SectionField = {
   options?: { value: string; label: string }[]
   min?: number
   max?: number
+  step?: number
+  unit?: string
   /** Para `items`: cartões (imagem, título, texto, link) ou perguntas e respostas. */
   variant?: 'cards' | 'faq'
 }
@@ -206,6 +210,7 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
       { key: 'title', label: 'Título', kind: 'text', maxLength: 90 },
       { key: 'text', label: 'Texto de apoio', kind: 'textarea', maxLength: 240 },
       { key: 'collection', label: 'Coleção', kind: 'collection' },
+      { key: 'count', label: 'Produtos exibidos', kind: 'number', min: 4, max: 8, step: 4, unit: ' produtos' },
       { key: 'buttonLabel', label: 'Texto do link para a coleção', kind: 'text', maxLength: 40 },
     ],
   },
@@ -254,6 +259,15 @@ type HomeSetting = Record<string, unknown>
 const homeText = (home: HomeSetting, key: string, fallback: string) => typeof home[key] === 'string' && (home[key] as string).trim() ? String(home[key]) : fallback
 
 /** Documento que reproduz a home de antes do editor, respeitando ordem e visibilidade salvas em `home`. */
+/** Coleções que a home mostra logo abaixo da vitrine principal (escolhidas para não repetir os filtros dela). */
+export const homeCollections = [
+  { slug: 'viralizou', name: 'Coleção: Viralizou' },
+  { slug: 'queridinhos', name: 'Coleção: Queridinhos' },
+  { slug: 'achadinhos', name: 'Coleção: Achadinhos' },
+  { slug: 'custo-beneficio', name: 'Coleção: Custo-benefício' },
+  { slug: 'desconto-pesado', name: 'Coleção: Desconto pesado' },
+] as const
+
 export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
   const order = (Array.isArray(home.sectionOrder) ? home.sectionOrder.map(String) : ['catalog', 'selections', 'guides', 'howItWorks'])
     .filter((id): id is 'catalog' | 'selections' | 'guides' | 'howItWorks' => ['catalog', 'selections', 'guides', 'howItWorks'].includes(id))
@@ -281,7 +295,16 @@ export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
         },
       },
       { id: 'campaign', type: 'campaign', name: sectionTypes.campaign.label, hidden: false, archived: false, settings: {} },
-      ...order.map((id): Section => ({ id, type: id, name: sectionTypes[id].label, hidden: hidden(id), archived: false, settings: settingsFor[id] })),
+      ...order.flatMap((id): Section[] => {
+        const section: Section = { id, type: id, name: sectionTypes[id].label, hidden: hidden(id), archived: false, settings: settingsFor[id] }
+        if (id !== 'catalog') return [section]
+        // Cada coleção é um bloco próprio (título e texto seguem a regra da coleção); some sozinho se ela ficar vazia.
+        const collections = homeCollections.map(({ slug, name }): Section => ({
+          id: `colecao-${slug}`, type: 'collection', name, hidden: hidden('collections'), archived: false,
+          settings: { collection: slug, count: 4, buttonLabel: 'Ver coleção' },
+        }))
+        return [section, ...collections]
+      }),
     ],
   }
 }
@@ -362,7 +385,7 @@ function normalizeSettings(type: SectionType, raw: unknown, path: string, errors
       }
       case 'number': {
         const number = Number(value)
-        if (Number.isFinite(number)) settings.height = Math.min(Math.max(Math.round(number), field.min ?? 0), field.max ?? 400)
+        if (Number.isFinite(number)) (settings as Record<string, unknown>)[field.key] = Math.min(Math.max(Math.round(number), field.min ?? 0), field.max ?? 400)
         break
       }
       case 'collection': {

@@ -16,7 +16,9 @@ import { StorefrontConfigProvider } from '@/components/storefront/storefront-con
 import { resolveStorefrontConfig } from '@/lib/site-builder/storefront-config'
 import { visibleSections } from '@/lib/site-builder/document'
 import { canPreviewDrafts } from '@/lib/site-builder/preview'
+import { buildCollections } from '@/lib/catalog/collections'
 import { buildGuide, guideSlugs } from '@/lib/catalog/guides'
+import { featuredProductIds, pickCollectionProducts } from '@/lib/site-builder/collection-picks'
 import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { getActiveCampaigns } from '@/lib/db/repositories/site-content'
 import { getRenderDocument } from '@/lib/db/repositories/site-documents'
@@ -53,6 +55,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   const guides = guideSlugs(catalog).flatMap((slug) => { const guide = buildGuide(catalog, slug); return guide ? [guide] : [] }).slice(0, 3)
   const sections = visibleSections(document)
   const hasCatalog = sections.some((section) => section.type === 'catalog')
+  // Cada produto aparece uma vez na home: as coleções pulam o que a vitrine principal já mostra e o que as de cima mostraram.
+  const collectionBlocks = sections.filter((section) => section.type === 'collection')
+  const picks = collectionBlocks.length === 0 ? new Map<string, string[]>() : pickCollectionProducts(
+    collectionBlocks,
+    buildCollections({ ...catalog, rules: await getCatalogRules() }),
+    hasCatalog ? featuredProductIds(catalog.products, catalog.offers) : [],
+  )
 
   function render(section: (typeof sections)[number]) {
     const s = section.settings
@@ -93,7 +102,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
           <div><p>{s.text}</p><Link href="/como-funciona">{s.buttonLabel} <ArrowUpRight aria-hidden="true"/></Link></div>
         </section>
       default:
-        return <PageBlock section={section}/>
+        return <PageBlock section={section} productIds={picks.get(section.id)}/>
     }
   }
 

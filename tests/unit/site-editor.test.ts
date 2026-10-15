@@ -12,6 +12,8 @@ import {
   restoreSection, updateSection, updateSettings,
 } from '@/lib/site-builder/operations'
 import { contrast, isLightEnough, readableOn } from '@/lib/site-builder/visual'
+import { isReservedCollectionSlug } from '@/lib/catalog/collections'
+import { pickCollectionProducts } from '@/lib/site-builder/collection-picks'
 
 const ok = (input: unknown, options?: { allowEmpty?: boolean }) => {
   const result = normalizeDocument(input, options)
@@ -82,8 +84,42 @@ describe('seções arquivadas e aparência', () => {
   })
 })
 
+describe('coleções na home padrão', () => {
+  const home = defaultHomeDocument({})
+
+  it('mostra pelo menos 5 coleções logo abaixo da vitrine principal', () => {
+    const order = home.sections.map((section) => section.type)
+    const catalog = order.indexOf('catalog')
+    const collections = home.sections.filter((section) => section.type === 'collection')
+    expect(collections.length).toBeGreaterThanOrEqual(5)
+    expect(order.slice(catalog + 1, catalog + 1 + collections.length).every((type) => type === 'collection')).toBe(true)
+    expect(new Set(collections.map((section) => section.settings.collection)).size).toBe(collections.length)
+    expect(collections.every((section) => section.settings.count === 4)).toBe(true)
+  })
+
+  it('só aponta para coleções automáticas que existem e passa na validação', () => {
+    for (const section of home.sections.filter((item) => item.type === 'collection')) {
+      expect(isReservedCollectionSlug(section.settings.collection ?? '')).toBe(true)
+    }
+    expect(() => ok(home)).not.toThrow()
+  })
+
+  it('esconder pelo painel antigo (show_collections) tira todas as coleções', () => {
+    const hidden = defaultHomeDocument({ show_collections: false })
+    expect(visibleSections(hidden).some((section) => section.type === 'collection')).toBe(false)
+  })
+
+  it('a quantidade de produtos aceita 4 a 8 e é limitada', () => {
+    const block = { ...newSection('collection'), settings: { collection: 'queridinhos', count: 99 } }
+    const result = ok({ schemaVersion: 1, sections: [block] })
+    expect(result.sections[0].settings.count).toBe(8)
+  })
+})
+
 describe('operações sobre o documento', () => {
-  const base = defaultHomeDocument({})
+  // As coleções da home padrão não fazem parte do que estas operações testam: fixa a ordem das seções internas.
+  const full = defaultHomeDocument({})
+  const base: SiteDocument = { ...full, sections: full.sections.filter((section) => section.type !== 'collection') }
 
   it('mover antes de outra seção, ou para o fim, sem alterar o original', () => {
     const before = ids(base)
@@ -245,5 +281,33 @@ describe('contraste das seções', () => {
     expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 0)
     expect(isLightEnough('#ffffff')).toBe(true)
     expect(isLightEnough('#1c2434')).toBe(false)
+  })
+})
+
+describe('escolha de produtos das coleções da home', () => {
+  const list = (prefix: string, n: number) => Array.from({ length: n }, (_, index) => ({ id: `${prefix}${index}` }))
+  const blocks = [
+    { id: 'a', settings: { collection: 'x', count: 4 } },
+    { id: 'b', settings: { collection: 'y', count: 4 } },
+    { id: 'c', settings: { collection: 'inexistente', count: 4 } },
+  ]
+
+  it('não repete produto entre blocos nem com o que a vitrine já mostra', () => {
+    const shared = [{ id: 's0' }, { id: 's1' }]
+    const collections = [
+      { slug: 'x', products: [...shared, ...list('x', 10)] },
+      { slug: 'y', products: [...shared, ...list('x', 10).slice(0, 2), ...list('y', 10)] },
+    ]
+    const picks = pickCollectionProducts(blocks, collections, ['s0'])
+    const all = [...picks.values()].flat()
+    expect(new Set(all).size).toBe(all.length)
+    expect(picks.get('a')).toEqual(['s1', 'x0', 'x1', 'x2'])
+    expect(picks.get('b')).toEqual(['y0', 'y1', 'y2', 'y3'])
+    expect(picks.has('c')).toBe(false)
+  })
+
+  it('completa com os melhores da coleção quando faltam produtos novos', () => {
+    const picks = pickCollectionProducts([{ id: 'a', settings: { collection: 'x', count: 4 } }], [{ slug: 'x', products: list('x', 4) }], ['x0', 'x1'])
+    expect(picks.get('a')).toEqual(['x2', 'x3', 'x0', 'x1'])
   })
 })

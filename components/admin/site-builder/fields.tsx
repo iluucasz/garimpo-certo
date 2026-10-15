@@ -76,11 +76,11 @@ export function FieldControl({ field, settings, disabled, errors, path, collecti
           {collections.filter((item) => item.group === group).map((item) => <option key={item.slug} value={item.slug}>{item.title}</option>)}
         </optgroup>)}
       </select>
-      <small className={styles.help}>{text && !known ? 'Esta coleção não existe mais no catálogo; o bloco fica oculto até você escolher outra.' : 'Mostra os primeiros 8 produtos, com os preços de hoje.'}</small>{err}</div>
+      <small className={styles.help}>{text && !known ? 'Esta coleção não existe mais no catálogo; o bloco fica oculto até você escolher outra.' : `Mostra os primeiros ${settings.count ?? 8} produtos, com os preços de hoje.`}</small>{err}</div>
   }
   if (field.kind === 'number') {
-    return <div className={styles.field}><label htmlFor={id}>{field.label} <b>{typeof value === 'number' ? value : field.min ?? 0}px</b></label>
-      <input id={id} type="range" min={field.min} max={field.max} step={8} value={typeof value === 'number' ? value : field.min ?? 0} disabled={disabled} onChange={(event) => set(Number(event.target.value))}/>
+    return <div className={styles.field}><label htmlFor={id}>{field.label} <b>{typeof value === 'number' ? value : field.min ?? 0}{field.unit ?? 'px'}</b></label>
+      <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 8} value={typeof value === 'number' ? value : field.min ?? 0} disabled={disabled} onChange={(event) => set(Number(event.target.value))}/>
       {help}{err}</div>
   }
   if (field.kind === 'items') {

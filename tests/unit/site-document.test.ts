@@ -16,9 +16,9 @@ const errorsOf = (input: unknown) => {
 }
 
 describe('documento padrão da home', () => {
-  it('reproduz a home de antes do editor', () => {
+  it('reproduz a home de antes do editor, com as coleções logo abaixo da vitrine', () => {
     const doc = defaultHomeDocument({})
-    expect(doc.sections.map((section) => section.type)).toEqual(['hero', 'campaign', 'catalog', 'selections', 'guides', 'howItWorks'])
+    expect(doc.sections.map((section) => section.type)).toEqual(['hero', 'campaign', 'catalog', ...Array(5).fill('collection'), 'selections', 'guides', 'howItWorks'])
     expect(doc.sections.every((section) => !section.hidden)).toBe(true)
     expect(doc.sections[0].settings).toMatchObject({ title: 'Bons produtos.', accent: 'Preços que valem.', buttonLabel: 'Ver ofertas' })
     expect(doc.sections.find((section) => section.type === 'guides')?.settings.title).toBe('Antes de comprar.')
@@ -31,7 +31,7 @@ describe('documento padrão da home', () => {
       sectionOrder: ['howItWorks', 'catalog'], show_guides: false, show_selections: false,
     })
     expect(doc.sections[0].settings).toMatchObject({ title: 'Achados.', accent: 'Todo dia.', text: 'Texto novo.', buttonLabel: 'Entrar' })
-    const rest = doc.sections.slice(2)
+    const rest = doc.sections.slice(2).filter((section) => section.type !== 'collection')
     // As que o setting não citou entram no fim, na ordem original.
     expect(rest.map((section) => section.type)).toEqual(['howItWorks', 'catalog', 'selections', 'guides'])
     expect(Object.fromEntries(rest.map((section) => [section.type, section.hidden]))).toMatchObject({ guides: true, selections: true, catalog: false })
