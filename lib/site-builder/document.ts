@@ -301,7 +301,7 @@ export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
         // Cada coleção é um bloco próprio (título e texto seguem a regra da coleção); some sozinho se ela ficar vazia.
         const collections = homeCollections.map(({ slug, name }): Section => ({
           id: `colecao-${slug}`, type: 'collection', name, hidden: hidden('collections'), archived: false,
-          settings: { collection: slug, count: 4, buttonLabel: 'Ver coleção' },
+          settings: { collection: slug, count: 8, buttonLabel: 'Ver coleção' },
         }))
         return [section, ...collections]
       }),

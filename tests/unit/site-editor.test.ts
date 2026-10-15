@@ -94,7 +94,7 @@ describe('coleções na home padrão', () => {
     expect(collections.length).toBeGreaterThanOrEqual(5)
     expect(order.slice(catalog + 1, catalog + 1 + collections.length).every((type) => type === 'collection')).toBe(true)
     expect(new Set(collections.map((section) => section.settings.collection)).size).toBe(collections.length)
-    expect(collections.every((section) => section.settings.count === 4)).toBe(true)
+    expect(collections.every((section) => section.settings.count === 8)).toBe(true)
   })
 
   it('só aponta para coleções automáticas que existem e passa na validação', () => {
