@@ -40,6 +40,10 @@ export type SelectionOptions = {
   /** Itens caros vendem menos unidades; o corte de vendas é menor nas faixas altas. */
   minSales: TierMix
   maxPerShop: number
+  /** Nomes (por `nameKey`) que a categoria já tem; ao acumular, não repete o mesmo produto de outra loja. */
+  knownKeys?: ReadonlySet<string>
+  /** Quantos produtos cada loja (por nome) já tem no catálogo; soma-se ao que a importação atual escolheu. */
+  shopBaseline?: ReadonlyMap<string, number>
 }
 
 export type SelectionState = { seen: Set<string>; perShop: Map<number, number> }
@@ -104,8 +108,8 @@ export function selectForCategory(candidates: Candidate[], options: SelectionOpt
 
   const take = (item: Candidate & { tier: TierId }, respectSourceCap: number | null) => {
     const key = nameKey(item.offer.productName)
-    if (keys.has(key)) return false
-    if ((perShop.get(item.offer.shopId) ?? 0) >= options.maxPerShop) return false
+    if (keys.has(key) || options.knownKeys?.has(key)) return false
+    if ((perShop.get(item.offer.shopId) ?? 0) + (options.shopBaseline?.get(item.offer.shopName) ?? 0) >= options.maxPerShop) return false
     const bucket = `${item.tier}:${item.source}`
     if (respectSourceCap !== null && (perSource.get(bucket) ?? 0) >= respectSourceCap) return false
     chosen.push(item)

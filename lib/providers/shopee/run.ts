@@ -6,6 +6,11 @@ import { closeRun, openRun } from './job-runs'
 /** Só arquiva produtos que saíram da seleção se a importação trouxe uma parte razoável do catálogo atual. */
 export const MIN_COVERAGE_TO_PRUNE = 0.7
 
+/** Ofertas que cada busca traz ao acumular: mais fundo que o top de vendas, onde estão os produtos novos. */
+const ACCUMULATE_DEPTH = 150
+/** Novos por categoria a cada importação quando a leitura do painel falha. */
+const DEFAULT_NEW_PER_CATEGORY = 10
+
 let running: Promise<CatalogRunResult> | null = null
 
 export type CatalogRunResult = {
@@ -13,6 +18,9 @@ export type CatalogRunResult = {
   updated: number
   priceChanges: number
   selected: number
+  /** Produtos novos nesta importação (ao acumular) e quantos antigos foram reatualizados. */
+  added: number
+  refreshed: number
   archived: number
   prunedSkipped: boolean
   catalog: { products: number; offers: number; withAffiliate: number }
@@ -21,10 +29,13 @@ export type CatalogRunResult = {
 
 export const CATALOG_JOB_TYPE = 'catalog_import'
 
-async function execute(): Promise<CatalogRunResult> {
+/** `refreshBudget` menor nas execuções dentro de uma função da Vercel (limite de 300 s); o worker da VPS usa o do padrão. */
+export type RunOptions = { refreshBudget?: number }
+
+async function execute(options: RunOptions): Promise<CatalogRunResult> {
   const runId = await openRun(CATALOG_JOB_TYPE, '0 6 * * *')
   try {
-    const result = await runImport()
+    const result = await runImport(options)
     await closeRun(runId, {
       status: result.selected === 0 ? 'partial' : 'succeeded',
       processed: result.selected, created: result.created, updated: result.updated, rejected: result.archived,
@@ -36,21 +47,29 @@ async function execute(): Promise<CatalogRunResult> {
   }
 }
 
-async function runImport(): Promise<CatalogRunResult> {
+async function runImport(options: RunOptions): Promise<CatalogRunResult> {
   const startedAt = Date.now()
   const before = await countCatalog()
   // Termos de datas comerciais que a equipe aprovou na Engine; se a leitura falhar, a importação segue sem eles.
   const extraKeywords = await activeSeasonalTerms().catch(() => [])
   // Os números da importação vêm do painel (Engine → Importação); se a leitura falhar, valem os padrões.
   const [settings, categoryBonus] = await Promise.all([loadImportSettings().catch(() => null), activeCategoryBonuses().catch(() => ({}))])
+  // Por padrão o catálogo acumula (cresce todo dia, sem limite); desligado, volta a ser uma seleção fixa por categoria.
+  const accumulate = settings ? settings.accumulate : true
   const result = await importShopeeCatalog({
-    prune: false, extraKeywords, categoryBonus,
-    ...(settings ? { perCategory: settings.perCategory, minRating: settings.minRating, minSales: settings.minSales, maxPerShop: settings.maxPerShop } : {}),
+    prune: false, extraKeywords, categoryBonus, accumulate,
+    ...(options.refreshBudget !== undefined ? { refreshBudget: options.refreshBudget } : {}),
+    ...(accumulate ? { perKeyword: ACCUMULATE_DEPTH } : {}),
+    ...(settings ? {
+      perCategory: accumulate ? settings.newPerCategory : settings.perCategory,
+      minRating: settings.minRating, minSales: settings.minSales, maxPerShop: settings.maxPerShop, maxCatalog: settings.maxCatalog,
+    } : { perCategory: accumulate ? DEFAULT_NEW_PER_CATEGORY : undefined }),
   })
 
   let pruned: string[] = []
+  // A poda por cobertura só existe na seleção fixa; acumulando, nada sai da vitrine só por não estar entre os melhores de hoje.
   const coverage = before.products > 0 ? result.total / before.products : 1
-  if (result.total >= 5 && coverage >= MIN_COVERAGE_TO_PRUNE) {
+  if (!accumulate && result.total >= 5 && coverage >= MIN_COVERAGE_TO_PRUNE) {
     pruned = await archiveProductsOutsideSelection(result.externalIds, result.providerId)
   }
 
@@ -59,8 +78,10 @@ async function runImport(): Promise<CatalogRunResult> {
     updated: result.summary.updated,
     priceChanges: result.summary.priceChanges,
     selected: result.total,
-    archived: pruned.length,
-    prunedSkipped: pruned.length === 0 && coverage < MIN_COVERAGE_TO_PRUNE,
+    added: result.newItems,
+    refreshed: result.refreshed,
+    archived: pruned.length + result.qualityArchived.length,
+    prunedSkipped: !accumulate && pruned.length === 0 && coverage < MIN_COVERAGE_TO_PRUNE,
     catalog: result.catalog,
     durationMs: Date.now() - startedAt,
   }
@@ -70,7 +91,7 @@ async function runImport(): Promise<CatalogRunResult> {
  * Importa o catálogo da Shopee e poda o que saiu da seleção (com a salvaguarda de cobertura).
  * Uma única execução por vez por instância: pedidos simultâneos (cron + botão do admin) compartilham o resultado.
  */
-export function runCatalogImport(): Promise<CatalogRunResult> {
-  if (!running) running = execute().finally(() => { running = null })
+export function runCatalogImport(options: RunOptions = {}): Promise<CatalogRunResult> {
+  if (!running) running = execute(options).finally(() => { running = null })
   return running
 }

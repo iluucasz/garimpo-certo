@@ -1,4 +1,4 @@
-import { and, eq, isNull, desc, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../client'
 import { brands, categories, offers, priceHistory, productCategories, productImages, productTags, products, providers, tags } from '../schema'
 import { slugify, type CatalogItem } from '@/lib/providers/shopee/mapping'
@@ -183,6 +183,52 @@ export async function archiveProductsOutsideSelection(externalIds: string[], pro
     await db.update(offers).set({ status: 'removed' }).where(eq(offers.productId, row.id))
   }
   return sobrando.map((row) => row.slug)
+}
+
+export type KnownProduct = {
+  externalId: string
+  name: string
+  status: string
+  sellerName: string | null
+  categorySlug: string | null
+  lastSyncedAt: string | null
+}
+
+/** Provedor já cadastrado (sem criar nada); '' quando ainda não existe. */
+export async function findProviderId(code: string) {
+  const [row] = await db.select({ id: providers.id }).from(providers).where(eq(providers.code, code))
+  return row?.id ?? ''
+}
+
+/**
+ * Tudo o que o parceiro já tem no banco, ativo ou não: a importação que acumula usa isto para não repetir produtos
+ * e para reatualizar os mais antigos.
+ */
+export async function listKnownProducts(providerId: string): Promise<KnownProduct[]> {
+  const rows = await db.select({
+    externalId: offers.externalId, name: products.name, status: products.status, sellerName: offers.sellerName,
+    categorySlug: categories.slug, lastSyncedAt: offers.lastSyncedAt,
+  }).from(offers)
+    .innerJoin(products, eq(products.id, offers.productId))
+    .leftJoin(productCategories, and(eq(productCategories.productId, products.id), eq(productCategories.isPrimary, true)))
+    .leftJoin(categories, eq(categories.id, productCategories.categoryId))
+    .where(eq(offers.providerId, providerId))
+  const byId = new Map<string, KnownProduct>()
+  for (const row of rows) if (!byId.has(row.externalId)) byId.set(row.externalId, { ...row, status: String(row.status) })
+  return [...byId.values()]
+}
+
+/** Arquiva (nunca apaga) os produtos do parceiro com estes ids externos. */
+export async function archiveProductsByExternalIds(externalIds: string[], providerId: string) {
+  if (externalIds.length === 0) return [] as string[]
+  const rows = await db.select({ id: products.id, slug: products.slug })
+    .from(products).innerJoin(offers, eq(offers.productId, products.id))
+    .where(and(eq(products.status, 'active'), eq(offers.providerId, providerId), inArray(offers.externalId, externalIds)))
+  for (const row of rows) {
+    await db.update(products).set({ status: 'removed', updatedAt: new Date().toISOString() }).where(eq(products.id, row.id))
+    await db.update(offers).set({ status: 'removed' }).where(eq(offers.productId, row.id))
+  }
+  return rows.map((row) => row.slug)
 }
 
 export async function countCatalog() {

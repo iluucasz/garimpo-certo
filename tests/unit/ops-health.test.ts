@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageHours, evaluatePrivacy, evaluateRoutine, summarize, thresholds } from '@/lib/ops/health'
+import { ageHours, evaluateCatalogSize, evaluatePrivacy, evaluateRoutine, summarize, thresholds } from '@/lib/ops/health'
 
 const NOW = Date.UTC(2026, 9, 13, 12, 0, 0)
 const hoursAgo = (hours: number) => new Date(NOW - hours * 3_600_000).toISOString()
@@ -63,5 +63,13 @@ describe('resumo', () => {
     expect(summarize([make('ok'), make('warning')], NOW).status).toBe('warning')
     expect(summarize([make('warning'), make('critical')], NOW).status).toBe('critical')
     expect(ageHours(null, NOW)).toBeNull()
+  })
+})
+
+describe('tamanho do catálogo', () => {
+  it('avisa quando o catálogo cresce além do que as páginas aguentam bem', () => {
+    expect(evaluateCatalogSize(440).severity).toBe('ok')
+    expect(evaluateCatalogSize(thresholds.catalogSizeWarn).severity).toBe('warning')
+    expect(evaluateCatalogSize(thresholds.catalogSizeCritical).severity).toBe('critical')
   })
 })

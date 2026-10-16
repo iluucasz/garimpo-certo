@@ -14,6 +14,9 @@ async function main() {
     maxPerShop: flag('max-per-shop', 2),
     replaceDemo: process.argv.includes('--replace-demo'),
     prune: process.argv.includes('--prune'),
+    // Acumula: só acrescenta produtos novos e reatualiza os antigos (sem limite de tamanho).
+    accumulate: process.argv.includes('--accumulate'),
+    maxCatalog: flag('max-catalog', 0),
   }
   console.log('Importando catálogo real da Shopee...', options)
   try {
@@ -21,6 +24,8 @@ async function main() {
     console.log(`\nImportados: ${result.summary.created} novos, ${result.summary.updated} atualizados, ${result.summary.priceChanges} com preço registrado no histórico.`)
     if (result.removed.length) console.log(`Arquivados ${result.removed.length} produtos sem oferta de afiliado: ${result.removed.join(', ')}`)
     if (result.pruned.length) console.log(`Arquivados ${result.pruned.length} produtos que saíram da seleção desta importação.`)
+    if (result.qualityArchived.length) console.log(`Arquivados ${result.qualityArchived.length} produtos que perderam a nota mínima ou saíram da Shopee.`)
+    if (options.accumulate) console.log(`${result.newItems} novos e ${result.refreshed} reatualizados.`)
     console.log(`Catálogo agora: ${result.catalog.products} produtos, ${result.catalog.offers} ofertas (${result.catalog.withAffiliate} com link de afiliado).`)
   } catch (error) {
     if (error instanceof ShopeeApiError) console.error(`Erro da API da Shopee${error.code ? ` (código ${error.code})` : ''}: ${error.message}`)

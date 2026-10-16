@@ -112,6 +112,19 @@ describe('seleção do catálogo por faixa de preço', () => {
     expect(result.byTier.essencial).toBe(8)
   })
 
+  it('ao acumular, não repete o produto que a categoria já tem (mesmo nome, outra loja)', () => {
+    const repeated = candidate({ productName: 'Garrafa Termica Inox 500ml', price: 40 })
+    const other = candidate({ productName: 'Copo Termico Com Canudo 1 litro', price: 45 })
+    const result = selectForCategory([repeated, other], options({ knownKeys: new Set([nameKey('Garrafa Termica Inox 500ml')]) }), fresh())
+    expect(result.offers.map((item) => item.itemId)).toEqual([other.offer.itemId])
+  })
+
+  it('ao acumular, conta as lojas que já estão no catálogo no limite por loja', () => {
+    const batch = Array.from({ length: 4 }, () => candidate({ shopName: 'Loja Grande', shopId: 99, price: 30 }))
+    const result = selectForCategory(batch, options({ maxPerShop: 3, shopBaseline: new Map([['Loja Grande', 2]]) }), fresh())
+    expect(result.offers).toHaveLength(1)
+  })
+
   it('ignora ofertas sem imagem, sem link ou sem preço', () => {
     const result = selectForCategory([candidate({ imageUrl: '' }), candidate({ offerLink: '' }), candidate({ price: 0, priceMin: '0', priceMax: '0' }), candidate()], options(), fresh())
     expect(result.offers).toHaveLength(1)

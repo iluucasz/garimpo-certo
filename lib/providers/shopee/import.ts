@@ -1,7 +1,7 @@
-import { fetchAllProductOffers, type ShopeeProductOffer } from './client'
+import { fetchAllProductOffers, fetchProductOffers, type ShopeeProductOffer } from './client'
 import { toCatalogItem, type CatalogItem } from './mapping'
-import { defaultMix, highTicketMix, selectForCategory, tierLabels, type Candidate, type SelectionState, type TierMix } from './selection'
-import { archiveProductsOutsideSelection, archiveProductsWithoutAffiliateOffer, countCatalog, getOrCreateProvider, importCatalogItems } from '@/lib/db/repositories/catalog-import'
+import { defaultMix, highTicketMix, nameKey, selectForCategory, tierLabels, type Candidate, type SelectionState, type TierMix } from './selection'
+import { archiveProductsByExternalIds, archiveProductsOutsideSelection, archiveProductsWithoutAffiliateOffer, countCatalog, findProviderId, getOrCreateProvider, importCatalogItems, listKnownProducts } from '@/lib/db/repositories/catalog-import'
 
 /**
  * Cada categoria da vitrine é alimentada por três tipos de busca na Shopee:
@@ -36,8 +36,12 @@ export const categoryGroups: readonly CategorySource[] = [
 ]
 
 export type ImportOptions = {
-  /** Produtos por categoria. Padrão 24 (era 12): com 11 categorias, cerca de 260 produtos. */
+  /**
+   * Produtos por categoria. Sem acumular é o total desejado de cada categoria; ao acumular é quantos produtos
+   * NOVOS entram por categoria a cada importação.
+   */
   perCategory?: number
+  /** Quantas ofertas cada busca traz (de 50 em 50, por vendas). Quanto mais fundo, mais produtos novos aparecem. */
   perKeyword?: number
   minRating?: number
   /** Corte de vendas da faixa básica; as faixas altas usam proporções menores (itens caros vendem menos). */
@@ -51,15 +55,31 @@ export type ImportOptions = {
   extraKeywords?: { category: string; keyword: string }[]
   /** Produtos a mais por categoria (slug), aprovados na Engine para as que rendem acima da média. */
   categoryBonus?: Record<string, number>
+  /**
+   * Acumula: o catálogo só cresce. Mantém o que já entrou, acrescenta produtos novos todo dia e reatualiza os
+   * existentes (arquiva o que perdeu a nota mínima ou saiu da Shopee). Não há limite de tamanho.
+   */
+  accumulate?: boolean
+  /** Teto de produtos ativos ao acumular; 0 ou ausente = sem limite. */
+  maxCatalog?: number
+  /** Quantos produtos antigos são reatualizados por importação, os de sincronização mais antiga primeiro. */
+  refreshBudget?: number
 }
 
 type Counted = { offers: ShopeeProductOffer[]; failed: boolean }
 
 const SEARCH_CONCURRENCY = 3
+/** Teto técnico por categoria (era 80): só existe para um valor digitado errado não pedir milhares de buscas. */
+export const MAX_PER_CATEGORY = 2000
+/** Reatualizações por importação quando o painel não define. Cada uma é uma chamada à API da Shopee. */
+export const DEFAULT_REFRESH_BUDGET = 300
+/** Ao acumular, uma loja pode ter até esta fração do catálogo (mínimo `maxPerShop`), para o catálogo grande não ficar travado em 2 por loja. */
+export const SHOP_SHARE = 0.005
 
 async function search(query: Parameters<typeof fetchAllProductOffers>[0], total: number): Promise<Counted> {
   try {
-    return { offers: await fetchAllProductOffers({ ...query, sortType: 2 }, total, 2), failed: false }
+    const pages = Math.max(2, Math.ceil(total / 50))
+    return { offers: await fetchAllProductOffers({ ...query, sortType: 2 }, total, pages), failed: false }
   } catch (error) {
     // Uma busca que falha não derruba a importação inteira; a categoria segue com as demais.
     console.warn(`  busca ignorada (${JSON.stringify(query)}): ${error instanceof Error ? error.message : error}`)
@@ -67,20 +87,63 @@ async function search(query: Parameters<typeof fetchAllProductOffers>[0], total:
   }
 }
 
+const priceOf = (offer: ShopeeProductOffer) => Number(offer.priceMin) || Number(offer.price) || 0
+const isUsable = (offer: ShopeeProductOffer) => Boolean(offer.imageUrl) && Boolean(offer.offerLink) && priceOf(offer) > 0
+
+/** Quantas lojas diferentes cada nome de vendedor já tem no catálogo ativo. */
+export function shopCounts(sellers: (string | null)[]) {
+  const counts = new Map<string, number>()
+  for (const seller of sellers) if (seller) counts.set(seller, (counts.get(seller) ?? 0) + 1)
+  return counts
+}
+
 export async function importShopeeCatalog(options: ImportOptions = {}) {
-  const { perCategory = 40, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false, extraKeywords = [], categoryBonus = {} } = options
-  const providerId = dryRun ? '' : await getOrCreateProvider('shopee', 'Shopee')
+  const {
+    perCategory = 40, perKeyword = 40, minRating = 4.5, minSales = 50, maxPerShop = 2, replaceDemo = false, prune = false, dryRun = false,
+    extraKeywords = [], categoryBonus = {}, accumulate = false, maxCatalog = 0, refreshBudget = DEFAULT_REFRESH_BUDGET,
+  } = options
+  const providerId = dryRun ? await findProviderId('shopee') : await getOrCreateProvider('shopee', 'Shopee')
   const categoryNames = Object.fromEntries(categoryGroups.map((group) => [group.slug, group.name]))
   const state: SelectionState = { seen: new Set<string>(), perShop: new Map<number, number>() }
   const selected: CatalogItem[] = []
   const minSalesByTier: TierMix = { essencial: minSales, intermediario: Math.max(10, Math.round(minSales * 0.6)), premium: Math.max(5, Math.round(minSales * 0.3)) }
 
+  // Ao acumular: o que já existe não é escolhido de novo (nem o que foi arquivado), e a seleção respeita o que o catálogo já tem.
+  const known = accumulate && providerId ? await listKnownProducts(providerId) : []
+  const knownById = new Map(known.map((item) => [item.externalId, item]))
+  const active = known.filter((item) => item.status === 'active')
+  for (const item of known) state.seen.add(item.externalId)
+  const shopBaseline = shopCounts(active.map((item) => item.sellerName))
+  const keysByCategory = new Map<string, Set<string>>()
+  for (const item of active) {
+    if (!item.categorySlug) continue
+    const keys = keysByCategory.get(item.categorySlug) ?? new Set<string>()
+    keys.add(nameKey(item.name))
+    keysByCategory.set(item.categorySlug, keys)
+  }
+  const shopCap = accumulate ? Math.max(maxPerShop, Math.ceil(active.length * SHOP_SHARE)) : maxPerShop
+  let room = accumulate && maxCatalog > 0 ? Math.max(0, maxCatalog - active.length) : Number.POSITIVE_INFINITY
+  const refreshed = new Map<string, CatalogItem>()
+  const toArchive = new Set<string>()
+  const depth = Math.max(perKeyword, accumulate ? 100 : perKeyword)
+
+  /** Produto que já está no catálogo e voltou nas buscas: reatualiza, ou arquiva se perdeu a nota mínima. */
+  function absorb(offer: ShopeeProductOffer, fallbackCategory: string) {
+    const id = String(offer.itemId)
+    const existing = knownById.get(id)
+    if (!existing || existing.status !== 'active' || refreshed.has(id) || toArchive.has(id)) return
+    const category = existing.categorySlug ?? fallbackCategory
+    if (!category || !isUsable(offer)) return
+    if ((Number(offer.ratingStar) || 0) < minRating) { toArchive.add(id); return }
+    refreshed.set(id, toCatalogItem(offer, category))
+  }
+
   for (const group of categoryGroups) {
     const queries: { query: Parameters<typeof fetchAllProductOffers>[0]; total: number; source: string }[] = [
-      ...group.keywords.map((keyword) => ({ query: { keyword }, total: perKeyword, source: `kw:${keyword}` })),
-      ...(group.premiumKeywords ?? []).map((keyword) => ({ query: { keyword }, total: perKeyword, source: `pk:${keyword}` })),
+      ...group.keywords.map((keyword) => ({ query: { keyword }, total: depth, source: `kw:${keyword}` })),
+      ...(group.premiumKeywords ?? []).map((keyword) => ({ query: { keyword }, total: depth, source: `pk:${keyword}` })),
       ...(group.shopeeCategoryIds ?? []).map((productCatId) => ({ query: { productCatId }, total: 100, source: `cat:${productCatId}` })),
-      ...extraKeywords.filter((extra) => extra.category === group.slug).map((extra) => ({ query: { keyword: extra.keyword }, total: perKeyword, source: `seasonal:${extra.keyword}` })),
+      ...extraKeywords.filter((extra) => extra.category === group.slug).map((extra) => ({ query: { keyword: extra.keyword }, total: depth, source: `seasonal:${extra.keyword}` })),
     ]
     // Poucas buscas ao mesmo tempo: a API da Shopee limita a taxa, e o cliente já refaz a chamada quando recusa.
     const results: Counted[] = []
@@ -91,24 +154,64 @@ export async function importShopeeCatalog(options: ImportOptions = {}) {
     if (failures === queries.length) throw new Error(`Nenhuma busca da categoria ${group.name} funcionou; a importação foi interrompida.`)
     // A ordem das fontes é a de `queries`, para a seleção ser determinística.
     const candidates: Candidate[] = results.flatMap((item, index) => item.offers.map((offer) => ({ offer, source: queries[index].source })))
+    if (accumulate) for (const { offer } of candidates) absorb(offer, group.slug)
 
-    const result = selectForCategory(candidates, {
-      perCategory: Math.min(80, perCategory + (categoryBonus[group.slug] ?? 0)), minRating, maxPerShop, minSales: minSalesByTier,
-      mix: group.mix === 'highTicket' ? highTicketMix : defaultMix,
-    }, state)
+    const wanted = Math.min(MAX_PER_CATEGORY, perCategory + (categoryBonus[group.slug] ?? 0))
+    const allowed = Math.min(wanted, room)
+    const result = allowed > 0
+      ? selectForCategory(candidates, {
+        perCategory: allowed, minRating, maxPerShop: shopCap, minSales: minSalesByTier,
+        mix: group.mix === 'highTicket' ? highTicketMix : defaultMix,
+        ...(accumulate ? { knownKeys: keysByCategory.get(group.slug), shopBaseline } : {}),
+      }, state)
+      : { offers: [] as ShopeeProductOffer[], analyzed: candidates.length, byTier: { essencial: 0, intermediario: 0, premium: 0 } as TierMix }
+    room -= result.offers.length
     selected.push(...result.offers.map((offer) => toCatalogItem(offer, group.slug)))
     const tiers = (['essencial', 'intermediario', 'premium'] as const).map((tier) => `${tierLabels[tier]}: ${result.byTier[tier]}`).join(' · ')
-    console.log(`${group.name}: ${result.offers.length} produtos (${tiers}) de ${result.analyzed} ofertas analisadas${failures ? `, ${failures} busca(s) falharam` : ''}`)
+    console.log(`${group.name}: ${result.offers.length} ${accumulate ? 'novos' : 'produtos'} (${tiers}) de ${result.analyzed} ofertas analisadas${failures ? `, ${failures} busca(s) falharam` : ''}`)
   }
+
+  // Produtos antigos que não voltaram nas buscas: reatualiza os de sincronização mais antiga, pelo id, dentro do orçamento.
+  if (accumulate && !dryRun && refreshBudget > 0) {
+    const due = active
+      .filter((item) => !refreshed.has(item.externalId) && !toArchive.has(item.externalId))
+      .sort((a, b) => (a.lastSyncedAt ?? '').localeCompare(b.lastSyncedAt ?? ''))
+      .slice(0, refreshBudget)
+    const missing: string[] = []
+    let looked = 0
+    for (let start = 0; start < due.length; start += SEARCH_CONCURRENCY) {
+      await Promise.all(due.slice(start, start + SEARCH_CONCURRENCY).map(async (item) => {
+        try {
+          const { nodes } = await fetchProductOffers({ itemId: Number(item.externalId), limit: 1 })
+          looked += 1
+          const offer = nodes.find((node) => String(node.itemId) === item.externalId)
+          if (offer) absorb(offer, '')
+          else missing.push(item.externalId)
+        } catch {
+          // Falha da API não é motivo para mexer no produto: ele é tentado de novo na próxima importação.
+        }
+      }))
+    }
+    // Salvaguarda: se "sumiu" for uma fatia grande das consultas, é a API falhando, não a Shopee tirando tudo do ar.
+    if (looked > 0 && missing.length / looked <= 0.2) for (const id of missing) toArchive.add(id)
+    console.log(`Reatualizados ${due.length - missing.length} produtos antigos${missing.length ? `; ${missing.length} sem resposta da Shopee` : ''}.`)
+  }
+
+  const everything = [...selected, ...refreshed.values()]
 
   if (dryRun) {
     return {
-      summary: { created: 0, updated: 0, priceChanges: 0 }, removed: [] as string[], pruned: [] as string[], total: selected.length,
-      externalIds: selected.map((item) => item.externalId), providerId, catalog: { products: 0, offers: 0, withAffiliate: 0 }, items: selected,
+      summary: { created: 0, updated: 0, priceChanges: 0 }, removed: [] as string[], pruned: [] as string[], qualityArchived: [...toArchive],
+      total: everything.length, newItems: selected.length, refreshed: refreshed.size,
+      externalIds: everything.map((item) => item.externalId), providerId, catalog: { products: 0, offers: 0, withAffiliate: 0 }, items: everything,
     }
   }
-  const summary = await importCatalogItems(selected, providerId, categoryNames)
+  const summary = await importCatalogItems(everything, providerId, categoryNames)
   const removed = replaceDemo ? await archiveProductsWithoutAffiliateOffer() : []
-  const pruned = prune ? await archiveProductsOutsideSelection(selected.map((item) => item.externalId), providerId) : []
-  return { summary, removed, pruned, total: selected.length, externalIds: selected.map((item) => item.externalId), providerId, catalog: await countCatalog(), items: selected }
+  const pruned = prune ? await archiveProductsOutsideSelection(everything.map((item) => item.externalId), providerId) : []
+  const qualityArchived = await archiveProductsByExternalIds([...toArchive], providerId)
+  return {
+    summary, removed, pruned, qualityArchived, total: everything.length, newItems: selected.length, refreshed: refreshed.size,
+    externalIds: everything.map((item) => item.externalId), providerId, catalog: await countCatalog(), items: everything,
+  }
 }

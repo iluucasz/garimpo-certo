@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   if (auth === 'denied') return fail('Não autorizado.', 401)
 
   try {
-    const result = await runCatalogImport()
+    const result = await runCatalogImport({ refreshBudget: 40 })
     // Faz a vitrine e as páginas de produto refletirem a importação já na próxima visita.
     revalidateTag('catalog', 'max')
     revalidateTag('metrics', 'max')

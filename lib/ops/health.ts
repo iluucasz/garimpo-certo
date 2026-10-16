@@ -16,6 +16,9 @@ export const thresholds = {
   conversionsCriticalHours: 26,
   privacyWarnDays: 10,
   privacyCriticalDays: 15,
+  /** O site envia o catálogo inteiro ao navegador (≈ 2 KB por produto): passando disso as páginas ficam pesadas. */
+  catalogSizeWarn: 2000,
+  catalogSizeCritical: 5000,
 } as const
 
 const worst = (...values: Severity[]): Severity => values.includes('critical') ? 'critical' : values.includes('warning') ? 'warning' : 'ok'
@@ -51,6 +54,15 @@ export function evaluatePrivacy(input: { pending: number; oldestAt: string | nul
   const noun = input.pending === 1 ? '1 pedido' : `${input.pending} pedidos`
   const tail = severity === 'critical' ? ' O prazo de 15 dias da LGPD venceu.' : severity === 'warning' ? ' O prazo de 15 dias da LGPD está perto.' : ''
   return { ...base, severity, message: `${noun} aguardando resposta; o mais antigo tem ${Math.floor(days)} ${Math.floor(days) === 1 ? 'dia' : 'dias'}.${tail}`, since: input.oldestAt }
+}
+
+/** Tamanho do catálogo ativo. O catálogo pode crescer sem limite, mas o peso das páginas cresce junto. */
+export function evaluateCatalogSize(active: number): HealthCheck {
+  const base = { id: 'tamanho', label: 'Tamanho do catálogo', href: '/admin/engine', since: null }
+  const count = active.toLocaleString('pt-BR')
+  if (active >= thresholds.catalogSizeCritical) return { ...base, severity: 'critical', message: `${count} produtos ativos: as páginas estão pesadas. Defina um limite total ou peça a busca no servidor.` }
+  if (active >= thresholds.catalogSizeWarn) return { ...base, severity: 'warning', message: `${count} produtos ativos: acima de ${thresholds.catalogSizeWarn.toLocaleString('pt-BR')} o site começa a ficar pesado.` }
+  return { ...base, severity: 'ok', message: `${count} produtos ativos.` }
 }
 
 export function summarize(checks: HealthCheck[], now: number): OpsHealth {
@@ -100,6 +112,8 @@ export async function getOpsHealth(now = Date.now()): Promise<OpsHealth> {
       run: run('conversion_sync'), warnHours: thresholds.conversionsWarnHours, criticalHours: thresholds.conversionsCriticalHours,
       neverMessage: 'Ainda não sincronizou. Atualize o worker da VPS ou use o botão em Analytics.',
     }))
+
+    checks.push(evaluateCatalogSize(Number(catalogRow?.active ?? 0)))
 
     const dead = Number((queue.rows[0] as { dead: number }).dead)
     checks.push({

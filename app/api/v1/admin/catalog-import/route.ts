@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const { blocked } = await authorize(request, 'jobs:run')
   if (blocked) return blocked
   try {
-    const result = await runCatalogImport()
+    const result = await runCatalogImport({ refreshBudget: 40 })
     revalidateTag('catalog', 'max')
     revalidateTag('metrics', 'max')
     return ok(result)

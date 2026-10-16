@@ -249,16 +249,20 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     permission: 'catalog:write',
     fields: [
       { key: 'enabled', label: 'Importação diária ligada', type: 'boolean', help: 'Desligada, o worker não importa às 6h. Dá para importar à mão em Importações.' },
-      numberField('perCategory', 'Produtos por categoria', 10, 80, 'Com 11 categorias, 40 dá cerca de 440 produtos. Quanto maior, mais tempo a importação leva.', 'produtos'),
+      { key: 'accumulate', label: 'Acumular: o catálogo só cresce', type: 'boolean', help: 'Ligado, nada sai por estar fora do top de hoje: a cada importação entram produtos novos e os antigos são reatualizados. Só sai o que perdeu a nota mínima ou saiu da Shopee. Desligado, a vitrine é uma seleção fixa por categoria.' },
+      numberField('newPerCategory', 'Novos por categoria a cada importação', 1, 500, 'Quantos produtos novos entram por categoria, por dia, quando acumula. Com 11 categorias, 10 dá cerca de 110 por dia.', 'produtos'),
+      numberField('maxCatalog', 'Limite total de produtos (0 = sem limite)', 0, 1_000_000, 'Só vale quando acumula. 0 deixa o catálogo crescer sem teto.', 'produtos'),
+      numberField('perCategory', 'Total por categoria (sem acumular)', 10, 2000, 'Usado só com “Acumular” desligado: com 11 categorias, 40 dá cerca de 440 produtos.', 'produtos'),
       numberField('minRating', 'Nota mínima', 4, 5, 'Só entra produto com nota igual ou maior.', 'estrelas', 0.1),
       numberField('minSales', 'Vendas mínimas (faixa até R$ 99)', 10, 500, 'As faixas mais caras usam proporções menores: itens caros vendem menos.', 'vendas'),
       numberField('maxPerShop', 'Máximo por loja, em cada categoria', 1, 5, 'Evita uma vitrine dominada por um vendedor só.', 'produtos'),
     ],
     sections: [
       { title: 'Rotina', description: 'Liga ou desliga a importação das 6h.', keys: ['enabled'] },
-      { title: 'Quanto e com que qualidade', description: 'O que decide quantos produtos entram e quais passam do corte.', keys: ['perCategory', 'minRating', 'minSales', 'maxPerShop'] },
+      { title: 'Quanto entra', description: 'Quantos produtos entram e se o catálogo cresce sem parar.', keys: ['accumulate', 'newPerCategory', 'maxCatalog', 'perCategory'] },
+      { title: 'Qualidade', description: 'O corte que todo produto precisa passar.', keys: ['minRating', 'minSales', 'maxPerShop'] },
     ],
-    defaults: { enabled: true, perCategory: 40, minRating: 4.5, minSales: 50, maxPerShop: 2 },
+    defaults: { enabled: true, accumulate: true, newPerCategory: 10, maxCatalog: 0, perCategory: 40, minRating: 4.5, minSales: 50, maxPerShop: 2 },
   },
   social: {
     key: 'social',

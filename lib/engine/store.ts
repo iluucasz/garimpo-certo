@@ -53,7 +53,10 @@ export async function loadEngineSettings(): Promise<EngineSettings> {
   }
 }
 
-export type ImportSettings = { enabled: boolean; perCategory: number; minRating: number; minSales: number; maxPerShop: number }
+export type ImportSettings = {
+  enabled: boolean; accumulate: boolean; newPerCategory: number; maxCatalog: number
+  perCategory: number; minRating: number; minSales: number; maxPerShop: number
+}
 
 /** Lê `global_settings.import` direto (o worker não tem o cache do Next) por cima dos padrões. */
 export async function loadImportSettings(): Promise<ImportSettings> {
@@ -67,7 +70,10 @@ export async function loadImportSettings(): Promise<ImportSettings> {
   }
   return {
     enabled: merged.enabled !== false,
-    perCategory: Math.round(number('perCategory', 10, 80, 40)),
+    accumulate: merged.accumulate !== false,
+    newPerCategory: Math.round(number('newPerCategory', 1, 500, 10)),
+    maxCatalog: Math.round(number('maxCatalog', 0, 1_000_000, 0)),
+    perCategory: Math.round(number('perCategory', 10, 2000, 40)),
     minRating: number('minRating', 4, 5, 4.5),
     minSales: Math.round(number('minSales', 10, 500, 50)),
     maxPerShop: Math.round(number('maxPerShop', 1, 5, 2)),
