@@ -29,10 +29,10 @@ export function HomeSelections() {
   if (!tiles.length) return null
 
   return <section className={`${styles.selections} container`} id="selecoes" aria-labelledby="selections-title">
-    <div className={styles.sectionHeading}><div><h2 id="selections-title">Escolha pelo que importa.</h2><p>Seleções que se atualizam sozinhas com os dados da Shopee.</p></div><Link href="/colecoes">Todas as coleções <ArrowUpRight aria-hidden="true"/></Link></div>
+    <div className={styles.sectionHeading}><div><h2 id="selections-title">Escolha pelo que importa.</h2></div><Link href="/colecoes">Todas as coleções <ArrowUpRight aria-hidden="true"/></Link></div>
     <div className={styles.selectionGrid}>{tiles.map(({ collection, icon: Icon }) => <Link href={`/colecoes/${collection.slug}`} className={styles.selection} key={collection.slug}>
       <span className={styles.selectionIcon} aria-hidden="true"><Icon/></span>
-      <span className={styles.selectionText}><strong>{collection.title}</strong><span>{collection.tone}</span><small>{collection.total} {collection.total === 1 ? 'produto' : 'produtos'}</small></span>
+      <span className={styles.selectionText}><strong>{collection.title}</strong><small>{collection.total} {collection.total === 1 ? 'produto' : 'produtos'}</small></span>
       <ArrowUpRight aria-hidden="true"/>
     </Link>)}</div>
   </section>

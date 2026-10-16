@@ -100,7 +100,7 @@ export function SocialPostsView() {
           <button type="button" className="btn primary" disabled={busy === 'run' || settings.mode === 'off'} onClick={() => act('run', () => call({ action: 'run' }), (result) => `Rodou: ${String(result.planned)} planejadas, ${String(result.sent)} enviadas, ${String(result.failed)} com falha.`)}><Play aria-hidden="true"/> Rodar agora</button>
         </div>}
       </div>
-      {!data.configured && <p className={styles.note}>Para publicar, crie o bot no @BotFather, adicione-o como administrador do canal e defina <code>TELEGRAM_BOT_TOKEN</code> e <code>TELEGRAM_CHAT_ID</code> no ambiente (Vercel e VPS). Até lá, as postagens ficam na fila e você já vê e aprova o que iria ao ar.</p>}
+      {!data.configured && <p className={styles.note}>Telegram não configurado: as postagens ficam na fila.</p>}
       {data.state?.note && <p className={styles.note}>{data.state.note}</p>}
       {message && <p className={failed ? styles.bad : styles.ok} role={failed ? 'alert' : 'status'}>{message}</p>}
       {data.state && <p className={styles.help}>Última execução: {dateTime(data.state.at)}.</p>}
@@ -108,7 +108,7 @@ export function SocialPostsView() {
 
     {canWrite && <section className="panel" aria-labelledby="posts-create">
       <h2 id="posts-create">Criar uma postagem</h2>
-      <p className={styles.help}>Escolha um produto do catálogo. O texto é gerado com os números reais da oferta e o link leva a etiqueta <code>telegram-{settings.campaign}</code>.</p>
+      
       <div className={styles.row}>
         <input type="search" aria-label="Buscar produto" placeholder="Digite parte do nome do produto" value={search} onChange={(event) => { setSearch(event.target.value); setProductId('') }}/>
         <select aria-label="Produto" value={productId} onChange={(event) => setProductId(event.target.value)} disabled={!products?.length}>

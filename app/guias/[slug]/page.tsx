@@ -38,18 +38,12 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
   const others = guideSlugs(catalog).filter((item) => item !== slug).flatMap((item) => { const found = catalog.categories.find((category) => category.slug === item); return found ? [found] : [] })
   const { stats } = guide
-  const syncedLabel = catalog.syncedAt
-    ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' }).format(new Date(catalog.syncedAt))
-    : null
 
   return <StorefrontShell>
     <div className={`container ${styles.page}`}>
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><Link href="/guias">Guias</Link><span aria-hidden="true">/</span><span aria-current="page">{guide.category.name}</span></nav>
       <header className={styles.header}>
-        <p className={styles.tone}>{guide.count} produtos analisados</p>
         <h1>{guide.title}</h1>
-        <p className={styles.lead}>Reunimos o que vale conferir antes de comprar em {guide.category.name.toLocaleLowerCase('pt-BR')} e mostramos o que se destaca hoje no catálogo, com dados da Shopee.</p>
-        {syncedLabel && <p className={styles.meta}>Dados atualizados em {syncedLabel}.</p>}
       </header>
 
       <section className={styles.facts} aria-label="Resumo da categoria">
@@ -60,13 +54,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
       {guide.checks.length > 0 && <section className={styles.section} aria-labelledby="o-que-observar">
         <h2 id="o-que-observar">O que observar antes de comprar</h2>
-        <p className={styles.sectionLead}>Orientação geral para {guide.category.name.toLocaleLowerCase('pt-BR')}; confirme os detalhes no anúncio de cada produto.</p>
         <ul className={styles.checks}>{guide.checks.map((check) => <li key={check.title}><strong>{check.title}</strong><p>{check.text}</p></li>)}</ul>
       </section>}
 
       {guide.picks.length > 0 && <section className={styles.section} aria-labelledby="destaques">
         <h2 id="destaques">Destaques de hoje</h2>
-        <p className={styles.sectionLead}>Escolhidos por regra, a partir dos números atuais, e não por indicação paga.</p>
         <div className={styles.picks}>{guide.picks.map((pick) => <div className={styles.pick} key={pick.product.id}>
           <span className={styles.pickLabel}><strong>{pick.label}</strong><span>{pick.reason}</span></span>
           <ProductCard product={pick.product}/>
@@ -81,7 +73,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         </div>
       </section>
 
-      <p className={styles.note}>Os botões de compra levam à Shopee por links de afiliado; podemos receber comissão pelas compras feitas por eles. Preços, vendas e estoque podem mudar na loja. <Link href="/como-funciona#afiliados">Como funciona</Link>.</p>
     </div>
   </StorefrontShell>
 }

@@ -446,7 +446,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
       <label className={styles.field}>Título da nova página
         <input value={newTitle} maxLength={70} autoFocus placeholder="Ex.: Presentes para o Dia das Mães" onChange={(event) => { setNewTitle(event.target.value); setCreateError('') }}/>
       </label>
-      <p className={styles.help}>Endereço: <code>/paginas/{slugify(newTitle) || '…'}</code>. A página nasce como rascunho, fora do ar.</p>
+      <p className={styles.help}><code>/paginas/{slugify(newTitle) || '…'}</code></p>
       {createError && <p className={styles.bad} role="alert">{createError}</p>}
       <div className={styles.toolRow}>
         <button type="submit" className="btn primary">Criar página</button>
@@ -456,7 +456,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
 
     {problem && <p className={styles.problem} role="alert">{problem}</p>}
     {notice && <p className={styles.notice} role="status">{notice}</p>}
-    {!canWrite && <p className={styles.notice} role="note">Seu papel só permite consultar a página.</p>}
+    {!canWrite && <p className={styles.notice} role="note">Somente leitura.</p>}
     {recovery && canWrite && <p className={styles.notice} role="status">
       Há alterações deste navegador que não chegaram ao rascunho salvo.{' '}
       <button type="button" className={styles.linkButton} onClick={() => { change(() => recovery); setRecovery(null) }}>Recuperar</button>{' · '}
@@ -466,7 +466,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
     {showVersions && <section className={`panel ${styles.history}`} aria-label="Versões publicadas">
       <h2>Versões publicadas</h2>
       {data.history.length === 0
-        ? <p>Ainda não há versões antigas. Cada publicação guarda a anterior aqui (até 30).</p>
+        ? <p>Sem versões antigas.</p>
         : <ul>{data.history.map((entry) => <li key={entry.id}>
           <span>{dateTime(entry.at)}{isGlobal ? '' : ` · ${entry.sections} seções`}</span>
           {canWrite && <button type="button" className="btn secondary" disabled={busy} onClick={() => action('restore', entry.id)}>Trazer para o rascunho</button>}
@@ -481,11 +481,10 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
             <ol className={styles.areaList}>
               {designAreas.map((area) => <li key={area.id} className={area.id === designArea ? styles.current : undefined}>
                 <button type="button" className={styles.pick} aria-current={area.id === designArea ? 'true' : undefined} onClick={() => onDesignArea(area.id)}>
-                  <span className={styles.name}>{area.label}</span><small>{area.description}</small>
+                  <span className={styles.name} title={area.description}>{area.label}</span>
                 </button>
               </li>)}
             </ol>
-            <p className={styles.help}>Clique no aviso do topo ou no rodapé da prévia para abrir o ajuste.</p>
           </>
           : <>
             <div className={styles.tabs} role="tablist" aria-label="Painel de seções">
@@ -533,8 +532,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
                 })}
                 {dropBefore === null && <li className={styles.dropEnd} aria-hidden="true"/>}
               </ol>
-              {active.length === 0 && <p className={styles.help}>A página está vazia. Use a aba “Adicionar”.</p>}
-              {canWrite && <p className={styles.help}>Arraste pelas alças para reordenar. Os botões ao lado também movem a seção.</p>}
+              {active.length === 0 && <p className={styles.help}>Página vazia.</p>}
             </>}
 
             {panel === 'add' && <Library
@@ -543,7 +541,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
             />}
 
             {panel === 'archived' && <>
-              {archived.length === 0 && <p className={styles.help}>Nenhuma seção arquivada. Arquivar tira a seção da página sem apagar o que foi escrito.</p>}
+              {archived.length === 0 && <p className={styles.help}>Nada arquivado.</p>}
               <ul className={styles.archiveList}>
                 {archived.map((section) => <li key={section.id}>
                   <span><strong>{section.name}</strong><small>{sectionTypes[section.type].label}</small></span>
@@ -563,7 +561,6 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
           selectedId={isGlobal || selected === PAGE_ITEM ? null : selected}
           onSelect={onSelectSection} onGlobal={onGlobalArea} onShortcut={shortcut}
         />
-        <p className={styles.hint}>A prévia é a página real, com o catálogo e as campanhas de hoje. Ela se atualiza depois de cada salvamento automático; clique numa seção para editá-la.</p>
       </section>
 
       <aside className={`panel ${styles.inspector}`} aria-label="Ajustes">
@@ -587,7 +584,7 @@ function Workspace({ docKey, canWrite, pages, collections, device, onDevice, zoo
                 onToggleHidden={() => change((value) => updateSection(value, current.id, { hidden: !current.hidden }))}
                 onArchive={() => archive(current.id)}
               />
-              : <p className={styles.help}>Escolha uma seção na lista, ou clique nela na prévia, para ajustar.</p>}
+              : <p className={styles.help}>Escolha uma seção.</p>}
       </aside>
     </div>
   </div>

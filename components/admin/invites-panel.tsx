@@ -69,11 +69,11 @@ export function InvitesPanel() {
     <div className={styles.inviteBar}>
       <div>
         <h2 id="invites-title" style={{ marginBottom: 4 }}>Equipe</h2>
-        <p className={styles.help}>Convide alguém com o papel certo: a pessoa abre o link e entra com o e-mail convidado. O convite vale por {data?.ttlDays ?? 7} dias.{pending > 0 ? ` ${pending} pendente${pending > 1 ? 's' : ''}.` : ''}</p>
+        <p className={styles.help}>Vale por {data?.ttlDays ?? 7} dias.{pending > 0 ? ` ${pending} pendente${pending > 1 ? 's' : ''}.` : ''}</p>
       </div>
       <button type="button" className="btn primary" onClick={() => setFormOpen((open) => !open)} aria-expanded={formOpen}><MailPlus aria-hidden="true"/> {formOpen ? 'Fechar' : 'Convidar pessoa'}</button>
     </div>
-    {data && !data.emailEnabled && formOpen && <p className={styles.help} style={{ marginTop: 10 }}>O envio por e-mail não está ativo: copie o link e envie você mesmo.</p>}
+    {data && !data.emailEnabled && formOpen && <p className={styles.help} style={{ marginTop: 10 }}>E-mail inativo: copie o link.</p>}
 
     {formOpen && <form onSubmit={create} className={styles.actionsRow} noValidate style={{ marginTop: 14 }}>
       <label className={styles.field} style={{ flex: '1 1 240px' }}>E-mail

@@ -15,7 +15,7 @@ export function ColorField({ label, value, onChange, reset, help, error, disable
   const [hex, setHex] = useState(value)
   useEffect(() => setHex(value), [value])
   const valid = /^#[0-9a-f]{6}$/i.test(value)
-  return <div className={styles.field}>
+  return <div className={styles.field} title={help}>
     <span>{label}</span>
     <div className={styles.colorRow}>
       <input type="color" aria-label={label} value={valid ? value : '#ffffff'} disabled={disabled} onChange={(event) => onChange(event.target.value)}/>
@@ -26,7 +26,6 @@ export function ColorField({ label, value, onChange, reset, help, error, disable
       />
       {reset && !disabled && <button type="button" className={styles.iconButton} aria-label={`Voltar ao padrão: ${label}`} onClick={reset}><X aria-hidden="true"/></button>}
     </div>
-    {help && <small className={styles.help}>{help}</small>}
     {error && <small className={styles.bad} role="alert">{error}</small>}
   </div>
 }
@@ -36,12 +35,11 @@ export function TextInput({ label, value, onChange, multiline, maxLength, help, 
   disabled?: boolean; placeholder?: string; rows?: number
 }) {
   const id = useId()
-  return <div className={styles.field}>
+  return <div className={styles.field} title={help}>
     <label htmlFor={id}>{label}</label>
     {multiline
       ? <textarea id={id} rows={rows ?? 3} maxLength={maxLength} value={value} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)}/>
       : <input id={id} maxLength={maxLength} value={value} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)}/>}
-    {help && <small className={styles.help}>{help}</small>}
     {error && <small className={styles.bad} role="alert">{error}</small>}
   </div>
 }
@@ -56,11 +54,11 @@ export function FieldControl({ field, settings, disabled, errors, path, collecti
   const value = settings[field.key]
   const text = typeof value === 'string' ? value : ''
   const set = (next: unknown) => onChange({ [field.key]: next } as Partial<SectionSettings>)
-  const help = field.help && <small className={styles.help}>{field.help}</small>
+  const help = null
   const err = error && <small className={styles.bad} role="alert">{error}</small>
 
   if (field.kind === 'select') {
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
       <select id={id} value={text || field.options?.[0]?.value} disabled={disabled} onChange={(event) => set(event.target.value)}>
         {field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>{help}{err}</div>
@@ -68,7 +66,7 @@ export function FieldControl({ field, settings, disabled, errors, path, collecti
   if (field.kind === 'collection') {
     const known = collections.some((item) => item.slug === text)
     const groups = Array.from(new Set(collections.map((item) => item.group)))
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
       <select id={id} value={text} disabled={disabled} onChange={(event) => set(event.target.value)}>
         {!text && <option value="">Escolha uma coleção…</option>}
         {text && !known && <option value={text}>{text} (não encontrada)</option>}
@@ -76,10 +74,10 @@ export function FieldControl({ field, settings, disabled, errors, path, collecti
           {collections.filter((item) => item.group === group).map((item) => <option key={item.slug} value={item.slug}>{item.title}</option>)}
         </optgroup>)}
       </select>
-      <small className={styles.help}>{text && !known ? 'Esta coleção não existe mais no catálogo; o bloco fica oculto até você escolher outra.' : `Mostra os primeiros ${settings.count ?? 8} produtos, com os preços de hoje.`}</small>{err}</div>
+      {text && !known && <small className={styles.help}>Coleção não encontrada.</small>}{err}</div>
   }
   if (field.kind === 'number') {
-    return <div className={styles.field}><label htmlFor={id}>{field.label} <b>{typeof value === 'number' ? value : field.min ?? 0}{field.unit ?? 'px'}</b></label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label} <b>{typeof value === 'number' ? value : field.min ?? 0}{field.unit ?? 'px'}</b></label>
       <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 8} value={typeof value === 'number' ? value : field.min ?? 0} disabled={disabled} onChange={(event) => set(Number(event.target.value))}/>
       {help}{err}</div>
   }
@@ -87,17 +85,16 @@ export function FieldControl({ field, settings, disabled, errors, path, collecti
     return <ItemsEditor items={settings.items ?? []} variant={field.variant ?? 'cards'} textMax={field.maxLength ?? 300} disabled={disabled} errors={errors} path={path} onChange={(items) => set(items)}/>
   }
   if (field.kind === 'image') {
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
       <input id={id} type="url" value={text} disabled={disabled} placeholder="Cole um endereço ou envie um arquivo" onChange={(event) => set(event.target.value)}/>
       <ImageUpload value={text} disabled={disabled} onChange={set}/>{help}{err}</div>
   }
   if (field.kind === 'textarea' || field.kind === 'markdown') {
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
       <textarea id={id} rows={field.kind === 'markdown' ? 9 : 3} maxLength={field.maxLength} value={text} disabled={disabled} onChange={(event) => set(event.target.value)}/>
-      {field.kind === 'markdown' && !field.help && <small className={styles.help}>Use **negrito**, ## subtítulos e - listas.</small>}
       {help}{err}</div>
   }
-  return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+  return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
     <input id={id} type={field.kind === 'url' ? 'url' : 'text'} maxLength={field.maxLength} value={text} disabled={disabled} onChange={(event) => set(event.target.value)}/>
     {help}{err}</div>
 }

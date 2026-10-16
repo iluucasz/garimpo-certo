@@ -130,10 +130,10 @@ export const sectionTypes: Record<SectionType, SectionDefinition> = {
   },
   howItWorks: {
     type: 'howItWorks', label: 'Como funciona', builtin: true,
-    description: 'Explica que a compra é na loja parceira e que o site pode receber comissão.',
+    description: 'Chamada curta para a página Como funciona.',
     fields: [
       { key: 'title', label: 'Título', kind: 'textarea', maxLength: 100, help: 'Use uma nova linha para quebrar o título.' },
-      { key: 'text', label: 'Texto', kind: 'textarea', maxLength: 400, help: 'Mantenha a menção a links de afiliado.' },
+      { key: 'text', label: 'Texto', kind: 'textarea', maxLength: 400 },
       { key: 'buttonLabel', label: 'Texto do link', kind: 'text', maxLength: 40 },
     ],
   },
@@ -276,12 +276,8 @@ export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
   const settingsFor: Record<string, SectionSettings> = {
     catalog: {},
     selections: {},
-    guides: { title: 'Antes de comprar.', text: 'O que conferir em cada categoria, com os destaques de hoje do catálogo.', buttonLabel: 'Todos os guias' },
-    howItWorks: {
-      title: 'Você escolhe.\nA gente ajuda a encontrar.',
-      text: 'Compare ofertas, salve seus favoritos e finalize a compra na loja parceira. Podemos receber uma comissão pelos links de afiliados.',
-      buttonLabel: 'Como o Garimpo funciona',
-    },
+    guides: { title: 'Antes de comprar.', text: '', buttonLabel: 'Todos os guias' },
+    howItWorks: { title: 'Você escolhe.\nA gente ajuda a encontrar.', text: '', buttonLabel: 'Como funciona' },
   }
   return {
     schemaVersion: 1,
@@ -290,13 +286,13 @@ export function defaultHomeDocument(home: HomeSetting = {}): SiteDocument {
         id: 'hero', type: 'hero', name: sectionTypes.hero.label, hidden: false, archived: false,
         settings: {
           title: homeText(home, 'heroTitle', 'Bons produtos.'), accent: homeText(home, 'heroAccent', 'Preços que valem.'),
-          text: homeText(home, 'heroLead', 'Encontre seu próximo achado e compre direto na loja com a melhor oferta disponível.'),
+          text: homeText(home, 'heroLead', ''),
           buttonLabel: homeText(home, 'ctaLabel', 'Ver ofertas'),
         },
       },
       { id: 'campaign', type: 'campaign', name: sectionTypes.campaign.label, hidden: false, archived: false, settings: {} },
       ...order.flatMap((id): Section[] => {
-        const section: Section = { id, type: id, name: sectionTypes[id].label, hidden: hidden(id), archived: false, settings: settingsFor[id] }
+        const section: Section = { id, type: id, name: sectionTypes[id].label, hidden: hidden(id) || id === 'howItWorks', archived: false, settings: settingsFor[id] }
         if (id !== 'catalog') return [section]
         // Cada coleção é um bloco próprio (título e texto seguem a regra da coleção); some sozinho se ela ficar vazia.
         const collections = homeCollections.map(({ slug, name }): Section => ({

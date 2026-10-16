@@ -9,7 +9,7 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
     <section className={styles.status} role="alert">
       <div>
         <h1>Não conseguimos carregar esta página.</h1>
-        <p>Algo deu errado do nosso lado. Tente de novo; se continuar, volte ao início e procure por outro caminho.</p>
+        <p>Algo deu errado. Tente de novo.</p>
         <div className={styles.statusActions}>
           <button type="button" className={styles.statusPrimary} onClick={reset}>Tentar novamente</button>
           <Link className={styles.statusSecondary} href="/">Voltar ao início</Link>

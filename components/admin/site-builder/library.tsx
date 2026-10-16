@@ -48,6 +48,7 @@ export function Library({ document, freeOnly, canWrite, full, onAdd, onRestore, 
             <button
               type="button"
               className={styles.libraryItem}
+              title={definition.description}
               disabled={blocked || (Boolean(existing) && !existing?.archived)}
               draggable={!blocked && !existing}
               onDragStart={(event) => { event.dataTransfer.setData(NEW_SECTION_MIME, type); event.dataTransfer.effectAllowed = 'copy'; onDragType(type) }}
@@ -55,8 +56,7 @@ export function Library({ document, freeOnly, canWrite, full, onAdd, onRestore, 
               onClick={() => existing?.archived ? onRestore(existing.id) : onAdd(type)}
             >
               <strong>{definition.label}</strong>
-              <span>{definition.description}</span>
-              <small>{existing ? (existing.archived ? 'Está arquivada: clique para restaurar' : 'Já está na página') : 'Clique ou arraste para a lista'}</small>
+              {existing && <small>{existing.archived ? 'Arquivada: restaurar' : 'Já está na página'}</small>}
             </button>
           </li>
         })}

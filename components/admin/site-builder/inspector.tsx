@@ -37,7 +37,6 @@ export function SectionInspector({ section, index, canWrite, errors, collections
     <header className={styles.inspectorHead}>
       <span className={styles.overline}>Seção</span>
       <h2>{definition.label}</h2>
-      <p className={styles.help}>{definition.description}</p>
     </header>
 
     {canWrite && <div className={styles.toolRow}>
@@ -49,7 +48,7 @@ export function SectionInspector({ section, index, canWrite, errors, collections
     <TextInput label="Nome na lista de seções" value={section.name} maxLength={80} disabled={!canWrite} onChange={onName}/>
 
     <h3>Conteúdo</h3>
-    {definition.fields.length === 0 && <p className={styles.help}>Esta seção não tem textos para ajustar: o conteúdo vem do catálogo.</p>}
+    {definition.fields.length === 0 && <p className={styles.help}>Sem textos para ajustar.</p>}
     {definition.fields.map((field) => <FieldControl key={field.key} field={field} settings={s} disabled={!canWrite} errors={errors} path={`${base}.${field.key}`} collections={collections} onChange={(patch) => onSettings(patch, `${section.id}-${field.key}`)}/>)}
 
     <h3>Aparência</h3>
@@ -98,7 +97,6 @@ export function PageInspector({ kind, slug, meta, canWrite, published, errors, o
   if (kind === 'home') {
     return <div className={styles.inspectorBody}>
       <header className={styles.inspectorHead}><span className={styles.overline}>Página</span><h2>Página inicial</h2></header>
-      <p className={styles.help}>O título e a descrição da home nos buscadores ficam em <Link href="/admin/seo">Configurações → SEO</Link>. A cor, os cantos e o rodapé estão em “Aparência do site”, no seletor de página acima.</p>
     </div>
   }
   return <div className={styles.inspectorBody}>
@@ -108,13 +106,13 @@ export function PageInspector({ kind, slug, meta, canWrite, published, errors, o
     <div className={styles.field}>
       <span>Endereço</span>
       <code className={styles.code}>/paginas/{slug}</code>
-      <small className={styles.help}>{published ? <>No ar: <Link href={`/paginas/${slug}`} target="_blank">abrir a página</Link>.</> : 'Ainda não está no ar. Publique para a página abrir para os visitantes.'}</small>
+      <small className={styles.help}>{published ? <>No ar: <Link href={`/paginas/${slug}`} target="_blank">abrir</Link></> : 'Fora do ar.'}</small>
     </div>
     {canWrite && <div className={styles.toolRow}>
       {published
         ? <button type="button" className="btn secondary" onClick={onUnpublish}><EyeOff aria-hidden="true"/> Tirar do ar</button>
         : <button type="button" className="btn secondary" onClick={onDelete}><Trash2 aria-hidden="true"/> Apagar página</button>}
     </div>}
-    {published && canWrite && <p className={styles.help}>Para apagar a página, tire-a do ar antes.</p>}
+    
   </div>
 }

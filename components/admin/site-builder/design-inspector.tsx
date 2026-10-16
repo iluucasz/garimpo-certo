@@ -33,7 +33,7 @@ export function DesignInspector({ area, design, canWrite, errors, onChange }: Pr
     const ratio = contrast(design.theme.primary, WHITE)
     const radius = { compact: 4, default: 10, round: 18 }[design.theme.radius]
     return <div className={styles.inspectorBody}>
-      <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Tema</h2><p className={styles.help}>Vale para todas as páginas, depois de publicar.</p></header>
+      <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Tema</h2></header>
       <ColorField
         label="Cor de ação (botões e destaques)" value={design.theme.primary} disabled={!canWrite} error={errors['design.theme.primary']}
         help={`Contraste de ${ratio.toFixed(1)}:1 com texto branco. O mínimo é 4,5:1 para o botão continuar legível.`}
@@ -54,7 +54,6 @@ export function DesignInspector({ area, design, canWrite, errors, onChange }: Pr
       </div>
       <div className={styles.themeSample} style={{ borderRadius: radius }} aria-hidden="true">
         <strong>Seu próximo achado.</strong>
-        <p>Uma prévia dos botões e dos cantos.</p>
         <span style={{ background: design.theme.primary, borderRadius: radius }}>Ver ofertas</span>
       </div>
     </div>
@@ -62,8 +61,8 @@ export function DesignInspector({ area, design, canWrite, errors, onChange }: Pr
 
   if (area === 'header') {
     return <div className={styles.inspectorBody}>
-      <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Aviso do topo</h2><p className={styles.help}>A faixa acima do menu. Deixe o texto vazio para ocultar.</p></header>
-      <TextInput label="Texto do aviso" value={design.header.noticeText} maxLength={140} disabled={!canWrite} help="Mantenha a menção a links de afiliado." onChange={(noticeText) => onChange((current) => ({ ...current, header: { ...current.header, noticeText } }), 'header-text')}/>
+      <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Aviso do topo</h2></header>
+      <TextInput label="Texto do aviso" value={design.header.noticeText} maxLength={140} disabled={!canWrite} onChange={(noticeText) => onChange((current) => ({ ...current, header: { ...current.header, noticeText } }), 'header-text')}/>
       <TextInput label="Complemento" value={design.header.noticeDetail} maxLength={140} disabled={!canWrite} onChange={(noticeDetail) => onChange((current) => ({ ...current, header: { ...current.header, noticeDetail } }), 'header-detail')}/>
     </div>
   }
@@ -79,12 +78,12 @@ export function DesignInspector({ area, design, canWrite, errors, onChange }: Pr
     setLinks(next)
   }
   return <div className={styles.inspectorBody}>
-    <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Rodapé</h2><p className={styles.help}>Os links de navegação do rodapé continuam os do site; aqui você escreve a apresentação e adiciona links.</p></header>
+    <header className={styles.inspectorHead}><span className={styles.overline}>Aparência do site</span><h2>Rodapé</h2></header>
     <TextInput label="Frase de apresentação" value={design.footer.tagline} multiline rows={3} maxLength={200} disabled={!canWrite} help="Cada linha vira uma quebra." onChange={(tagline) => onChange((current) => ({ ...current, footer: { ...current.footer, tagline } }), 'footer-tagline')}/>
     <TextInput label="Assinatura" value={design.footer.signature} maxLength={80} disabled={!canWrite} onChange={(signature) => onChange((current) => ({ ...current, footer: { ...current.footer, signature } }), 'footer-signature')}/>
     <fieldset className={styles.items}>
       <legend>Links extras ({links.length}/{MAX_FOOTER_LINKS})</legend>
-      {links.length === 0 && <p className={styles.help}>Aparecem na coluna “Sobre”. Use para páginas criadas aqui, por exemplo /paginas/dia-das-maes.</p>}
+      
       {links.map((link, index) => <div className={styles.item} key={link.id}>
         <div className={styles.itemHead}>
           <strong>Link {index + 1}</strong>

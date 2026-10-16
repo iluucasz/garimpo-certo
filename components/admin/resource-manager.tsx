@@ -107,7 +107,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
         {meta.create && <button className="btn primary" disabled={!canWrite} onClick={() => setCreating(true)} title={canWrite ? undefined : 'Seu papel não permite criar'}><Plus aria-hidden="true"/> {meta.createLabel}</button>}
       </div>
     </div>
-    {!canWrite && meta.fields.some((field) => !field.readOnly) && <p className={styles.note}>Seu papel só permite consultar este módulo.</p>}
+    {!canWrite && meta.fields.some((field) => !field.readOnly) && <p className={styles.note}>Somente leitura.</p>}
     {error && <p className={`${styles.note} ${styles.warn}`} role="alert">{userFacingError(error)}</p>}
 
     {meta.layout === 'cards' && meta.card && <ul className={styles.cards}>
@@ -194,7 +194,7 @@ export function ResourceManager({ slug, toolbar, intro }: { slug: ResourceSlug; 
     {confirming && <div className="drawer-backdrop"><div className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
       <h2 id="confirm-title">{meta.remove === 'archive' ? 'Ocultar da vitrine?' : meta.slug === 'sessoes' ? 'Encerrar esta sessão?' : 'Excluir?'}</h2>
       <p>{meta.remove === 'archive'
-        ? `“${title(confirming)}” sai da vitrine, da busca e das coleções. O histórico de preço é mantido e a importação não o traz de volta.`
+        ? `“${title(confirming)}” sai da vitrine.`
         : meta.slug === 'sessoes' ? `${title(confirming)} precisará entrar de novo.` : `“${title(confirming)}” será removido. Isso não pode ser desfeito.`}</p>
       {problem && <p className={styles.error} role="alert">{problem}</p>}
       <div className="drawer-actions"><button className="btn secondary" onClick={() => setConfirming(null)} disabled={busy}>Cancelar</button><button className="btn danger" onClick={remove} disabled={busy}>{busy ? 'Aguarde…' : meta.remove === 'archive' ? 'Ocultar' : meta.slug === 'sessoes' ? 'Encerrar' : 'Excluir'}</button></div>
@@ -321,13 +321,13 @@ function defaults(fields: ResourceField[]): Values {
 function FieldControl({ field, value, error, disabled, onChange, segment }: { field: ResourceField; value: unknown; error?: string; disabled: boolean; onChange: (value: unknown) => void; segment?: { match: string } }) {
   const id = `field-${field.key}`
   const describedBy = [field.help ? `${id}-help` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined
-  const help = field.help && <small id={`${id}-help`} className={styles.help}>{field.help}</small>
+  const help = field.help ? <span id={`${id}-help`} className="sr-only">{field.help}</span> : null
   const err = error && <span id={`${id}-error`} className={styles.error} role="alert">{error}</span>
 
   if (field.type === 'boolean') {
-    return <div><label className={styles.checkRow} htmlFor={id}>
+    return <div title={field.help}><label className={styles.checkRow} htmlFor={id}>
       <input id={id} type="checkbox" checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} aria-describedby={describedBy}/>
-      <span>{field.label}{field.help && <><br/><small className={styles.help}>{field.help}</small></>}</span>
+      <span>{field.label}</span>
     </label>{err}</div>
   }
   if (disabled && !['multi', 'products', 'rules'].includes(field.type)) {
@@ -347,7 +347,7 @@ function FieldControl({ field, value, error, disabled, onChange, segment }: { fi
   }
 
   const common = { id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined, disabled, className: `${field.type === 'textarea' || field.type === 'markdown' ? 'textarea' : 'input'} ${error ? styles.inputError : ''}` }
-  return <label className={styles.field} htmlFor={id}>
+  return <label className={styles.field} htmlFor={id} title={field.help}>
     <span>{field.label}{field.required && <span aria-hidden="true"> *</span>}</span>
     {field.type === 'select' && <select {...common} className={`select ${error ? styles.inputError : ''}`} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)}>{!field.required && <option value="">—</option>}{field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>}
     {(field.type === 'text' || field.type === 'url') && <input {...common} type={field.type === 'url' ? 'url' : 'text'} value={String(value ?? '')} maxLength={field.maxLength} placeholder={field.placeholder} onChange={(event) => onChange(event.target.value)}/>}

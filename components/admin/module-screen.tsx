@@ -17,17 +17,15 @@ import { CatalogHub } from './catalog-hub'
 export function ModuleScreen({ config }: { config: ModuleConfig }) {
   const { allowed, roles } = useAdminAccess()
   if (!allowed(config.slug)) {
-    return <div className="panel access-denied"><h1>Acesso restrito</h1><p>O seu papel não tem permissão para ver este módulo.</p></div>
+    return <div className="panel access-denied"><h1>Acesso restrito</h1></div>
   }
   const view = config.view
   return <div>
     <div className="admin-title"><div>
-      <div className="kicker">{config.group.toUpperCase()}</div>
-      <h1>{config.title}</h1>
-      <p>{config.description}</p>
+      <h1 title={config.description}>{config.title}</h1>
     </div></div>
     <CatalogHub group={config.group}/>
-    {!allowed(config.slug, true) && view.kind !== 'analytics' && view.kind !== 'events' && view.kind !== 'logs' && <p className="permission-banner" role="note">Você está como {roles.join(', ')} e pode apenas consultar este módulo.</p>}
+    {!allowed(config.slug, true) && view.kind !== 'analytics' && view.kind !== 'events' && view.kind !== 'logs' && <p className="permission-banner" role="note">Somente leitura ({roles.join(', ')}).</p>}
     {view.kind === 'resource' && <ResourceManager slug={view.resource}/>}
     {view.kind === 'settings' && <SettingsForm settingKey={view.key}/>}
     {view.kind === 'builder' && <SiteBuilder pageKey={view.page}/>}

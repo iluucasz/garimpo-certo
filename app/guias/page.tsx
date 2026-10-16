@@ -24,14 +24,13 @@ export default async function GuidesPage() {
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><span aria-current="page">Guias de compra</span></nav>
       <header className={styles.header}>
         <h1>Guias de compra</h1>
-        <p className={styles.lead}>Para cada categoria: o que vale conferir antes de comprar e quais produtos se destacam hoje em vendas, nota e preço.</p>
       </header>
       {guides.length === 0
         ? <p className={styles.empty}>Os guias aparecem quando uma categoria tem produtos suficientes. <Link href="/buscar">Explorar o catálogo</Link></p>
         : <div className={styles.cards}>{guides.map((guide) => {
           const covers = guide.picks.slice(0, 3)
           return <Link href={`/guias/${guide.slug}`} className={styles.card} key={guide.slug}>
-            <span className={styles.cardText}><small>{guide.count} produtos</small><strong>{guide.category.name}</strong><p>Preços de {formatPrice(guide.stats.minPrice)} a {formatPrice(guide.stats.maxPrice)} e {guide.checks.length} pontos para conferir antes de decidir.</p><span>Abrir o guia</span></span>
+            <span className={styles.cardText}><strong>{guide.category.name}</strong><span>{guide.count} produtos · {formatPrice(guide.stats.minPrice)} a {formatPrice(guide.stats.maxPrice)}</span></span>
             <span className={styles.mosaic} aria-hidden="true">{covers.map((pick) => <span key={pick.product.id}><Image src={pick.product.image} alt="" fill sizes="96px"/></span>)}</span>
           </Link>
         })}</div>}

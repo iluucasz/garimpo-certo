@@ -12,9 +12,9 @@ import styles from './content-pages.module.css'
 type Mode = 'entrar' | 'cadastro' | 'recuperar'
 
 const copy: Record<Mode, { title: string; lead: string; submit: string; busy: string }> = {
-  entrar: { title: 'Bem-vindo de volta.', lead: 'Entre para rever seus favoritos e preferências.', submit: 'Entrar', busy: 'Entrando…' },
-  cadastro: { title: 'Crie sua conta.', lead: 'Salve favoritos e preferências na sua conta e acesse de qualquer aparelho.', submit: 'Criar conta', busy: 'Criando conta…' },
-  recuperar: { title: 'Recupere seu acesso.', lead: 'Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.', submit: 'Enviar link', busy: 'Enviando…' },
+  entrar: { title: 'Bem-vindo de volta.', lead: 'Entre para ver seus favoritos.', submit: 'Entrar', busy: 'Entrando…' },
+  cadastro: { title: 'Crie sua conta.', lead: 'Salve seus favoritos e acesse de qualquer aparelho.', submit: 'Criar conta', busy: 'Criando conta…' },
+  recuperar: { title: 'Recupere seu acesso.', lead: 'Enviaremos um link para criar uma nova senha.', submit: 'Enviar link', busy: 'Enviando…' },
 }
 
 export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: { mode: Mode; emailEnabled?: boolean; googleEnabled?: boolean }) {
@@ -69,7 +69,7 @@ export function AuthForm({ mode, emailEnabled = false, googleEnabled = false }: 
       <h1>{text.title}</h1>
       <p className={styles.lead}>{text.lead}</p>
 
-      {mode === 'recuperar' && !sent && !emailEnabled && <p className={styles.notice} role="note">O envio do e-mail de redefinição ainda não está ativo. Seu pedido é registrado, mas a mensagem pode não chegar.</p>}
+      {mode === 'recuperar' && !sent && !emailEnabled && <p className={styles.notice} role="note">O envio de e-mail ainda não está ativo.</p>}
 
       {sent
         ? <div className={styles.done} role="status">

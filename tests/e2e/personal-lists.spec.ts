@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('favoritos permite salvar, retomar e remover uma escolha', async ({ page }) => {
   await page.goto('/favoritos')
-  await expect(page.getByRole('heading', { name: 'Sua seleção começa aqui.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Nenhum favorito ainda.' })).toBeVisible()
   const card = page.locator('.product-card').first()
   const name = await card.locator('h3').innerText()
   await card.getByRole('button', { name: /aos favoritos/ }).click()
@@ -15,9 +15,9 @@ test('favoritos permite salvar, retomar e remover uma escolha', async ({ page })
   await page.reload()
   await expect(page.locator('.product-card').getByRole('heading', { name })).toBeVisible()
   await page.locator('.product-card').getByRole('button', { name: /dos favoritos/ }).click()
-  await expect(page.getByRole('heading', { name: 'Sua seleção começa aqui.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Nenhum favorito ainda.' })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Sua seleção começa aqui.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Nenhum favorito ainda.' })).toBeVisible()
 })
 
 test('favorito que ficou mais barato desde que foi salvo aparece em destaque', async ({ page }) => {

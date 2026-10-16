@@ -110,14 +110,14 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     fields: [
       { key: 'primary', label: 'Cor de ação (botões e destaques)', type: 'color', help: 'Precisa ter contraste mínimo de 4,5:1 com texto branco para o botão continuar legível.' },
       { key: 'radius', label: 'Cantos', type: 'select', options: [{ value: 'compact', label: 'Retos (compacto)' }, { value: 'default', label: 'Arredondados (padrão)' }, { value: 'round', label: 'Bem arredondados' }] },
-      { key: 'noticeText', label: 'Faixa de aviso no topo', type: 'text', optional: true, maxLength: 140, help: 'Deixe vazio para ocultar a faixa. Mantenha a menção a links de afiliado.' },
+      { key: 'noticeText', label: 'Faixa de aviso no topo', type: 'text', optional: true, maxLength: 140, help: 'Vazio oculta a faixa.' },
       { key: 'noticeDetail', label: 'Complemento do aviso', type: 'text', optional: true, maxLength: 140 },
     ],
     defaults: {
       primary: '#c3441d',
       radius: 'default',
-      noticeText: 'Preços e avaliações vêm da Shopee.',
-      noticeDetail: 'Usamos links de afiliado.',
+      noticeText: '',
+      noticeDetail: '',
     },
   },
   home: {

@@ -98,6 +98,8 @@ Four building blocks, so a new module is usually a few lines:
 
 ### Components
 
+**Texto mínimo (decisão de 2026-10-15):** o site e o painel são minimalistas; não acrescente parágrafos explicativos, subtítulos de seção nem avisos repetidos. A divulgação de afiliado fica em duas linhas curtas (rodapé "Links de afiliado" e "Link de afiliado" na caixa de compra do produto), mais a página Como funciona. A faixa de aviso do topo e a frase do rodapé vêm **vazias** por padrão (a equipe pode preencher no painel). No painel, `help`/`description` dos campos e módulos aparecem como dica (`title`), não como texto fixo. Seção "Como funciona" da home nasce oculta.
+
 Organized by feature domain: `components/{admin,home,product,search,storefront}/`. There is no shared UI kit: everything is hand-built with CSS Modules over the storefront tokens (`components.json` is only shadcn CLI config; `components/ui` and its dependencies were removed as unused). There is no `hooks/` directory despite the `@/hooks` alias.
 
 ### Styling: tokens live in `storefront.module.css`; prefer CSS Modules

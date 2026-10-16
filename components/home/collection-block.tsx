@@ -24,7 +24,7 @@ export async function CollectionBlock({ section, productIds }: { section: Sectio
   const items = productIds ? productIds.flatMap((id) => { const product = byId.get(id); return product ? [product] : [] }) : collection.products.slice(0, s.count ?? DEFAULT_SHOWN)
   if (items.length === 0) return null
   const title = s.title || collection.title
-  const text = s.text || collection.description
+  const text = s.text
   return <section className={`container ${styles.collection}`} aria-label={title}>
     <header>
       <div><h2>{title}</h2>{text && <p>{text}</p>}</div>

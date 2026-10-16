@@ -8,7 +8,7 @@ export default function NotFound() {
       <div>
         <span className={styles.statusCode} data-code="404" aria-hidden="true"/>
         <h1>Essa página saiu do mapa.</h1>
-        <p>O endereço pode ter mudado ou o produto já não está no catálogo. Procure pelo que você queria ou volte ao início.</p>
+        <p>Esta página não existe mais.</p>
         <div className={styles.statusActions}>
           <Link className={styles.statusPrimary} href="/">Voltar ao início</Link>
           <Link className={styles.statusSecondary} href="/buscar">Buscar no catálogo</Link>

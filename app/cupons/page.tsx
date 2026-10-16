@@ -52,15 +52,14 @@ export default async function CouponsPage() {
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><span aria-current="page">Cupons</span></nav>
       <header className={styles.header}>
         <h1>Cupons e campanhas</h1>
-        <p className={styles.lead}>Cupons da Shopee que encontramos e campanhas oficiais para economizar. Confira a validade e as condições: elas são definidas pela Shopee e podem mudar sem aviso.</p>
       </header>
       {coupons.length === 0
-        ? <p className={styles.empty}>Nenhum cupom válido no momento. <Link href="/colecoes">Veja as coleções com os melhores preços</Link></p>
+        ? <p className={styles.empty}>Nenhum cupom no momento. <Link href="/colecoes">Ver coleções</Link></p>
         : <>
           {manual.length > 0 && <section className={styles.group} aria-labelledby="cupons-titulo"><h2 id="cupons-titulo">Cupons</h2><ul className={styles.couponGrid}>{manual.map((coupon) => <CouponCard coupon={coupon} key={coupon.id}/>)}</ul></section>}
           {campaigns.length > 0 && <section className={styles.group} aria-labelledby="campanhas-titulo"><h2 id="campanhas-titulo">Campanhas da Shopee</h2><ul className={styles.couponGrid}>{campaigns.map((coupon) => <CouponCard coupon={coupon} key={coupon.id}/>)}</ul></section>}
         </>}
-      <p className={styles.disclosure}>Os links levam à Shopee e são de afiliado: se você comprar por eles, podemos receber uma comissão, sem custo adicional para você. O desconto final é sempre o que a Shopee mostrar no carrinho.</p>
+      <p className={styles.disclosure}>Links de afiliado da Shopee.</p>
     </div>
   </StorefrontShell>
 }

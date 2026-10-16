@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUpRight, BadgeCheck, GitCompareArrows, Heart, ShieldCheck, Star, Truck } from 'lucide-react'
+import { ArrowUpRight, BadgeCheck, GitCompareArrows, Heart, Star } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
@@ -98,13 +98,9 @@ export function ProductDetail({ product }: { product: Product }) {
               {previousPrice > bestOffer.price && <s>{formatPrice(previousPrice)}</s>}
               {saving > 0 && <span className={styles.saving}>Economize {formatPrice(saving)}</span>}
             </div>
-            {hasRange && <p className={styles.range}>Vai até {formatPrice(bestOffer.priceMax!)} conforme a variação escolhida na {bestProvider.name}.</p>}
+            {hasRange && <p className={styles.range}>até {formatPrice(bestOffer.priceMax!)} conforme a variação</p>}
             <a className={styles.buyButton} ref={buyButton} data-offer-id={bestOffer.id} data-slot="pdp-main" href={bestOffer.url} target="_blank" rel="sponsored noopener noreferrer">Comprar na {bestProvider.name}<ArrowUpRight aria-hidden="true"/></a>
-            <ul className={styles.facts}>
-              <li><Truck aria-hidden="true"/>Frete calculado na {bestProvider.name}</li>
-              <li><ShieldCheck aria-hidden="true"/>Link de afiliado: você finaliza a compra na loja</li>
-            </ul>
-            <p className={styles.fine}>Preço, frete e estoque da última sincronização ({bestOffer.stock}, atualizado {bestOffer.updatedAt}). Podem mudar na loja.</p>
+            <p className={styles.fine}>Link de afiliado · atualizado {bestOffer.updatedAt}</p>
           </div>}
 
           <div className={styles.actions}>
@@ -114,7 +110,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
           <div className={styles.index}>
             <span className={styles.indexScore} aria-label={`Índice Garimpo ${product.score} de 100`}>{product.score}</span>
-            <div><strong>Índice Garimpo</strong><span>Reúne avaliação, volume de vendas e desconto em uma nota de 0 a 100.</span></div>
+            <div><strong title="Reúne avaliação, vendas e desconto em uma nota de 0 a 100.">Índice Garimpo</strong></div>
           </div>
         </div>
       </div>
@@ -122,7 +118,6 @@ export function ProductDetail({ product }: { product: Product }) {
 
     {alternativeOffers.length > 0 && <section className={`container ${styles.section}`} aria-labelledby="outras-ofertas">
       <h2 id="outras-ofertas">Outras {alternativeOffers.length} ofertas</h2>
-      <p className={styles.sectionLead}>Ordenadas pelo menor preço encontrado.</p>
       <ul className={styles.offers}>{alternativeOffers.map((offer) => { const provider = getProvider(offer.providerId); const offerTotal = offer.price + offer.shipping; return <li className={styles.offer} key={offer.id}>
         <div><strong>{provider.name}</strong><span>{provider.verified && <BadgeCheck aria-hidden="true"/>}{offer.stock} · atualizado {offer.updatedAt}</span></div>
         <div className={styles.offerPrice}><strong>{formatPrice(offer.price)}</strong><span>{offer.shipping > 0 ? `${formatPrice(offerTotal)} com frete` : offer.soldCount ? formatSoldCount(offer.soldCount) : 'oferta do parceiro'}</span></div>
@@ -130,17 +125,16 @@ export function ProductDetail({ product }: { product: Product }) {
       </li> })}</ul>
     </section>}
 
-    {specs.length > 0 && <section className={styles.tinted}><div className={`container ${styles.section}`}><h2>Ficha rápida</h2><dl className={styles.specs}>{specs.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></div></section>}
+    {specs.length > 0 && <section className={styles.tinted}><div className={`container ${styles.section}`}><h2>Detalhes</h2><dl className={styles.specs}>{specs.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></div></section>}
 
     {product.priceHistory.length > 1 && <section className={`container ${styles.section}`} aria-labelledby="historico-preco">
-      <h2 id="historico-preco">Preço acompanhado pelo Garimpo</h2>
-      <p className={styles.sectionLead}>Menor preço registrado desde que passamos a acompanhar esta oferta: {formatPrice(min)}.</p>
+      <h2 id="historico-preco">Histórico de preço</h2>
+      <p className={styles.sectionLead}>Menor preço registrado: {formatPrice(min)}</p>
       <ol className={styles.history}>{product.priceHistory.map((point) => <li key={point.month}><strong>{formatPrice(point.price)}</strong><span className={styles.bar} style={{ height: `${Math.max(8, Math.round((point.price / (max || 1)) * 120))}px` }} aria-hidden="true"/><span>{point.month}</span></li>)}</ol>
     </section>}
 
     {similarEnabled && recommendations.length > 0 && <section className={`container ${styles.section}`} aria-labelledby="relacionados">
       <h2 id="relacionados">Você também pode gostar</h2>
-      <p className={styles.sectionLead}>Escolhas próximas em categoria, faixa de preço e interesse.</p>
       <ProductGrid items={recommendations}/>
     </section>}
 

@@ -109,8 +109,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="admin-header-actions"><Link href="/" className={styles.storeLink}>Ver loja <ArrowUpRight aria-hidden="true"/></Link></div>
       </header>
       {mfa && mfa.required && !mfa.enabled && <p className="permission-banner" role="alert" style={{ margin: '12px 40px 0', width: 'auto' }}>
-        {mfa.enforced ? 'Seu papel exige verificação em duas etapas e o painel está bloqueado até você ativar. ' : 'Proteja o painel: seu papel dá acesso a pessoas e configurações. '}
-        <Link href="/conta#seguranca">Ativar a verificação em duas etapas</Link>
+        <Link href="/conta#seguranca">{mfa.enforced ? 'Ative a verificação em duas etapas para continuar' : 'Ativar a verificação em duas etapas'}</Link>
       </p>}
       <div id="admin-content" className="admin-content" tabIndex={-1}>{children}</div>
     </main>

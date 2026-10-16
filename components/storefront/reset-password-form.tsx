@@ -20,7 +20,7 @@ export function ResetPasswordForm() {
     return <section className={styles.shell}>
       <div className={styles.card}>
         <h1>Link inválido ou expirado.</h1>
-        <p className={styles.lead}>Por segurança, o link de redefinição vale por 1 hora e só pode ser usado uma vez. Peça um novo para continuar.</p>
+        <p className={styles.lead}>Link inválido ou expirado. Peça um novo.</p>
         <div className={styles.form}>
           <Link className={styles.submit} href="/recuperar-senha">Pedir novo link</Link>
           <div className={styles.links}><Link href="/entrar">Voltar para entrar</Link></div>
@@ -51,7 +51,7 @@ export function ResetPasswordForm() {
   return <section className={styles.shell}>
     <div className={styles.card}>
       <h1>Escolha uma nova senha.</h1>
-      <p className={styles.lead}>Use pelo menos 8 caracteres. Depois de salvar, você entra com a nova senha.</p>
+      <p className={styles.lead}>Mínimo de 8 caracteres.</p>
       {done
         ? <div className={styles.done} role="status">
           <CheckCircle2 aria-hidden="true"/>

@@ -19,7 +19,7 @@ describe('documento padrão da home', () => {
   it('reproduz a home de antes do editor, com as coleções logo abaixo da vitrine', () => {
     const doc = defaultHomeDocument({})
     expect(doc.sections.map((section) => section.type)).toEqual(['hero', 'campaign', 'catalog', ...Array(5).fill('collection'), 'selections', 'guides', 'howItWorks'])
-    expect(doc.sections.every((section) => !section.hidden)).toBe(true)
+    expect(doc.sections.filter((section) => section.hidden).map((section) => section.type)).toEqual(['howItWorks'])
     expect(doc.sections[0].settings).toMatchObject({ title: 'Bons produtos.', accent: 'Preços que valem.', buttonLabel: 'Ver ofertas' })
     expect(doc.sections.find((section) => section.type === 'guides')?.settings.title).toBe('Antes de comprar.')
     expect(doc.sections.find((section) => section.type === 'howItWorks')?.settings.title).toBe('Você escolhe.\nA gente ajuda a encontrar.')

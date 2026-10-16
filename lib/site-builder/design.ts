@@ -36,8 +36,8 @@ export const fontOptions: { value: ThemeFont; label: string }[] = [
 ]
 
 export const defaultFooter: SiteDesign['footer'] = {
-  tagline: 'Um lugar para descobrir produtos,\ncomparar preços e escolher com calma.',
-  signature: 'Curadoria. Comparação. Descoberta.',
+  tagline: '',
+  signature: '',
   links: [],
 }
 
@@ -53,8 +53,8 @@ export function defaultDesign(theme: Record<string, unknown> = {}): SiteDesign {
       font: 'default',
     },
     header: {
-      noticeText: text(theme.noticeText, 'Preços e avaliações vêm da Shopee.'),
-      noticeDetail: text(theme.noticeDetail, 'Usamos links de afiliado.'),
+      noticeText: text(theme.noticeText, ''),
+      noticeDetail: text(theme.noticeDetail, ''),
     },
     footer: { ...defaultFooter, links: [] },
   }

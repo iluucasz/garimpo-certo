@@ -125,57 +125,52 @@ export default function AccountPage() {
   return <StorefrontShell>
     <div className={`container ${styles.account}`}>
       <nav className={styles.breadcrumb} aria-label="Caminho da página"><Link href="/">Início</Link><ChevronRight aria-hidden="true"/><span aria-current="page">Minha conta</span></nav>
-      <header className={styles.heading}><div><h1>Seu <em>Garimpo.</em></h1><p>Olá, {firstName}. Seus achados e preferências, em um só lugar.</p></div><Link className={styles.backLink} href="/buscar">Continuar explorando <ArrowUpRight aria-hidden="true"/></Link></header>
+      <header className={styles.heading}><div><h1>Seu <em>Garimpo.</em></h1></div><Link className={styles.backLink} href="/buscar">Continuar explorando <ArrowUpRight aria-hidden="true"/></Link></header>
       <div className={styles.layout}>
         <aside className={styles.sidebar} aria-label="Sua conta">
           <div className={styles.identity}><div className={styles.avatar} aria-hidden="true">{initials}</div><strong>{session.user.name}</strong><span>{session.user.email}</span></div>
           <nav className={styles.navigation} aria-label="Seções da conta">{sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`} className={activeSection === id ? styles.current : ''} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setActiveSection(id)}><Icon aria-hidden="true"/>{label}</a>)}<Link href="/privacidade"><ShieldCheck aria-hidden="true"/>Privacidade<ArrowUpRight aria-hidden="true"/></Link></nav>
           <button className={styles.signOut} type="button" disabled={leaving} onClick={leaveAccount}><LogOut aria-hidden="true"/>{leaving ? 'Saindo…' : 'Sair da conta'}</button>
           {sessionError && <p className={styles.sessionError} role="alert">{sessionError}</p>}
-          <div className={styles.sidebarNote}><LockKeyhole aria-hidden="true"/><p>Você controla suas informações e as preferências da sua conta.</p></div>
         </aside>
 
         <div className={styles.content}>
           <nav className={styles.shortcuts} aria-label="Suas descobertas">{shortcuts.map(({ href, label, count, caption, icon: Icon }) => <Link href={href} className={styles.shortcut} key={href}><div><span className={styles.shortcutLabel}><Icon aria-hidden="true"/>{label}</span><strong>{count.toLocaleString('pt-BR')}</strong><small>{caption}</small></div><ArrowUpRight aria-hidden="true"/></Link>)}</nav>
 
           <section className={styles.panel} id="perfil" aria-labelledby="profile-title">
-            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Seus dados</span><h2 id="profile-title">Um pouco sobre você</h2><p>Como vamos chamar você por aqui.</p></div><UserRound aria-hidden="true"/></div>
+            <div className={styles.panelHeader}><div><h2 id="profile-title">Seus dados</h2></div><UserRound aria-hidden="true"/></div>
             <form className={styles.profileForm} onSubmit={saveProfile} aria-busy={saving}>
-              <div className={styles.fields}><label className={styles.field}>Seu nome<input name="name" autoComplete="name" value={name} onChange={(event) => { setName(event.target.value); setFeedback(null) }} required disabled={saving}/></label><label className={styles.field}>E-mail<input name="email" type="email" autoComplete="email" value={session.user.email} readOnly aria-describedby="email-help"/><small id="email-help">O e-mail de acesso não pode ser alterado por aqui.</small></label></div>
-              <div className={styles.formFooter}><span>As alterações serão salvas na sua conta.</span><button className={styles.saveButton} type="submit" disabled={saving || name.trim() === session.user.name}>{saving ? 'Salvando…' : 'Salvar alterações'}<Check aria-hidden="true"/></button></div>
+              <div className={styles.fields}><label className={styles.field}>Seu nome<input name="name" autoComplete="name" value={name} onChange={(event) => { setName(event.target.value); setFeedback(null) }} required disabled={saving}/></label><label className={styles.field}>E-mail<input name="email" type="email" autoComplete="email" value={session.user.email} readOnly/></label></div>
+              <div className={styles.formFooter}><span/><button className={styles.saveButton} type="submit" disabled={saving || name.trim() === session.user.name}>{saving ? 'Salvando…' : 'Salvar alterações'}<Check aria-hidden="true"/></button></div>
               {feedback && <p className={`${styles.formMessage} ${feedback.error ? styles.error : ''}`} role={feedback.error ? 'alert' : 'status'}>{!feedback.error && <Check aria-hidden="true"/>}{feedback.text}</p>}
             </form>
           </section>
 
           <section className={styles.panel} id="preferencias" aria-labelledby="preferences-title">
-            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Do seu jeito</span><h2 id="preferences-title">O que chama sua atenção?</h2><p>Ajuste seus interesses e a faixa de preço que você prefere.</p></div><SlidersHorizontal aria-hidden="true"/></div>
+            <div className={styles.panelHeader}><div><h2 id="preferences-title">Interesses</h2></div><SlidersHorizontal aria-hidden="true"/></div>
             <div className={styles.preferences}>
               <fieldset className={styles.categories}><legend>Seus interesses</legend><div className={styles.categoryOptions}>{categories.map((category) => { const selected = state.preferences.categories.includes(category.name); return <button className={styles.category} key={category.id} type="button" aria-pressed={selected} onClick={() => toggleCategory(category.name)}><span aria-hidden="true">{selected && <Check/>}</span>{category.name}</button> })}</div></fieldset>
               <div className={styles.pricePreference}><div className={styles.priceHeading}><label htmlFor="preferred-price">Quanto você pretende gastar?</label><output htmlFor="preferred-price">Até {formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}</output></div><input id="preferred-price" type="range" min="10" max={priceCeiling} step="10" value={Math.min(state.preferences.maxPrice, priceCeiling)} aria-valuetext={`Até ${formatPrice(Math.min(state.preferences.maxPrice, priceCeiling))}`} onChange={(event) => state.savePreferences({ ...state.preferences, maxPrice: Number(event.target.value) })}/><div className={styles.rangeLabels}><span>R$ 10</span><span>{formatPrice(priceCeiling)}</span></div></div>
             </div>
-            <div className={styles.communication}><h3>Alertas e novidades</h3><p>Quando um produto salvo fica mais barato, mostramos em Favoritos e aqui no atalho. Avisos por e-mail ainda não existem; sua escolha fica registrada para quando existirem.</p><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong><small>Interesse em alertas sobre produtos mais baratos.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong><small>Interesse em novidades e seleções editoriais.</small></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
-            <p className={styles.personalHint}>{state.cookiePreferences.personalization
-              ? <>Seus interesses aparecem na aba “Para você” da <Link href="/#ofertas">página inicial</Link>.</>
-              : <>Para ver seus interesses na página inicial, permita a personalização em <Link href="/privacidade">Privacidade</Link>.</>}</p>
-            <p className={styles.autosave}><Check aria-hidden="true"/>Preferências salvas automaticamente neste navegador.</p>
+            <div className={styles.communication}><h3>Alertas e novidades</h3><div className={styles.toggleRow}><div><strong id="price-alert-label">Quedas de preço</strong></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.notifications} aria-labelledby="price-alert-label" onClick={() => state.savePreferences({ ...state.preferences, notifications: !state.preferences.notifications })}><span/></button></div><div className={styles.toggleRow}><div><strong id="newsletter-label">Seleção semanal</strong></div><button className={styles.switch} type="button" role="switch" aria-checked={state.preferences.newsletter} aria-labelledby="newsletter-label" onClick={() => state.savePreferences({ ...state.preferences, newsletter: !state.preferences.newsletter })}><span/></button></div></div>
           </section>
 
           <TwoFactorSection/>
 
           <section className={styles.panel} id="dados" aria-labelledby="data-title">
-            <div className={styles.panelHeader}><div><span className={styles.sectionLabel}>Privacidade</span><h2 id="data-title">Seus dados</h2><p>Baixe uma cópia do que guardamos na sua conta ou exclua a conta.</p></div><ShieldCheck aria-hidden="true"/></div>
+            <div className={styles.panelHeader}><div><h2 id="data-title">Privacidade</h2></div><ShieldCheck aria-hidden="true"/></div>
             <div className={styles.dataBody}>
               <div className={styles.dataRow}>
-                <div><strong>Baixar meus dados</strong><small>Perfil e favoritos salvos na conta, em um arquivo JSON.</small></div>
+                <div><strong>Baixar meus dados</strong></div>
                 <button type="button" className={styles.outlineButton} onClick={exportData} disabled={exporting}>{exporting ? 'Preparando…' : 'Baixar arquivo'}</button>
               </div>
               {dataError && <p className={`${styles.formMessage} ${styles.error}`} role="alert">{dataError}</p>}
               <div className={styles.dataRow}>
-                <div><strong>Excluir minha conta</strong><small>Apaga a conta e os favoritos salvos nela. Não dá para desfazer.</small></div>
+                <div><strong>Excluir minha conta</strong></div>
                 {!confirmingDelete && <button type="button" className={styles.dangerButton} onClick={() => setConfirmingDelete(true)}>Excluir conta</button>}
               </div>
               {confirmingDelete && <form className={styles.deleteForm} onSubmit={deleteAccount} aria-busy={deleting}>
-                <label className={styles.field}>Senha da conta<input name="password" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => { setDeletePassword(event.target.value); setDeleteError('') }} placeholder="Se você entra com o Google, deixe em branco"/></label>
+                <label className={styles.field}>Senha da conta<input name="password" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => { setDeletePassword(event.target.value); setDeleteError('') }}/></label>
                 {deleteError && <p className={`${styles.formMessage} ${styles.error}`} role="alert">{deleteError}</p>}
                 <div className={styles.deleteActions}>
                   <button type="button" className={styles.outlineButton} onClick={() => { setConfirmingDelete(false); setDeletePassword(''); setDeleteError('') }}>Cancelar</button>
@@ -185,7 +180,6 @@ export default function AccountPage() {
             </div>
           </section>
 
-          <div className={styles.privacyNote}><ShieldCheck aria-hidden="true"/><p>Seus interesses ficam salvos neste navegador. <Link href="/privacidade">Gerenciar privacidade e cookies</Link></p></div>
         </div>
       </div>
     </div>

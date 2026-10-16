@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { LockKeyhole, TrendingDown } from 'lucide-react'
+import { TrendingDown } from 'lucide-react'
 import { formatPrice } from '@/lib/format'
 import { useVisitorState } from '@/components/visitor-state-provider'
 import { useStoreData } from '@/components/store-data-provider'
@@ -28,9 +28,7 @@ export function FavoritesCollection() {
         <Link href={`/produto/${product.slug}`}>{product.name}</Link>
         <span><s>{formatPrice(drop.from)}</s> <strong>{formatPrice(drop.to)}</strong> · menos {formatPrice(drop.amount)} ({drop.percent}%)</span>
       </li>)}</ul>
-      <p>Comparado ao preço de quando você salvou. Os preços vêm da última sincronização com a Shopee e podem mudar.</p>
     </section>}
     {items.length ? <><div className={styles.toolbar}><p><strong>{items.length}</strong> {items.length === 1 ? 'produto na sua seleção' : 'produtos na sua seleção'}</p><label>Ordenar por<select aria-label="Ordenar favoritos" value={sort} onChange={(event) => setSort(event.target.value)}><option value="saved">Salvos recentemente</option><option value="price">Menor preço</option><option value="rating">Melhor avaliados</option></select></label></div><section aria-labelledby="saved-products-title"><h2 id="saved-products-title" className="sr-only">Produtos favoritos</h2><ProductGrid items={items}/></section></> : <><EmptyCollection mode="favorites"/><SuggestedProducts mode="favorites"/></>}
-    <p className={styles.localNote}><LockKeyhole aria-hidden="true"/>Sem conta, seus favoritos ficam salvos neste navegador.</p>
   </div>
 }

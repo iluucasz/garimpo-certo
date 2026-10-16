@@ -54,7 +54,7 @@ export function CommissionsPanel() {
           <h2 style={{ marginBottom: 4 }}>Comissões reais (Shopee)</h2>
           <p className={styles.help}>
             {sync_.at
-              ? <>Última sincronização: {dateTime(sync_.at)}{sync_.status === 'failed' ? <> — <strong>falhou</strong>{sync_.error ? `: ${sync_.error}` : ''}</> : ''}. O worker da VPS sincroniza a cada 3 horas.</>
+              ? <>Última sincronização: {dateTime(sync_.at)}{sync_.status === 'failed' ? <> — <strong>falhou</strong>{sync_.error ? `: ${sync_.error}` : ''}</> : ''}.</>
               : 'Ainda não sincronizado. O worker da VPS sincroniza a cada 3 horas; você também pode sincronizar agora.'}
           </p>
         </div>
@@ -78,7 +78,7 @@ export function CommissionsPanel() {
     </div>
 
     {totals.conversions === 0 && <div className="panel">
-      <p className={styles.lead}>Nenhuma conversão neste período. A Shopee só conta uma venda depois que a pessoa compra, em até 7 dias após o clique, então os primeiros números aparecem com alguns dias de tráfego. As comissões ficam como “previstas” até o pedido ser concluído.</p>
+      <p className={styles.lead}>Nenhuma conversão neste período.</p>
     </div>}
 
     {data.byOrigin.length > 0 && <div className="panel">
@@ -90,7 +90,7 @@ export function CommissionsPanel() {
           <td>{number.format(row.conversions)}</td><td>{formatPrice(row.amount)}</td><td>{formatPrice(row.commission)}</td>
         </tr>)}</tbody>
       </table></div>
-      <p className={styles.help} style={{ marginTop: 12 }}>“Sem origem” são vendas de links sem etiqueta (por exemplo, links antigos ou gerados fora do site). Os botões de compra do site passam a levar a etiqueta <code>site-categoria</code> depois da próxima importação.</p>
+      
     </div>}
 
     {data.byProduct.length > 0 && <div className="panel">

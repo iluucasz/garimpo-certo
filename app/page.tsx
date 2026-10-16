@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, BadgeCheck, ExternalLink, GitCompareArrows, RefreshCw } from 'lucide-react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { CampaignBanner } from '@/components/home/campaign-banner'
 import { PageBlock } from '@/components/home/page-block'
 import { SectionFrame } from '@/components/home/section-frame'
@@ -74,12 +74,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
               control={{ title: s.title ?? '', accent: s.accent ?? '', text: s.text ?? '', buttonLabel: s.buttonLabel ?? '' }}
               experiment={running ? { key: running.key, splitB: running.splitB, variantB: running.variantB } : null}
               ctaHref={hasCatalog ? '#ofertas' : '/buscar'}/>
-            <ul className={styles.trust} aria-label="Vantagens do Garimpo">
-              <li><BadgeCheck aria-hidden="true"/>Só entram produtos com nota 4,5+ e vendas comprovadas</li>
-              <li><RefreshCw aria-hidden="true"/>Preços atualizados todo dia, com histórico de preço</li>
-              <li><GitCompareArrows aria-hidden="true"/>Compare lado a lado e salve seus favoritos</li>
-              <li><ExternalLink aria-hidden="true"/>Grátis e sem cadastro: você finaliza a compra na Shopee</li>
-            </ul>
           </div>
           <FeaturedProducts/>
         </section>
@@ -91,7 +85,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
         return <HomeSelections/>
       case 'guides':
         return guides.length > 0 ? <section className={styles.guides} aria-labelledby="guides-title"><div className={`container ${styles.guidesInner}`}>
-          <div className={styles.guideIntro}><h2 id="guides-title">{s.title}</h2><p>{s.text}</p><Link href="/guias">{s.buttonLabel} <ArrowRight aria-hidden="true"/></Link></div>
+          <div className={styles.guideIntro}><h2 id="guides-title">{s.title}</h2>{s.text && <p>{s.text}</p>}<Link href="/guias">{s.buttonLabel} <ArrowRight aria-hidden="true"/></Link></div>
           <div className={styles.guideList}>{guides.map((guide) => <Link href={`/guias/${guide.slug}`} className={styles.guide} key={guide.slug}>
             <div className={styles.guideImage}>{guide.picks[0] && <Image src={guide.picks[0].product.image} alt="" fill sizes="(max-width: 700px) 88px, 140px"/>}</div>
             <div><span>{guide.count} produtos <i/> de {formatPrice(guide.stats.minPrice)} a {formatPrice(guide.stats.maxPrice)}</span><h3>{guide.title}</h3></div><ArrowUpRight aria-hidden="true"/>
@@ -100,7 +94,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
       case 'howItWorks':
         return <section className={`${styles.howItWorks} container`} aria-labelledby="how-title">
           <h2 id="how-title">{withBreaks(s.title ?? '')}</h2>
-          <div><p>{s.text}</p><Link href="/como-funciona">{s.buttonLabel} <ArrowUpRight aria-hidden="true"/></Link></div>
+          <div>{s.text && <p>{s.text}</p>}<Link href="/como-funciona">{s.buttonLabel} <ArrowUpRight aria-hidden="true"/></Link></div>
         </section>
       default:
         return <PageBlock section={section} productIds={picks.get(section.id)}/>

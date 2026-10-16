@@ -66,17 +66,16 @@ export function HomeCatalog({ activeFilter = 'trending' }: { activeFilter?: Filt
 
     <section className={`${styles.featured} container`} id="ofertas" aria-labelledby="featured-title">
       <div className={styles.sectionHeading}>
-        <div><h2 id="featured-title">Achados para conhecer.</h2><p>Escolha por tendência, desconto ou nota. Os botões de compra levam à Shopee por link de afiliado.</p></div>
+        <div><h2 id="featured-title">Achados para conhecer.</h2></div>
         <Link href="/buscar">Ver todos os produtos <ArrowUpRight aria-hidden="true"/></Link>
       </div>
       <div className={styles.filters} role="group" aria-label="Ordenar vitrine principal">{(forYouAvailable ? [forYouFilter, ...filters] : filters).map((item) => <Link key={item.id} href={item.id === 'trending' ? '/#ofertas' : `/?filtro=${item.id}#ofertas`} scroll={false} className={filter === item.id ? styles.activeFilter : ''} aria-current={filter === item.id ? 'true' : undefined} onClick={(event) => { event.preventDefault(); select(item.id) }}>{item.label}</Link>)}</div>
-      {filter === 'foryou' && <p className={styles.personalNote}>Selecionado neste aparelho a partir do que você {hasBehavior ? 'viu, favoritou e comparou' : 'escolheu em Minha conta'}. Nada disso é enviado a ninguém. <Link href="/privacidade">Gerenciar privacidade</Link></p>}
+      {filter === 'foryou' && <p className={styles.personalNote}>Com base no que você viu e favoritou neste aparelho.</p>}
       <p className="sr-only" role="status">{shown.length ? `Mostrando ${shown.length} produtos: ${filters.find((item) => item.id === filter)?.label}.` : 'Nenhum produto nesta seleção.'}</p>
       <div>
-        {shown.length ? <ProductGrid items={shown}/> : <div className={styles.emptyState}><p><strong>Nada por aqui ainda.</strong> Nenhum produto cabe nesta seleção no momento.</p><Link href="/buscar">Explorar o catálogo <ArrowRight aria-hidden="true"/></Link></div>}
+        {shown.length ? <ProductGrid items={shown}/> : <div className={styles.emptyState}><p>Nada por aqui ainda.</p><Link href="/buscar">Explorar o catálogo <ArrowRight aria-hidden="true"/></Link></div>}
       </div>
       {sorted.length > PAGE && <div className={styles.moreRow}><Link className={styles.moreButton} href="/buscar">Ver os {products.length} produtos do catálogo <ArrowRight aria-hidden="true"/></Link></div>}
-      <p className={styles.disclosure}>Links patrocinados: podemos receber comissão da Shopee pelas compras feitas por eles.</p>
     </section>
   </>
 }

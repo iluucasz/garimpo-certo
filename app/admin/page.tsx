@@ -25,7 +25,7 @@ export default async function AdminDashboard() {
 
   return <div className={styles.dashboard}>
     <div className="admin-title">
-      <div><div className={styles.pageEyebrow}>Painel da operação</div><h1>Visão geral</h1><p>O que o catálogo e os cliques mostram hoje. Todos os números vêm do banco.</p></div>
+      <div><div className={styles.pageEyebrow}>Painel da operação</div><h1>Visão geral</h1></div>
       <Link href="/admin/imports-jobs" className="btn primary"><RefreshCw aria-hidden="true"/>Importar catálogo</Link>
     </div>
 
@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
 
     <div className={styles.dashboardGrid}>
       <section className={styles.card} aria-labelledby="performance-title">
-        <div className={styles.cardHeader}><div><h2 id="performance-title">Cliques nos botões de compra</h2><p>Últimos 7 dias, por dia</p></div><span className={styles.chartLegend}><i/>Cliques</span></div>
+        <div className={styles.cardHeader}><div><h2 id="performance-title">Cliques de compra</h2><p>7 dias</p></div><span className={styles.chartLegend}><i/>Cliques</span></div>
         <div className={styles.chartSummary}><strong>{number.format(clicks.last7d)}</strong><span>cliques no período</span></div>
         <div className={styles.activityChart} role="img" aria-label={`Cliques por dia: ${clicks.byDay.map((entry) => `${weekday(entry.day)}, ${entry.count}`).join('; ')}.`}>
           <div className={styles.chartAxis} aria-hidden="true">{[1, 0.75, 0.5, 0.25, 0].map((fraction) => <span key={fraction}>{number.format(Math.round(peak * fraction))}</span>)}</div>
@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
       </section>
 
       <section className={styles.card} aria-labelledby="operations-title">
-        <div className={styles.cardHeader}><div><h2 id="operations-title">Catálogo e sincronização</h2><p>Dados da Shopee</p></div><span className={`${styles.alertCount} ${stale ? '' : styles.quiet}`}>{stale ? 'Desatualizado' : 'Em dia'}</span></div>
+        <div className={styles.cardHeader}><div><h2 id="operations-title">Catálogo</h2></div><span className={`${styles.alertCount} ${stale ? '' : styles.quiet}`}>{stale ? 'Desatualizado' : 'Em dia'}</span></div>
         <dl className={styles.facts}>
           <div><dt>Última sincronização</dt><dd>{dateTime(catalog.syncedAt)}{ageDays !== null && ageDays > 0 ? ` · há ${ageDays} ${ageDays === 1 ? 'dia' : 'dias'}` : ''}</dd></div>
           <div><dt>Produtos ativos</dt><dd>{number.format(catalog.active)}</dd></div>
@@ -73,7 +73,7 @@ export default async function AdminDashboard() {
       </section>
 
       <section className={`${styles.card} ${styles.productsCard}`} aria-labelledby="products-title">
-        <div className={styles.cardHeader}><div><h2 id="products-title">Mais vendidos do catálogo</h2><p>Vendas recentes informadas pela Shopee</p></div><Link className={styles.subtleLink} href="/admin/produtos">Ver catálogo <ArrowUpRight aria-hidden="true"/></Link></div>
+        <div className={styles.cardHeader}><div><h2 id="products-title">Mais vendidos</h2></div><Link className={styles.subtleLink} href="/admin/produtos">Ver catálogo <ArrowUpRight aria-hidden="true"/></Link></div>
         <div className={styles.productTableScroll}><table className={styles.productTable}><thead><tr><th scope="col">Produto</th><th scope="col">Vendas</th><th scope="col">Preço</th><th scope="col">Nota</th></tr></thead><tbody>{topProducts.map((product) => <tr key={product.id}>
           <td><Link href={`/produto/${product.slug}`} className={styles.productIdentity}><span><strong>{product.name}</strong><small>{product.brand}</small></span></Link></td>
           <td>{number.format(product.soldCount)}</td>

@@ -111,7 +111,7 @@ export function ContentPostsView() {
           <input readOnly value={item.linkUrl} aria-label="Link de afiliado deste post" onFocus={(event) => event.currentTarget.select()}/>
           <button type="button" className="btn secondary" onClick={() => void doCopy('Link', item.linkUrl)}><Copy aria-hidden="true"/> Copiar link</button>
         </div>
-        <p className={styles.help}>Coloque este link na bio (ou no adesivo de link do Story). Ele leva a etiqueta <code>{item.channel}-{item.campaign}</code>, e as vendas aparecem em Analytics por canal.</p>
+        
 
         <div className={styles.controls}>
           <button type="button" className="btn secondary" onClick={() => void doCopy('Legenda', draft.text)}><Copy aria-hidden="true"/> Copiar legenda</button>
@@ -190,7 +190,7 @@ export function ContentPostsView() {
         })}
       </div>
       {toPublish.length === 0
-        ? <p className={styles.help}>Nada a publicar no {channelLabel[channel]} agora. Use “Preparar os posts de hoje” ou crie de um produto.</p>
+        ? <p className={styles.help}>Nada a publicar no {channelLabel[channel]}.</p>
         : <ul className={styles.list}>{toPublish.map(renderItem)}</ul>}
 
       {published.length > 0 && <details className={styles.collapse}>

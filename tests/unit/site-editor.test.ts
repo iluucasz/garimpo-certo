@@ -247,7 +247,7 @@ describe('aparência do site (design global)', () => {
     expect(design.header).toEqual({ noticeText: '', noticeDetail: 'x' })
     const filled = ok(global({ theme: { primary: '#1d4ed8' } }), { allowEmpty: true }).design!
     expect(filled.theme).toMatchObject({ primary: '#1d4ed8', radius: 'default', font: 'default' })
-    expect(filled.footer.signature).toBeTruthy()
+    expect(filled.footer.signature).toBe('')
   })
 
   it('recusa cor de ação com pouco contraste, como o painel de Tema', () => {

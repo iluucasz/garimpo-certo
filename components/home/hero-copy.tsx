@@ -35,7 +35,7 @@ export function HeroCopy({ control, experiment, ctaHref }: { control: Copy; expe
 
   return <>
     <h1 id="home-title">{copy.title} <span>{copy.accent}</span></h1>
-    <p className={styles.heroLead}>{copy.text}</p>
+    {copy.text && <p className={styles.heroLead}>{copy.text}</p>}
     <div className={styles.heroActions}>
       <Link className={styles.heroButton} href={ctaHref}>{copy.buttonLabel} <ArrowRight aria-hidden="true"/></Link>
       <Link className={styles.heroLink} href="/como-funciona">Como funciona</Link>

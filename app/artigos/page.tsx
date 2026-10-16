@@ -19,10 +19,9 @@ export default async function ArticlesPage() {
       <nav className={styles.breadcrumbs} aria-label="Navegação estrutural"><Link href="/">Início</Link><span aria-hidden="true">/</span><span aria-current="page">Artigos</span></nav>
       <header className={styles.header}>
         <h1>Artigos</h1>
-        <p className={styles.lead}>Guias, dicas e análises para escolher melhor antes de comprar.</p>
       </header>
       {articles.length === 0
-        ? <p className={styles.empty}>Ainda não há artigos publicados. <Link href="/colecoes">Veja as coleções</Link></p>
+        ? <p className={styles.empty}>Nenhum artigo ainda. <Link href="/colecoes">Ver coleções</Link></p>
         : <ul className={styles.articleList}>{articles.map((article) => <li className={styles.article} key={article.id}>
           <Link href={`/artigos/${article.slug}`}>
             {article.publishedAt && <time dateTime={article.publishedAt}>{date(article.publishedAt)}</time>}

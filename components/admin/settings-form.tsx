@@ -76,19 +76,18 @@ export function SettingsForm({ settingKey }: { settingKey: SettingKey }) {
   return <div className={styles.stack}>
     <div className={settingKey === 'ranking' ? styles.withPreview : undefined}>
       <form onSubmit={save} noValidate className={styles.settingsForm}>
-        {settingKey !== 'ranking' && settingKey !== 'rules' && <p className={styles.lead}>{definition.description}</p>}
-        {!canWrite && <p className={styles.note}>Seu papel só permite consultar esta configuração.</p>}
+        {!canWrite && <p className={styles.note}>Somente leitura.</p>}
         {settingKey === 'ranking' && <PresetSettings
           title="Como ordenar os produtos recomendados" presets={rankingPresets} values={values} disabled={!canWrite} errors={errors} onChange={set}
-          intro="Escolha o estilo que combina com a sua loja. A prévia mostra, ao lado, o resultado com os produtos de hoje; nada muda no site até você salvar."
+          intro=""
           fine={[{ fields: definition.fields }]} onPreset={(preset) => setValues((current) => ({ ...current, ...preset }))}/>}
         {settingKey === 'rules' && <PresetSettings
           title="Quão exigentes são as coleções e os filtros" presets={rulesPresets} values={values} disabled={!canWrite} errors={errors} onChange={set}
-          intro="Define o que entra em “Viralizou”, “Mais vendidos”, “Achadinhos”, “Em promoção” e nos filtros da busca. O texto de cada coleção acompanha o valor escolhido. Vale para o site inteiro em até 5 minutos."
+          intro=""
           fine={groups.map((group) => ({ title: group.title, fields: group.fields }))} onPreset={(preset) => setValues((current) => ({ ...current, ...preset }))}/>}
         {settingKey !== 'ranking' && settingKey !== 'rules' && <div className={styles.sections}>
           {groups.map((group) => <section key={group.title} className={styles.sectionCard} aria-label={group.title}>
-            {(definition.sections || groups.length > 1) && <header><h2>{group.title}</h2>{group.description && <p>{group.description}</p>}</header>}
+            {(definition.sections || groups.length > 1) && <header><h2>{group.title}</h2></header>}
             <div className={styles.sectionBody}>
               {group.fields.map((field) => <Control key={field.key} field={field} value={values[field.key]} error={errors[field.key]} disabled={!canWrite} onChange={(value) => set(field.key, value)}/>)}
             </div>
@@ -96,7 +95,7 @@ export function SettingsForm({ settingKey }: { settingKey: SettingKey }) {
         </div>}
         {problem && <p className={styles.error} role="alert">{problem}</p>}
         <div className={`${styles.saveBar} ${dirty ? styles.saveBarDirty : ''}`}>
-          <span className={styles.saveStatus} role="status">{dirty ? 'Alterações ainda não salvas.' : data.isDefault ? 'Usando os valores originais do site.' : `Personalizado · salvo em ${dateTime(data.updatedAt)}`}</span>
+          <span className={styles.saveStatus} role="status">{dirty ? 'Não salvo' : data.isDefault ? 'Padrão' : `Salvo em ${dateTime(data.updatedAt)}`}</span>
           <span className={styles.saveActions}>
             <button className="btn secondary" type="button" onClick={reset} disabled={!canWrite || saving || data.isDefault}><RotateCcw aria-hidden="true"/> Restaurar padrão</button>
             {dirty && <button className="btn secondary" type="button" onClick={() => data && setValues(data.value)} disabled={saving}>Descartar</button>}
@@ -114,13 +113,13 @@ export function SettingsForm({ settingKey }: { settingKey: SettingKey }) {
 function Control({ field, value, error, disabled, onChange }: { field: SettingField; value: unknown; error?: string; disabled: boolean; onChange: (value: unknown) => void }) {
   const id = `setting-${field.key}`
   const describedBy = [field.help ? `${id}-help` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined
-  const help = field.help && <small id={`${id}-help`} className={styles.help}>{field.help}</small>
+  const help = field.help ? <span id={`${id}-help`} className="sr-only">{field.help}</span> : null
   const err = error && <span id={`${id}-error`} className={styles.error} role="alert">{error}</span>
 
   if (field.type === 'boolean') {
-    return <div><label className={styles.checkRow} htmlFor={id}>
+    return <div title={field.help}><label className={styles.checkRow} htmlFor={id} title={field.help}>
       <input id={id} type="checkbox" checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} aria-describedby={describedBy}/>
-      <span>{field.label}{field.help && <><br/><small className={styles.help}>{field.help}</small></>}</span>
+      <span>{field.label}</span>
     </label>{err}</div>
   }
   if (field.type === 'order') {
@@ -132,7 +131,7 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
       ;[next[index], next[target]] = [next[target], next[index]]
       onChange(next)
     }
-    return <div className={styles.field}><span id={id}>{field.label}</span>
+    return <div className={styles.field} title={field.help}><span id={id}>{field.label}</span>
       <ol className={styles.orderList} aria-labelledby={id}>
         {order.map((itemId, index) => <li className={styles.pickerItem} key={itemId}>
           <span className={styles.position}>{index + 1}</span>
@@ -146,7 +145,7 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
   }
   if (field.type === 'number') {
     const number = Number(value ?? field.min)
-    return <div className={styles.numberField}>
+    return <div className={styles.numberField} title={field.help}>
       <div className={styles.numberHead}><label htmlFor={id}>{field.label}</label><output htmlFor={id}>{number.toLocaleString('pt-BR')}{field.unit ? ` ${field.unit}` : ''}</output></div>
       <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 1} value={number} disabled={disabled} onChange={(event) => onChange(Number(event.target.value))} aria-describedby={describedBy}/>
       {help}{err}</div>
@@ -154,7 +153,7 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
   if (field.type === 'color') {
     const color = String(value ?? '#000000')
     const ratio = /^#[0-9a-f]{6}$/i.test(color) ? contrastWithWhite(color) : 0
-    return <div className={styles.field}><label htmlFor={id}>{field.label}</label>
+    return <div className={styles.field} title={field.help}><label htmlFor={id}>{field.label}</label>
       <div className={styles.colorRow}>
         <input id={id} className={styles.swatch} type="color" value={/^#[0-9a-f]{6}$/i.test(color) ? color : '#000000'} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
         <input className="input" style={{ maxWidth: 140 }} aria-label={`${field.label} (código)`} value={color} disabled={disabled} onChange={(event) => onChange(event.target.value)} maxLength={7}/>
@@ -162,32 +161,32 @@ function Control({ field, value, error, disabled, onChange }: { field: SettingFi
       </div>{help}{err}</div>
   }
   if (field.type === 'select') {
-    return <label className={styles.field} htmlFor={id}>{field.label}
+    return <label className={styles.field} htmlFor={id} title={field.help}>{field.label}
       <select id={id} className="select" value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}>
         {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>{help}{err}</label>
   }
   if (field.type === 'checklist') {
-    return <label className={styles.field} htmlFor={id}>{field.label}
+    return <label className={styles.field} htmlFor={id} title={field.help}>{field.label}
       <textarea id={id} className={`textarea ${error ? styles.inputError : ''}`} rows={6} value={String(value ?? '')} placeholder="Título | Texto" disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
       {help}{err}</label>
   }
   if (field.type === 'list') {
     const text = Array.isArray(value) ? value.join('\n') : String(value ?? '')
-    return <label className={styles.field} htmlFor={id}>{field.label}
+    return <label className={styles.field} htmlFor={id} title={field.help}>{field.label}
       <textarea id={id} className="textarea" rows={5} value={text} placeholder={field.placeholder} disabled={disabled} onChange={(event) => onChange(event.target.value.split(/\r?\n/))} aria-describedby={describedBy}/>
       {help}{err}</label>
   }
   const textual = field as Extract<SettingField, { type: 'text' | 'textarea' | 'url' }>
   if (textual.type === 'url' && textual.upload) {
-    return <div className={styles.field}>
+    return <div className={styles.field} title={field.help}>
       <label htmlFor={id}>{field.label}</label>
       <input id={id} className={`input ${error ? styles.inputError : ''}`} type="url" maxLength={textual.maxLength} placeholder={textual.placeholder ?? 'Cole um endereço ou envie um arquivo'} value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
       <ImageUpload value={String(value ?? '')} disabled={disabled} onChange={onChange}/>
       {help}{err}
     </div>
   }
-  return <label className={styles.field} htmlFor={id}>{field.label}
+  return <label className={styles.field} htmlFor={id} title={field.help}>{field.label}
     {textual.type === 'textarea'
       ? <textarea id={id} className={`textarea ${error ? styles.inputError : ''}`} rows={3} maxLength={textual.maxLength} value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>
       : <input id={id} className={`input ${error ? styles.inputError : ''}`} type={textual.type === 'url' ? 'url' : 'text'} maxLength={textual.maxLength} placeholder={textual.placeholder} value={String(value ?? '')} disabled={disabled} onChange={(event) => onChange(event.target.value)} aria-describedby={describedBy}/>}
@@ -206,7 +205,6 @@ function RankingPreview({ values }: { values: Values }) {
   )
   return <section className="panel" aria-labelledby="preview-title">
     <h2 id="preview-title">Prévia com o catálogo de hoje</h2>
-    <p className={styles.lead}>Os 8 primeiros produtos que o ranking escolheria com estes pesos, antes de salvar.</p>
     {snapshot.recommendations.length === 0 ? <p className={styles.help}>O catálogo está vazio.</p> : <ol className={styles.preview}>
       {snapshot.recommendations.map((item, index) => <li key={item.product.id}>
         <span className={styles.position}>{index + 1}</span>
@@ -240,17 +238,16 @@ function PresetSettings({ title, intro, presets, fine, values, disabled, errors,
   const current = presets.find((preset) => matches(preset.values))
   return <div className={styles.sections} style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
     <section className={styles.sectionCard} aria-label={title}>
-      <header><h2>{title}</h2><p>{intro}</p></header>
+      <header><h2>{title}</h2>{intro && <p>{intro}</p>}</header>
       <div className={styles.presets} role="radiogroup" aria-label={title}>
         {presets.map((preset) => <button
           key={preset.id} type="button" role="radio" aria-checked={current?.id === preset.id} disabled={disabled}
-          className={`${styles.preset} ${current?.id === preset.id ? styles.presetOn : ''}`} onClick={() => onPreset(preset.values)}
+          className={`${styles.preset} ${current?.id === preset.id ? styles.presetOn : ''}`} onClick={() => onPreset(preset.values)} title={preset.description}
         >
           <strong>{preset.title}</strong>
-          <span>{preset.description}</span>
         </button>)}
       </div>
-      {!current && <p className={styles.help}>Os valores estão <strong>personalizados</strong> (ajuste fino abaixo). Escolher um estilo acima substitui esses valores.</p>}
+      {!current && <p className={styles.help}>Personalizado.</p>}
     </section>
     <details className={styles.fineTune}>
       <summary>Ajuste fino <small>(avançado)</small></summary>

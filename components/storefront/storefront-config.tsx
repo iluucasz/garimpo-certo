@@ -14,8 +14,8 @@ export type StorefrontConfig = {
 
 export const defaultStorefrontConfig: StorefrontConfig = {
   themeStyle: {},
-  notice: { text: 'Preços e avaliações vêm da Shopee.', detail: 'Usamos links de afiliado.' },
-  footer: { tagline: 'Um lugar para descobrir produtos,\ncomparar preços e escolher com calma.', signature: 'Curadoria. Comparação. Descoberta.', links: [] },
+  notice: { text: '', detail: '' },
+  footer: { tagline: '', signature: '', links: [] },
   nav: { coupons: false, articles: false, pages: [] },
   googleEnabled: false,
 }

@@ -21,7 +21,7 @@ export function ImportsView() {
     <section className={`panel ${styles.importHero}`}>
       <div>
         <h2>Atualizar o catálogo agora</h2>
-        <p className={styles.lead}>Busca as ofertas atuais na Shopee, atualiza preço, nota e vendas e arquiva o que saiu da seleção. O arquivamento só acontece quando a importação cobre pelo menos 70% do catálogo atual. Produtos que você editou mantêm nome, categoria e selos. A importação automática roda todo dia às 06:00 (Brasília), no worker da VPS.</p>
+        
       </div>
       <CatalogImportButton onDone={() => setRefresh((value) => value + 1)}/>
     </section>
@@ -56,8 +56,7 @@ export function CouponsView() {
 
   return <div className={styles.stack}>
     <div className={styles.note}><div>
-      <strong>Como funciona.</strong> A API de afiliados da Shopee não informa cupons nem códigos. Aqui você cadastra os que encontra (com validade e link de afiliado) e eles aparecem em <a href="/cupons" target="_blank" rel="noreferrer noopener">/cupons</a> para quem visita o site.
-      O botão “Buscar campanhas da Shopee” traz as páginas oficiais de categoria que a Shopee disponibiliza para afiliados; elas entram <em>ocultas</em> para você escolher quais exibir e renomear (os nomes vêm em inglês).
+      Campanhas da Shopee entram ocultas: escolha quais exibir.
     </div></div>
     <CouponClicks refresh={version}/>
     <ResourceManager key={version} slug="cupons" toolbar={canWrite && <button className="btn secondary" onClick={sync} disabled={busy} aria-busy={busy}><RefreshCw className={busy ? 'spin' : undefined} aria-hidden="true"/> {busy ? 'Buscando…' : 'Buscar campanhas da Shopee'}</button>}
@@ -94,7 +93,7 @@ function CouponClicks({ refresh }: { refresh: number }) {
           </tr>)}</tbody>
         </table></div>
       </>}
-    <p className={styles.help} style={{ marginTop: 12 }}>Os cliques ficam guardados pelo mesmo prazo dos demais eventos (Sistema → Medição). A Shopee não informa quanto cada cupom vendeu; o clique mede só o interesse.</p>
+    
   </section>
 }
 
@@ -144,7 +143,7 @@ export function EventsView() {
 
     <section className="panel">
       <h2>Eventos por dia (14 dias)</h2>
-      {data.byDay.length === 0 ? <p className={styles.help}>Nenhum evento no período. Eventos só são gravados para visitantes que aceitaram a medição.</p> : <>
+      {data.byDay.length === 0 ? <p className={styles.help}>Nenhum evento no período.</p> : <>
         <div className={styles.bars} role="img" aria-label={`Eventos por dia: ${data.byDay.map((row) => `${row.day}: ${row.count}`).join('; ')}`}>
           {data.byDay.map((row) => <div className={styles.bar} key={row.day} style={{ height: `${Math.max(4, (row.count / peak) * 100)}%` }} title={`${row.day}: ${row.count}`}/>)}
         </div>
@@ -169,7 +168,7 @@ export function EventsView() {
 
     {canPurge && <section className="panel">
       <h2>Retenção</h2>
-      <p className={styles.lead}>Apaga os eventos mais antigos que {data.retentionDays} dias (valor definido em Medição). Os cliques de compra, usados para comissão, não são apagados.</p>
+      <p className={styles.lead}>Apaga eventos com mais de {data.retentionDays} dias.</p>
       <button className="btn secondary" onClick={purge} disabled={busy}><Eraser aria-hidden="true"/> Limpar eventos antigos</button>
       {message && <p role="status" style={{ marginTop: 10 }}>{message}</p>}
     </section>}
@@ -203,7 +202,7 @@ export function IntegrationsView() {
   }
 
   return <div className={styles.stack}>
-    <p className={styles.note}>Os valores secretos ficam nas variáveis de ambiente do servidor (Vercel) e nunca aparecem aqui; o painel só mostra se estão configurados e permite testar a conexão.</p>
+    
     <div className={styles.grid2}>
       {data.checks.map((check) => {
         const result = results[check.id]

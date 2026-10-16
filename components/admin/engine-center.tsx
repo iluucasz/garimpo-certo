@@ -19,10 +19,10 @@ type Tab = 'geral' | 'aprovacoes' | 'semana' | 'importacao' | 'aprendizado' | 'a
 const number = new Intl.NumberFormat('pt-BR')
 
 const modeInfo = {
-  off: { label: 'Desligada', text: 'A Engine não analisa nem sugere nada.' },
-  shadow: { label: 'Sombra', text: 'Ela analisa e registra o que faria, mas não pede nem muda nada. Serve para você conferir se concorda.' },
-  approval: { label: 'Com aprovação', text: 'Cada sugestão espera o seu OK antes de valer.' },
-  auto: { label: 'Automática', text: 'Aplica sozinha o que é reversível (termos de datas e cotas por categoria). O resto continua pedindo o seu OK.' },
+  off: { label: 'Desligada', text: '' },
+  shadow: { label: 'Sombra', text: 'Só registra.' },
+  approval: { label: 'Com aprovação', text: 'Pede o seu OK.' },
+  auto: { label: 'Automática', text: 'Aplica o que é reversível.' },
 } as const
 
 const stateLabel: Record<TaskState, string> = { ok: 'Em dia', attention: 'Precisa de atenção', idle: 'Aguardando dados', off: 'Desligada' }
@@ -126,7 +126,7 @@ export function EngineCenter() {
         <p className={styles.heroMeta}>
           <span className={`${styles.dot} ${styles[`worker_${data.worker.state}`]}`} aria-hidden="true"/>
           {workerLabel[data.worker.state]}{data.worker.lastBeatAt ? ` · último sinal ${dateTime(data.worker.lastBeatAt)}` : ''}
-          {data.worker.state === 'unknown' ? ' — o worker da VPS precisa ser atualizado para mostrar o sinal' : ''}
+          
         </p>
       </div>
       <div className={styles.heroActions}>
@@ -226,7 +226,7 @@ function Approvals({ data, shadow, canDecide, busy, onProposal, onPost, onApprov
 }) {
   const { proposals, posts } = data.approvals
   return <div className={styles.stack}>
-    {proposals.length === 0 && posts.length === 0 && <section className="panel"><p className={styles.empty}>Nada esperando você. Quando a Engine tiver postagens ou sugestões que pedem o seu OK, elas aparecem aqui.</p></section>}
+    {proposals.length === 0 && posts.length === 0 && <section className="panel"><p className={styles.empty}>Nada esperando você.</p></section>}
 
     {posts.length > 0 && <section className="panel" aria-labelledby="ap-posts">
       <div className={styles.rowHead}>
@@ -273,7 +273,6 @@ function Approvals({ data, shadow, canDecide, busy, onProposal, onPost, onApprov
 
     {shadow.length > 0 && <details className={`panel ${styles.collapse}`}>
       <summary><span>Registro do modo sombra</span><small>{shadow.length} {shadow.length === 1 ? 'sugestão registrada' : 'sugestões registradas'}, sem pedir nada</small></summary>
-      <p className={styles.help}>No modo sombra a Engine só registra o que faria. Compare com o que você faria sozinho; quando concordar, mude o modo para “Com aprovação” em Modo e regras.</p>
       <ul className={styles.list}>
         {shadow.map((proposal) => <li key={proposal.id} className={styles.card}>
           <div className={styles.cardMain}>
@@ -305,7 +304,7 @@ function WeekTab() {
   if (!data) return <section className="panel" role="status">Montando o resumo…</section>
   const { site, commissions, engine, posts, catalog } = data
   return <div className={styles.stack}>
-    {!data.measured && <section className="panel"><p className={styles.help}>Ainda não há visitas nem cliques medidos nas duas últimas semanas. Só contam visitantes que permitiram a medição de uso; os números abaixo aparecem conforme o site recebe tráfego. O que a Engine fez e as comissões já valem.</p></section>}
+    {!data.measured && <section className="panel"><p className={styles.help}>Sem visitas medidas nas duas últimas semanas.</p></section>}
 
     <div className={styles.kpis}>
       <div className={styles.kpi}><span>Cliques de compra</span><strong>{number.format(site.clicks.current)}</strong><Delta pair={site.clicks}/></div>
@@ -357,7 +356,7 @@ function WeekTab() {
         </dl>
         {commissions.byChannel.length > 0
           ? <ul className={styles.channels} aria-label="Comissão por canal">{commissions.byChannel.map((item) => <li key={item.channel}><span>{channelLabel[item.channel] ?? item.channel}</span><strong>{formatPrice(item.commission)}</strong><small>{item.conversions} {item.conversions === 1 ? 'venda' : 'vendas'}</small></li>)}</ul>
-          : <p className={styles.help}>Nenhuma venda pelos seus links nos últimos {data.days} dias. A Shopee só informa as vendas depois de concluídas; o relatório aparece aqui sozinho.</p>}
+          : <p className={styles.help}>Nenhuma venda nos últimos {data.days} dias.</p>}
       </section>
     </div>
   </div>
@@ -371,7 +370,6 @@ function ImportTab({ data }: { data: EngineOverview }) {
   return <div className={styles.stack}>
     <section className="panel">
       <h3 className={styles.sectionTitle}>Como a importação decide</h3>
-      <p className={styles.help}>Para cada categoria a Engine busca na Shopee, separa os produtos em três faixas de preço (até R$ 99, de R$ 100 a R$ 499 e a partir de R$ 500), tira o que não passa na nota e nas vendas mínimas, limita por loja e fica com os melhores de cada faixa. Preço e nota são atualizados; o que saiu da seleção sai da vitrine (só quando a importação cobre 70% do catálogo atual).</p>
       {task?.last && <p className={styles.taskNote}>Última importação: {dateTime(task.last.at)} — {task.last.summary}.{task.nextAt ? ` Próxima: ${dateTime(task.nextAt)}.` : ''}</p>}
       {boosted.length > 0 && <p className={styles.taskNote}>Cotas extras ativas por aprendizado: {boosted.map((item) => `${item.name} +${item.bonus}`).join(', ')}.</p>}
     </section>
@@ -387,7 +385,6 @@ function LearningTab({ data }: { data: EngineOverview }) {
   return <div className={styles.stack}>
     <section className="panel">
       <h3 className={styles.sectionTitle}>O que a Engine aprende com os cliques</h3>
-      <p className={styles.help}>Ela compara cada categoria pelos cliques reais de compra com o tamanho da categoria. Quem rende bem acima da média ganha mais vagas na próxima importação (depois que você aprova) e prioridade suave nas postagens. Só visitantes que permitiram a medição contam.</p>
       <div className={styles.progressText}><strong>{number.format(learning.siteClicks)}</strong> de {number.format(learning.minSiteClicks)} cliques nos últimos {learning.windowDays} dias para começar a aprender {learning.enabled ? '' : '· desligado'}</div>
       <div className={styles.bar} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Cliques disponíveis para aprender"><span style={{ width: `${progress}%` }}/></div>
     </section>
@@ -410,7 +407,7 @@ function LearningTab({ data }: { data: EngineOverview }) {
 const kindLabel: Record<ActivityItem['kind'], string> = { import: 'Importação', commissions: 'Comissões', engine: 'Engine', post: 'Postagem', proposal: 'Sugestão' }
 
 function History({ items }: { items: ActivityItem[] }) {
-  if (items.length === 0) return <section className="panel"><p className={styles.empty}>Nada registrado ainda. As execuções do worker e das postagens aparecem aqui.</p></section>
+  if (items.length === 0) return <section className="panel"><p className={styles.empty}>Nada registrado ainda.</p></section>
   return <section className="panel" aria-label="Histórico">
     <ol className={styles.timeline}>
       {items.map((item, index) => <li key={`${item.at}-${index}`} className={styles[`tone_${item.tone}`]}>

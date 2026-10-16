@@ -159,12 +159,7 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
     setSearchOpen(false)
   }
 
-  const heading = query ? `Resultados para “${query}”` : activeCategory ? activeCategory.name : 'Descubra sem se perder'
-  const subheading = query
-    ? 'Preços e vendas conforme a última sincronização com a Shopee.'
-    : activeCategory
-      ? `${categoryCounts.get(activeCategory.slug) ?? 0} produtos em ${activeCategory.name.toLocaleLowerCase('pt-BR')}, com preço e vendas da última sincronização com a Shopee.`
-      : `${products.length} produtos em ${categories.length} categorias. Busque por nome ou marca, ou comece por uma categoria.`
+  const heading = query ? `Resultados para “${query}”` : activeCategory ? activeCategory.name : 'Todos os achados'
   const showQuickCategories = !query && category === 'todos' && categories.length > 0
   const chips: { key: string; label: string; remove: () => void }[] = [
     ...(category !== (initialCategory ?? 'todos') && activeCategory ? [{ key: 'categoria', label: activeCategory.name, remove: () => { setCategory(initialCategory ?? 'todos'); setPage(1) } }] : []),
@@ -181,7 +176,6 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
         {activeCategory ? <><Link href="/buscar">Descobrir</Link><span aria-hidden="true">/</span><span aria-current="page">{activeCategory.name}</span></> : <span aria-current="page">Descobrir</span>}
       </nav>
       <h1>{heading}</h1>
-      <p className={styles.lead}>{subheading}</p>
       <div className={styles.searchWrap} ref={searchRef}>
         <div className={styles.searchField}>
           <Search aria-hidden="true"/>
@@ -255,7 +249,6 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
           : <div className={styles.empty}>
             <SearchX aria-hidden="true"/>
             <h2>Nenhum produto encontrado</h2>
-            <p>{query ? `Não achamos nada para “${query}” com os filtros atuais.` : 'Nenhum produto combina com os filtros atuais.'} Tente um termo mais amplo ou remova algum filtro.</p>
             <button type="button" onClick={clearFilters}>Limpar filtros</button>
           </div>}
         {totalPages > 1 && <nav className={styles.pagination} aria-label="Paginação">
