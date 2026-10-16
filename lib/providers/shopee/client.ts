@@ -25,6 +25,24 @@ export class ShopeeApiError extends Error {
 const productFields = 'itemId productName priceMin priceMax price sales ratingStar imageUrl offerLink productLink commissionRate commission priceDiscountRate shopName shopId productCatIds'
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+/**
+ * Limite de chamadas por hora (janela deslizante, por processo). A Shopee recusa quando o aplicativo passa do
+ * limite dela; com um catálogo grande e reatualização diária o volume de chamadas é alto, então o cliente se
+ * regula sozinho em vez de falhar no meio da importação. Ajustável por `SHOPEE_MAX_REQUESTS_PER_HOUR`.
+ */
+const WINDOW_MS = 3_600_000
+const sentAt: number[] = []
+async function throttle(): Promise<void> {
+  const limit = Number(process.env.SHOPEE_MAX_REQUESTS_PER_HOUR) || 1800
+  const now = Date.now()
+  while (sentAt.length && now - sentAt[0] > WINDOW_MS) sentAt.shift()
+  if (sentAt.length >= limit) {
+    await sleep(sentAt[0] + WINDOW_MS - now + 1000)
+    return throttle()
+  }
+  sentAt.push(Date.now())
+}
+
 function credentials() {
   const appId = process.env.SHOPEE_AFFILIATE_APP_ID
   const appSecret = process.env.SHOPEE_AFFILIATE_APP_SECRET
@@ -35,14 +53,22 @@ function credentials() {
 /** Assina e envia uma chamada GraphQL. A assinatura cobre o corpo exato enviado. */
 export async function shopeeRequest<T>(query: string, attempt = 1): Promise<T> {
   const { appId, appSecret } = credentials()
+  await throttle()
   const payload = JSON.stringify({ query })
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = createHash('sha256').update(`${appId}${timestamp}${payload}${appSecret}`).digest('hex')
-  const response = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `SHA256 Credential=${appId}, Timestamp=${timestamp}, Signature=${signature}` },
-    body: payload,
-  })
+  let response: Response
+  try {
+    response = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `SHA256 Credential=${appId}, Timestamp=${timestamp}, Signature=${signature}` },
+      body: payload,
+    })
+  } catch (error) {
+    // Queda de rede ("fetch failed"): tenta de novo antes de desistir.
+    if (attempt < MAX_ATTEMPTS) { await sleep(2 ** attempt * 1000); return shopeeRequest<T>(query, attempt + 1) }
+    throw new ShopeeApiError(`Não foi possível falar com a Shopee: ${error instanceof Error ? error.message : String(error)}`)
+  }
   const retriable = response.status === 429 || response.status >= 500
   if (retriable && attempt < MAX_ATTEMPTS) { await sleep(2 ** attempt * 500); return shopeeRequest<T>(query, attempt + 1) }
   if (!response.ok) throw new ShopeeApiError(`A Shopee respondeu ${response.status}.`, undefined, response.status)

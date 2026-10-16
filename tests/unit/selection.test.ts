@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ShopeeProductOffer } from '@/lib/providers/shopee/client'
 import { defaultMix, highTicketMix, nameKey, selectForCategory, tierOf, tierRank, type Candidate, type SelectionOptions } from '@/lib/providers/shopee/selection'
+import { categoryGroups, passesIndexGate } from '@/lib/providers/shopee/import'
 
 let counter = 0
 /** `price` aqui é número (na API é texto); os demais campos seguem o tipo da oferta. */
@@ -128,5 +129,23 @@ describe('seleção do catálogo por faixa de preço', () => {
   it('ignora ofertas sem imagem, sem link ou sem preço', () => {
     const result = selectForCategory([candidate({ imageUrl: '' }), candidate({ offerLink: '' }), candidate({ price: 0, priceMin: '0', priceMax: '0' }), candidate()], options(), fresh())
     expect(result.offers).toHaveLength(1)
+  })
+})
+
+describe('corte de Índice ao acumular', () => {
+  it('faixas mais caras aceitam alguns pontos a menos e 0 desliga o corte', () => {
+    expect(passesIndexGate(84, 30, 84)).toBe(true)
+    expect(passesIndexGate(83, 30, 84)).toBe(false)
+    expect(passesIndexGate(79, 250, 84)).toBe(true)
+    expect(passesIndexGate(74, 900, 84)).toBe(true)
+    expect(passesIndexGate(73, 900, 84)).toBe(false)
+    expect(passesIndexGate(10, 30, 0)).toBe(true)
+  })
+
+  it('cada categoria tem buscas e um nome só, sem repetir identificador', () => {
+    const slugs = categoryGroups.map((group) => group.slug)
+    expect(new Set(slugs).size).toBe(slugs.length)
+    expect(slugs.length).toBeGreaterThanOrEqual(24)
+    for (const group of categoryGroups) expect(group.keywords.length).toBeGreaterThanOrEqual(5)
   })
 })

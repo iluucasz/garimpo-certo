@@ -9,7 +9,9 @@ export const MIN_COVERAGE_TO_PRUNE = 0.7
 /** Ofertas que cada busca traz ao acumular: mais fundo que o top de vendas, onde estão os produtos novos. */
 const ACCUMULATE_DEPTH = 150
 /** Novos por categoria a cada importação quando a leitura do painel falha. */
-const DEFAULT_NEW_PER_CATEGORY = 10
+const DEFAULT_NEW_PER_CATEGORY = 0
+/** Índice mínimo quando a leitura do painel falha. */
+const DEFAULT_MIN_INDEX = 84
 
 let running: Promise<CatalogRunResult> | null = null
 
@@ -63,7 +65,8 @@ async function runImport(options: RunOptions): Promise<CatalogRunResult> {
     ...(settings ? {
       perCategory: accumulate ? settings.newPerCategory : settings.perCategory,
       minRating: settings.minRating, minSales: settings.minSales, maxPerShop: settings.maxPerShop, maxCatalog: settings.maxCatalog,
-    } : { perCategory: accumulate ? DEFAULT_NEW_PER_CATEGORY : undefined }),
+      minIndex: settings.minIndex,
+    } : { perCategory: accumulate ? DEFAULT_NEW_PER_CATEGORY : undefined, minIndex: DEFAULT_MIN_INDEX }),
   })
 
   let pruned: string[] = []

@@ -50,6 +50,20 @@ const categoryTags: Record<string, string[]> = {
   games: ['games', 'gamer', 'jogos'],
   eletronicos: ['eletronicos', 'tecnologia', 'gadgets'],
   eletrodomesticos: ['eletrodomesticos', 'casa', 'cozinha'],
+  'moda-feminina': ['modafeminina', 'moda', 'look'],
+  'moda-masculina': ['modamasculina', 'moda', 'estilo'],
+  calcados: ['calcados', 'tenis', 'moda'],
+  acessorios: ['acessorios', 'moda', 'estilo'],
+  infantil: ['infantil', 'bebe', 'maternidade'],
+  papelaria: ['papelaria', 'escritorio', 'organizacao'],
+  automotivo: ['automotivo', 'carro', 'moto'],
+  ferramentas: ['ferramentas', 'faca voce mesmo', 'casa'],
+  jardim: ['jardim', 'quintal', 'plantas'],
+  suplementos: ['suplementos', 'fitness', 'treino'],
+  viagem: ['viagem', 'mochila', 'turismo'],
+  esporte: ['esporte', 'lazer', 'outdoor'],
+  'cama-mesa-banho': ['camamesaebanho', 'casa', 'decoracao'],
+  hobbies: ['hobbies', 'lazer', 'diversao'],
 }
 
 /** Uma hashtag válida: só letras e números, sem acento, minúscula, até 30 caracteres. */

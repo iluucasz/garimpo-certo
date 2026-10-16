@@ -70,8 +70,19 @@ export async function importCatalogItem(item: CatalogItem, providerId: string, c
 
   const [existingOffer] = await db.select({
     id: offers.id, productId: offers.productId, price: offers.price, soldCount: offers.soldCount,
-    affiliateUrl: offers.affiliateUrl, affiliateSubIds: offers.affiliateSubIds,
+    affiliateUrl: offers.affiliateUrl, affiliateSubIds: offers.affiliateSubIds, rating: offers.rating, status: offers.status,
+    priceMax: offers.priceMax, originalPrice: offers.originalPrice,
   }).from(offers).where(and(eq(offers.providerId, providerId), eq(offers.externalId, item.externalId)))
+  // Reatualização sem mudança (mesmo preço, vendas, nota e faixa): só o carimbo de sincronização. Com milhares de
+  // produtos reatualizados todo dia, regravar imagem, selos e categoria de cada um seria trabalho à toa.
+  const same = (a: string | null, b: number | null | undefined) => (a === null || a === undefined ? b === null || b === undefined : b !== null && b !== undefined && Number(a).toFixed(2) === b.toFixed(2))
+  const taggedKey = process.env.SHOPEE_TAGGED_LINKS === '0' ? null : subIdsKey(siteSubIds(item.categorySlug))
+  if (existingOffer && existingOffer.status === 'active' && existingOffer.affiliateUrl && (taggedKey === null || existingOffer.affiliateSubIds === taggedKey)
+    && Number(existingOffer.price).toFixed(2) === item.price.toFixed(2) && (existingOffer.soldCount ?? -1) === item.soldCount
+    && same(existingOffer.rating, item.rating) && same(existingOffer.priceMax, item.priceMax) && same(existingOffer.originalPrice, item.originalPrice)) {
+    await db.update(offers).set({ lastSyncedAt: new Date().toISOString() }).where(eq(offers.id, existingOffer.id))
+    return { isNew: false, priceChanged: false }
+  }
   const [existingBySlug] = existingOffer ? [] : await db.select({ id: products.id }).from(products).where(eq(products.slug, item.slug))
   const knownProductId = existingOffer?.productId ?? existingBySlug?.id
   const [lockRow] = knownProductId ? await db.select({ locked: products.editorialLocked }).from(products).where(eq(products.id, knownProductId)) : []

@@ -250,7 +250,8 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     fields: [
       { key: 'enabled', label: 'Importação diária ligada', type: 'boolean', help: 'Desligada, o worker não importa às 6h. Dá para importar à mão em Importações.' },
       { key: 'accumulate', label: 'Acumular: o catálogo só cresce', type: 'boolean', help: 'Ligado, nada sai por estar fora do top de hoje: a cada importação entram produtos novos e os antigos são reatualizados. Só sai o que perdeu a nota mínima ou saiu da Shopee. Desligado, a vitrine é uma seleção fixa por categoria.' },
-      numberField('newPerCategory', 'Novos por categoria a cada importação', 1, 500, 'Quantos produtos novos entram por categoria, por dia, quando acumula. Com 11 categorias, 10 dá cerca de 110 por dia.', 'produtos'),
+      numberField('minIndex', 'Índice Garimpo mínimo para entrar', 0, 100, 'Define o que é “bom”: todo dia entra tudo o que tem Índice igual ou maior (faixas mais caras aceitam 5 e 10 pontos a menos). 0 desliga o corte.', 'pontos'),
+      numberField('newPerCategory', 'Teto de novos por categoria (0 = sem teto)', 0, 2000, 'Em geral deixe 0: entra tudo o que passa nos cortes, seja 300 ou 4 produtos. Use só para frear um dia de muitas entradas.', 'produtos'),
       numberField('maxCatalog', 'Limite total de produtos (0 = sem limite)', 0, 1_000_000, 'Só vale quando acumula. 0 deixa o catálogo crescer sem teto.', 'produtos'),
       numberField('perCategory', 'Total por categoria (sem acumular)', 10, 2000, 'Usado só com “Acumular” desligado: com 11 categorias, 40 dá cerca de 440 produtos.', 'produtos'),
       numberField('minRating', 'Nota mínima', 4, 5, 'Só entra produto com nota igual ou maior.', 'estrelas', 0.1),
@@ -260,9 +261,9 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     sections: [
       { title: 'Rotina', description: 'Liga ou desliga a importação das 6h.', keys: ['enabled'] },
       { title: 'Quanto entra', description: 'Quantos produtos entram e se o catálogo cresce sem parar.', keys: ['accumulate', 'newPerCategory', 'maxCatalog', 'perCategory'] },
-      { title: 'Qualidade', description: 'O corte que todo produto precisa passar.', keys: ['minRating', 'minSales', 'maxPerShop'] },
+      { title: 'Qualidade', description: 'O corte que todo produto precisa passar.', keys: ['minIndex', 'minRating', 'minSales', 'maxPerShop'] },
     ],
-    defaults: { enabled: true, accumulate: true, newPerCategory: 10, maxCatalog: 0, perCategory: 40, minRating: 4.5, minSales: 50, maxPerShop: 2 },
+    defaults: { enabled: true, accumulate: true, newPerCategory: 0, maxCatalog: 0, minIndex: 84, perCategory: 40, minRating: 4.5, minSales: 50, maxPerShop: 2 },
   },
   social: {
     key: 'social',

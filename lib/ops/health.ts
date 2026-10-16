@@ -17,8 +17,8 @@ export const thresholds = {
   privacyWarnDays: 10,
   privacyCriticalDays: 15,
   /** O site envia o catálogo inteiro ao navegador (≈ 2 KB por produto): passando disso as páginas ficam pesadas. */
-  catalogSizeWarn: 2000,
-  catalogSizeCritical: 5000,
+  catalogSizeWarn: 3000,
+  catalogSizeCritical: 6000,
 } as const
 
 const worst = (...values: Severity[]): Severity => values.includes('critical') ? 'critical' : values.includes('warning') ? 'warning' : 'ok'

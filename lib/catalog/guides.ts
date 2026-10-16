@@ -94,6 +94,10 @@ type Input = { products: Product[]; offers: Offer[]; categories: Category[]; che
 export const guideCategoryLabels: Record<string, string> = {
   games: 'Games', eletronicos: 'Eletrônicos', eletrodomesticos: 'Eletrodomésticos', tecnologia: 'Tecnologia', casa: 'Casa',
   audio: 'Áudio', cozinha: 'Cozinha', pet: 'Pet', beleza: 'Beleza', fitness: 'Fitness', 'bem-estar': 'Bem-estar',
+  'moda-feminina': 'Moda feminina', 'moda-masculina': 'Moda masculina', calcados: 'Calçados', acessorios: 'Acessórios',
+  infantil: 'Infantil e bebê', papelaria: 'Papelaria e escritório', automotivo: 'Automotivo', ferramentas: 'Ferramentas',
+  jardim: 'Jardim e quintal', suplementos: 'Suplementos', viagem: 'Viagem e mochilas', esporte: 'Esporte e lazer',
+  'cama-mesa-banho': 'Cama, mesa e banho', hobbies: 'Hobbies',
 }
 
 export const MAX_CHECKS = 6

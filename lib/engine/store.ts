@@ -54,7 +54,7 @@ export async function loadEngineSettings(): Promise<EngineSettings> {
 }
 
 export type ImportSettings = {
-  enabled: boolean; accumulate: boolean; newPerCategory: number; maxCatalog: number
+  enabled: boolean; accumulate: boolean; newPerCategory: number; maxCatalog: number; minIndex: number
   perCategory: number; minRating: number; minSales: number; maxPerShop: number
 }
 
@@ -71,7 +71,8 @@ export async function loadImportSettings(): Promise<ImportSettings> {
   return {
     enabled: merged.enabled !== false,
     accumulate: merged.accumulate !== false,
-    newPerCategory: Math.round(number('newPerCategory', 1, 500, 10)),
+    newPerCategory: Math.round(number('newPerCategory', 0, 2000, 0)),
+    minIndex: Math.round(number('minIndex', 0, 100, 84)),
     maxCatalog: Math.round(number('maxCatalog', 0, 1_000_000, 0)),
     perCategory: Math.round(number('perCategory', 10, 2000, 40)),
     minRating: number('minRating', 4, 5, 4.5),

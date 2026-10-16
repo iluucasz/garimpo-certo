@@ -8,7 +8,7 @@ import { createAuthenticatedUser } from '../helpers/auth'
 describe('saúde operacional', () => {
   it('lê o banco real e devolve as quatro verificações', async () => {
     const health = await getOpsHealth()
-    expect(health.checks.map((check) => check.id)).toEqual(['catalogo', 'comissoes', 'tarefas', 'lgpd'])
+    expect(health.checks.map((check) => check.id)).toEqual(['catalogo', 'comissoes', 'tamanho', 'tarefas', 'lgpd'])
     expect(['ok', 'warning', 'critical']).toContain(health.status)
     for (const check of health.checks) expect(check.message.length).toBeGreaterThan(0)
   })
@@ -27,6 +27,6 @@ describe('saúde operacional', () => {
     const reader = await createAuthenticatedUser('READ_ONLY')
     const response = await adminHealth(new Request('http://localhost/api/v1/admin/health', { headers: { cookie: reader.cookie } }))
     expect(response.status).toBe(200)
-    expect((await response.json()).data.checks.length).toBe(4)
+    expect((await response.json()).data.checks.length).toBe(5)
   })
 })
