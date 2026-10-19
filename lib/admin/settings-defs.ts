@@ -226,6 +226,7 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
       numberField('windowDays', 'Janela de análise', 14, 90, 'Quantos dias de visitas, cliques e favoritos a Engine considera.', 'dias'),
       numberField('minSiteViews', 'Visitas mínimas para decidir', 50, 5000, 'Abaixo disso a faxina não sugere nada: pouca gente visitando não prova que o produto é ruim.', 'visitas'),
       numberField('minAgeDays', 'Idade mínima do produto', 7, 180, 'Produto que entrou há menos tempo que isso nunca é sugerido para sair.', 'dias'),
+      numberField('minProductViews', 'Visitas mínimas do produto para sair', 0, 1000, 'Só sai quem foi visto pelo menos isso e não teve clique, favorito nem compra. Quem nunca foi aberto fica: falta de exposição não é falta de qualidade. 0 deixa sair também quem nunca foi visto.', 'visitas'),
       numberField('maxPerRun', 'Máximo de sugestões por execução', 1, 50, undefined, 'produtos'),
       numberField('maxSharePercent', 'Parte máxima do catálogo por execução', 1, 30, undefined, '%'),
       { key: 'seasonalEnabled', label: 'Sugerir termos de datas comerciais (Dia das Mães, Black Friday…)', type: 'boolean' },
@@ -236,11 +237,11 @@ export const settingDefinitions: Record<SettingKey, SettingDefinition> = {
     ],
     sections: [
       { title: 'Modo', description: 'Quanto a Engine pode fazer sozinha.', keys: ['mode'] },
-      { title: 'Faxina do catálogo', description: 'Quando sugerir tirar um produto da vitrine.', keys: ['windowDays', 'minSiteViews', 'minAgeDays', 'maxPerRun', 'maxSharePercent'] },
+      { title: 'Faxina do catálogo', description: 'Quando sugerir tirar um produto da vitrine.', keys: ['windowDays', 'minSiteViews', 'minAgeDays', 'minProductViews', 'maxPerRun', 'maxSharePercent'] },
       { title: 'Datas comerciais', description: 'Termos de busca para as datas que se aproximam.', keys: ['seasonalEnabled', 'lookaheadDays'] },
       { title: 'Aprender com os cliques', description: 'Mais produtos nas categorias que rendem e prioridade a elas nas postagens.', keys: ['learnEnabled', 'minSiteClicks', 'quotaExtra'] },
     ],
-    defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40, learnEnabled: true, minSiteClicks: 50, quotaExtra: 10 },
+    defaults: { mode: 'shadow', windowDays: 30, minSiteViews: 500, minAgeDays: 30, minProductViews: 10, maxPerRun: 10, maxSharePercent: 10, seasonalEnabled: true, lookaheadDays: 40, learnEnabled: true, minSiteClicks: 50, quotaExtra: 10 },
   },
   import: {
     key: 'import',

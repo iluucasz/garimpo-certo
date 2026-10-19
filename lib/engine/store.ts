@@ -46,6 +46,7 @@ export async function loadEngineSettings(): Promise<EngineSettings> {
     windowDays: number('windowDays', defaultEngineConfig.windowDays),
     minSiteViews: number('minSiteViews', defaultEngineConfig.minSiteViews),
     minAgeDays: number('minAgeDays', defaultEngineConfig.minAgeDays),
+    minProductViews: number('minProductViews', defaultEngineConfig.minProductViews),
     maxPerRun: number('maxPerRun', defaultEngineConfig.maxPerRun),
     maxShare: number('maxSharePercent', defaultEngineConfig.maxShare * 100) / 100,
     seasonalEnabled: merged.seasonalEnabled !== false,

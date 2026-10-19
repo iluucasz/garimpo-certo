@@ -12,6 +12,11 @@ export type EngineConfig = {
   minSiteViews: number
   /** Idade mínima do produto no catálogo antes de poder ser sugerido para sair. */
   minAgeDays: number
+  /**
+   * Visitas que o PRODUTO precisa ter tido na janela para poder sair. Sem isso, num catálogo grande a faxina arquivaria
+   * produtos que ninguém abriu simplesmente por falta de exposição. 0 = também sai quem nunca foi visto.
+   */
+  minProductViews: number
   /** Máximo de produtos sugeridos para sair por execução. */
   maxPerRun: number
   /** Parte máxima do catálogo ativo que a faxina pode sugerir de uma vez (0–1). */
@@ -27,7 +32,7 @@ export type EngineConfig = {
 }
 
 export const defaultEngineConfig: EngineConfig = {
-  windowDays: 30, minSiteViews: 500, minAgeDays: 30, maxPerRun: 10, maxShare: 0.1, seasonalEnabled: true, lookaheadDays: 40,
+  windowDays: 30, minSiteViews: 500, minAgeDays: 30, minProductViews: 10, maxPerRun: 10, maxShare: 0.1, seasonalEnabled: true, lookaheadDays: 40,
   learnEnabled: true, minSiteClicks: 50, quotaExtra: 10,
 }
 
@@ -81,9 +86,10 @@ export function pruneProposals(signals: ProductSignal[], siteViews: number, conf
   const candidates = signals
     .filter((signal) => !signal.locked && now - new Date(signal.createdAt).getTime() >= config.minAgeDays * dayMs)
     .filter((signal) => signal.clicks === 0 && signal.favorites === 0 && signal.conversions === 0)
+    .filter((signal) => signal.views >= config.minProductViews)
   coverage.eligible = candidates.length
   const cap = Math.max(1, Math.min(config.maxPerRun, Math.floor(signals.length * config.maxShare)))
-  // Pior primeiro: quem foi visto e ignorado pesa mais que quem nem foi aberto (pode só estar mal posicionado).
+  // Pior primeiro: mais visitas sem nenhum clique.
   const ranked = [...candidates].sort((a, b) => b.views - a.views || a.soldCount - b.soldCount).slice(0, cap)
 
   const proposals = ranked.map((signal): ProposalDraft => ({

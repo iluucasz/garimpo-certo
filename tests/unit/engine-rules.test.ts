@@ -66,7 +66,7 @@ describe('faxina do catálogo', () => {
     const sold = signal({ name: 'Vendeu', conversions: 1 })
     const locked = signal({ name: 'Editado', locked: true })
     const fresh = signal({ name: 'Novo', createdAt: daysAgo(3) })
-    const many = Array.from({ length: 20 }, () => signal({ views: 1 }))
+    const many = Array.from({ length: 20 }, () => signal({ views: 11 }))
     const result = pruneProposals([ignored, clicked, favorited, sold, locked, fresh, ...many], 900, config, NOW)
     const titles = result.proposals.map((proposal) => proposal.title)
     expect(titles[0]).toContain('Ignorado')
@@ -74,17 +74,23 @@ describe('faxina do catálogo', () => {
   })
 
   it('respeita o teto por execução e a parte máxima do catálogo', () => {
-    const all = Array.from({ length: 100 }, () => signal({ views: 5 }))
+    const all = Array.from({ length: 100 }, () => signal({ views: 15 }))
     const result = pruneProposals(all, 5000, { ...config, maxPerRun: 25, maxShare: 0.1 }, NOW)
     expect(result.proposals).toHaveLength(10) // 10% de 100
     expect(pruneProposals(all, 5000, { ...config, maxPerRun: 3, maxShare: 0.5 }, NOW).proposals).toHaveLength(3)
   })
 
+  it('quem nunca foi visto não sai: falta de exposição não é falta de qualidade', () => {
+    const unseen = Array.from({ length: 30 }, () => signal({ views: 3 }))
+    expect(pruneProposals(unseen, 900, config, NOW).proposals).toEqual([])
+    expect(pruneProposals(unseen, 900, { ...config, minProductViews: 0 }, NOW).proposals.length).toBeGreaterThan(0)
+  })
+
   it('cada proposta carrega o motivo e os números que a justificam', () => {
-    const [proposal] = pruneProposals([signal({ views: 7 }), ...Array.from({ length: 9 }, () => signal())], 800, config, NOW).proposals
+    const [proposal] = pruneProposals([signal({ views: 12 }), ...Array.from({ length: 9 }, () => signal())], 800, config, NOW).proposals
     expect(proposal).toMatchObject({ kind: 'archive_product', subjectType: 'product' })
-    expect(proposal.reason).toContain('7 visitas')
-    expect(proposal.evidence).toMatchObject({ views: 7, clicks: 0, siteViews: 800 })
+    expect(proposal.reason).toContain('12 visitas')
+    expect(proposal.evidence).toMatchObject({ views: 12, clicks: 0, siteViews: 800 })
     expect(proposal.expiresAt).toBeTruthy()
   })
 })
