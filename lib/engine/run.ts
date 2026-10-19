@@ -32,7 +32,7 @@ async function execute(now: Date): Promise<RunState> {
     const expired = await expireStale(now)
     const persisted = await persistDrafts([...prune.proposals, ...seasonal, ...quota.proposals], settings.mode, now.getTime())
 
-    // Automático: só os tipos reversíveis. O resto continua esperando a equipe.
+    // Automático: aplica tudo o que a Engine propõe (ver AUTO_KINDS).
     let applied = 0
     if (settings.mode === 'auto') {
       const pending = await db.select().from(engineProposals).where(and(eq(engineProposals.status, 'pending'), inArray(engineProposals.kind, [...AUTO_KINDS])))

@@ -16,8 +16,11 @@ export type EngineSettings = EngineConfig & { mode: EngineMode }
 export type ProposalStatus = 'shadow' | 'pending' | 'applied' | 'rejected' | 'failed' | 'expired'
 export type ProposalRow = typeof engineProposals.$inferSelect
 
-/** Tipos que o modo automático aplica sozinho: só o que é reversível e não esconde produto da vitrine. */
-export const AUTO_KINDS = ['import_term', 'category_quota'] as const
+/**
+ * Tipos que o modo automático aplica sozinho. Desde 2026-10-19 são todos: tirar produto da vitrine também é reversível
+ * (arquiva e bloqueia, nunca apaga) e só é proposto com tráfego medido suficiente (`minSiteViews`).
+ */
+export const AUTO_KINDS = ['archive_product', 'import_term', 'category_quota'] as const
 
 export const kindLabels: Record<string, string> = {
   archive_product: 'Tirar produto da vitrine',

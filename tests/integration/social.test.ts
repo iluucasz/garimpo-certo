@@ -4,6 +4,7 @@ import { GET as listRoute, POST as actionRoute } from '@/app/api/v1/admin/posts/
 import { PATCH as patchRoute } from '@/app/api/v1/admin/posts/[id]/route'
 import { db } from '@/lib/db/client'
 import { offers, products, providers, socialPosts } from '@/lib/db/schema'
+import { settingDefinitions } from '@/lib/admin/settings-defs'
 import { brasiliaTime } from '@/lib/social/schedule'
 import {
   approvePost, cancelPost, createPost, deliverDue, deliverPost, expireOldPending, loadCandidates, loadSocialSettings, planToday, restoreOriginalText, rewritePost, type SocialSettings,
@@ -202,10 +203,10 @@ describe('fila de postagens', () => {
     expect(second.created).toBe(0)
   })
 
-  it('a configuração padrão é segura: desligada e com aprovação', async () => {
+  it('o padrão publica no horário, sem exigir aprovação, e começa desligado', async () => {
     const stored = await loadSocialSettings()
     expect(stored.dailyLimit).toBeGreaterThanOrEqual(1)
-    expect(stored.requireApproval).toBe(true)
+    expect(settingDefinitions.social.defaults).toMatchObject({ mode: 'off', requireApproval: false })
   })
 })
 
