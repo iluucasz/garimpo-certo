@@ -8,15 +8,29 @@ import { buildPasswordResetEmail, emailEnabled, sendEmail } from './email'
 
 if (!process.env.BETTER_AUTH_SECRET) throw new Error('BETTER_AUTH_SECRET não configurado.')
 
-// Links de e-mail e callbacks usam esta URL. Sem BETTER_AUTH_URL, vale o endereço público do site.
+// Endereço de fallback (testes, scripts e hosts desconhecidos). Sem BETTER_AUTH_URL, vale o endereço público do site.
 const baseURL = process.env.BETTER_AUTH_URL ?? siteUrl
 if (process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(baseURL)) {
   console.error(`[auth] BETTER_AUTH_URL aponta para ${baseURL} em produção: links de redefinição e logins sociais vão falhar.`)
 }
 
+const hostOf = (url: string) => { try { return new URL(url).host } catch { return '' } }
+/**
+ * Domínios em que o site atende. O callback do login social e os links de e-mail usam o domínio em que a pessoa
+ * está (não um fixo): com o site em www.garimpoucerto.com.br e a URL fixa no .vercel.app, o cookie de estado do
+ * Google ficava em um domínio e o retorno chegava no outro. Cada domínio daqui também precisa estar nos
+ * "URIs de redirecionamento autorizados" do Google (.../api/auth/callback/google). Extras: AUTH_ALLOWED_HOSTS (vírgulas).
+ * Sem curinga em produção: curinga viraria origem confiável para qualquer subdomínio.
+ */
+const allowedHosts = [...new Set([
+  hostOf(baseURL), hostOf(siteUrl), 'www.garimpoucerto.com.br', 'garimpoucerto.com.br', 'garimpo-certo-coral.vercel.app',
+  ...(process.env.AUTH_ALLOWED_HOSTS ?? '').split(',').map((host) => host.trim()).filter(Boolean),
+  ...(process.env.NODE_ENV === 'production' ? [] : ['localhost:*', '127.0.0.1:*']),
+].filter(Boolean))]
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL,
+  baseURL: { allowedHosts, protocol: process.env.NODE_ENV === 'production' ? 'https' : 'auto', fallback: baseURL },
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
