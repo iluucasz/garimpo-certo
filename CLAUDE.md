@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Garimpo" — a Brazilian discovery/affiliate-commerce platform (Next.js 16, App Router, Turbopack). Workspace package name is `@garimpo/contracts`; `package.json`'s own name (`my-project`) is a placeholder. All routes, UI copy, and API error messages are in Portuguese.
 
+**Links oficiais:** site https://www.garimpoucerto.com.br/ (canonical host, `www`), TikTok https://www.tiktok.com/@garimpou.certo (username `garimpou.certo`), Telegram @garimpoucerto. Use these when writing bios, post captions, share links or docs; never hard-code the domain in app code (`lib/site.ts#siteUrl`). TikTok bio limit is 80 characters.
+
 Package manager is **pnpm** (`pnpm-workspace.yaml`: `.` + `packages/*`). Do not use npm/yarn.
 
 ## Commands
