@@ -7,7 +7,7 @@ import { featureEnabled, getVisibleCoupons, type VisibleCoupon } from '@/lib/db/
 import { formatPrice } from '@/lib/format'
 import styles from '@/components/content/content.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 export const metadata = {
   title: 'Cupons',
   description: 'Cupons e campanhas da Shopee para economizar nas suas compras, com validade e condições.',

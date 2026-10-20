@@ -7,7 +7,7 @@ import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { formatPrice } from '@/lib/format'
 import styles from '@/components/editorial/editorial.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 export const metadata = {
   title: 'Guias de compra',
   description: 'O que observar antes de comprar em cada categoria, com os destaques atuais do catálogo.',

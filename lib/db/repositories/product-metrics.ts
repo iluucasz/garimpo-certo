@@ -70,7 +70,7 @@ async function loadProductMetrics(): Promise<ProductMetricsMap> {
   return metrics
 }
 
-const cachedProductMetrics = unstable_cache(loadProductMetrics, ['product-metrics-v2'], { revalidate: 300, tags: ['metrics'] })
+const cachedProductMetrics = unstable_cache(loadProductMetrics, ['product-metrics-v2'], { revalidate: 3600, tags: ['metrics'] })
 
 export async function getProductMetrics(): Promise<ProductMetricsMap> {
   try {

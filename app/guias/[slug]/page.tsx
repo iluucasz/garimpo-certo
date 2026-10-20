@@ -10,7 +10,7 @@ import { formatPrice } from '@/lib/format'
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/editorial/editorial.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   return guideSlugs(await getStoreCatalog()).map((slug) => ({ slug }))

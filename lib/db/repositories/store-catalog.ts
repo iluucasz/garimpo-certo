@@ -137,8 +137,8 @@ async function loadStoreCatalog(): Promise<StoreCatalog> {
   return assemble([part], meta)
 }
 
-const cachedShards = Array.from({ length: CATALOG_SHARDS }, (_, shard) => unstable_cache(() => loadProducts(shard), ['store-catalog-v2', String(shard)], { revalidate: 300, tags: ['catalog'] }))
-const cachedMeta = unstable_cache(loadMeta, ['store-catalog-meta-v2'], { revalidate: 300, tags: ['catalog'] })
+const cachedShards = Array.from({ length: CATALOG_SHARDS }, (_, shard) => unstable_cache(() => loadProducts(shard), ['store-catalog-v2', String(shard)], { revalidate: 86400, tags: ['catalog'] }))
+const cachedMeta = unstable_cache(loadMeta, ['store-catalog-meta-v2'], { revalidate: 86400, tags: ['catalog'] })
 
 /**
  * Catálogo da vitrine com cache entre requisições (5 min), em fragmentos. A importação agendada chama

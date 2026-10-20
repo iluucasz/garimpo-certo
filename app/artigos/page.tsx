@@ -3,7 +3,7 @@ import { StorefrontShell } from '@/components/storefront/storefront-shell'
 import { getPublishedContent } from '@/lib/db/repositories/site-content'
 import styles from '@/components/content/content.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 export const metadata = {
   title: 'Artigos',
   description: 'Guias, dicas e análises para escolher melhor antes de comprar.',

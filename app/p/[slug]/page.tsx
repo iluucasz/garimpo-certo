@@ -6,7 +6,7 @@ import { getPublishedContent, getPublishedContentBySlug } from '@/lib/db/reposit
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/storefront/content-pages.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   return (await getPublishedContent('page')).map((page) => ({ slug: page.slug }))

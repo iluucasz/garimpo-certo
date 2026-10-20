@@ -113,7 +113,8 @@ async function heartbeatLoop(isStopping: () => boolean) {
 async function conversionLoop(everyMinutes: number, isStopping: () => boolean) {
   while (!isStopping()) {
     await sleep(everyMinutes * 60_000)
-    if (await syncConversions('interval')) await notifySite()
+    // Sem notifySite aqui: invalidar o site inteiro a cada sincronização de comissões gerava milhares de regenerações (ISR) por dia.
+    await syncConversions('interval')
   }
 }
 

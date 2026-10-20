@@ -6,7 +6,7 @@ import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { buildCollections, collectionGroups, pickCovers } from '@/lib/catalog/collections'
 import styles from '@/components/editorial/editorial.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 export const metadata = {
   title: 'Coleções',
   description: 'Seleções montadas a partir do catálogo: o que viralizou, mais vendidos, achadinhos, promoções e o que está bem avaliado.',

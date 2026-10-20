@@ -8,7 +8,7 @@ import { siteUrl } from '@/lib/site'
 import contentStyles from '@/components/content/content.module.css'
 import styles from '@/components/storefront/content-pages.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   return (await getPublishedContent('article')).map((article) => ({ slug: article.slug }))

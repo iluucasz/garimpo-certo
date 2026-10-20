@@ -9,7 +9,7 @@ import { getCatalogRules, getGuideChecklists } from '@/lib/catalog/server-rules'
 import { siteUrl } from '@/lib/site'
 import styles from '@/components/editorial/editorial.module.css'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   const [catalog, rules] = await Promise.all([getStoreCatalog(), getCatalogRules()])
