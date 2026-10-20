@@ -1,6 +1,6 @@
 import type { Category, Offer, Product } from '@/lib/types'
 import { defaultCatalogRules, moneyLabel, ratingLabel, salesLabel, type CatalogRules } from './rules'
-import { currentPrice, matchesSignal, offerDiscount } from './signals'
+import { currentPrice, matchesSignal, offerDiscount, offersOf } from './signals'
 
 export type CuratedDefinition = { slug: string; title: string; tone: string; description: string; productIds: string[] }
 export type CatalogInput = { products: Product[]; offers: Offer[]; categories?: Category[]; curated?: CuratedDefinition[]; rules?: CatalogRules }
@@ -31,8 +31,8 @@ type Definition = {
 }
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
-const soldOf = (product: Product, offers: Offer[]) => Math.max(0, ...offers.filter((offer) => offer.productId === product.id).map((offer) => offer.soldCount ?? 0))
-const bestOffer = (product: Product, offers: Offer[]) => offers.filter((offer) => offer.productId === product.id).sort((a, b) => a.price - b.price)[0]
+const soldOf = (product: Product, offers: Offer[]) => Math.max(0, ...offersOf(offers, product.id).map((offer) => offer.soldCount ?? 0))
+const bestOffer = (product: Product, offers: Offer[]) => offersOf(offers, product.id).slice().sort((a, b) => a.price - b.price)[0]
 const bySold = (a: Product, b: Product, { offers }: CatalogInput) => soldOf(b, offers) - soldOf(a, offers)
 const byScore = (a: Product, b: Product) => b.score - a.score
 const byDiscount = (a: Product, b: Product, { offers }: CatalogInput) => offerDiscount(bestOffer(b, offers)) - offerDiscount(bestOffer(a, offers))

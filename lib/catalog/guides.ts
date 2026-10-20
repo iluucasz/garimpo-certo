@@ -1,5 +1,5 @@
 import type { Category, Offer, Product } from '@/lib/types'
-import { currentPrice, offerDiscount } from './signals'
+import { currentPrice, offerDiscount, offersOf } from './signals'
 
 export type GuideCheck = { title: string; text: string }
 
@@ -149,7 +149,7 @@ export function buildGuide(input: Input, slug: string): Guide | null {
   if (products.length < 3) return null
 
   const facts = products.map((product) => {
-    const offers = input.offers.filter((offer) => offer.productId === product.id)
+    const offers = offersOf(input.offers, product.id)
     const best = [...offers].sort((a, b) => a.price - b.price)[0]
     return { product, price: currentPrice(product, input.offers), sold: Math.max(0, ...offers.map((offer) => offer.soldCount ?? 0)), discount: offerDiscount(best) }
   })

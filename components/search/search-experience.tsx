@@ -8,7 +8,7 @@ import { useVisitorState } from '@/components/visitor-state-provider'
 import { ProductGrid } from '@/components/product/product-card'
 import { useStoreData } from '@/components/store-data-provider'
 import { rankProducts, searchProducts } from '@/lib/catalog/search'
-import { catalogSignals, currentPrice, matchesSignal } from '@/lib/catalog/signals'
+import { catalogSignals, currentPrice, matchesSignal, offersOf } from '@/lib/catalog/signals'
 import { platformServices } from '@/lib/platform'
 import styles from './search-experience.module.css'
 
@@ -65,7 +65,7 @@ export function SearchExperience({ initialCategory, initialParams }: { initialCa
   const results = useMemo(() => {
     const filtered = searchProducts(products, query, category).filter((product) => currentPrice(product, offers) <= max && signals.every((signal) => matchesSignal(signal, product, offers, rules)))
     if (sort === 'mais-vendidos') {
-      const sold = (id: string) => Math.max(0, ...offers.filter((offer) => offer.productId === id).map((offer) => offer.soldCount ?? 0))
+      const sold = (id: string) => Math.max(0, ...offersOf(offers, id).map((offer) => offer.soldCount ?? 0))
       return [...filtered].sort((a, b) => sold(b.id) - sold(a.id))
     }
     return rankProducts(filtered, sort, offers)
