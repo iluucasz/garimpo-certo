@@ -8,7 +8,8 @@ import { siteUrl } from '@/lib/site'
 const base=siteUrl
 // Sem isto o HTML do produto ficava congelado no preço do build; o cron invalida a tag 'catalog'.
 export const revalidate = 86400
-export async function generateStaticParams(){const{products}=await getStoreCatalog();return products.map((product)=>({slug:product.slug}))}
+// Vazio de propósito: pré-renderizar ~2.500 produtos a cada deploy (cada página leva o catálogo inteiro) custava centenas de milhares de ISR writes por push no plano Hobby. A página nasce na primeira visita e fica em cache.
+export function generateStaticParams(){return[]}
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params;const{products}=await getStoreCatalog();const product=products.find((item)=>item.slug===slug);if(!product)notFound();return{title:product.name,description:product.description,alternates:{canonical:`/produto/${product.slug}`},openGraph:{type:'website',url:`${base}/produto/${product.slug}`,title:product.name,description:product.description,images:[{url:product.image,alt:product.name}]},twitter:{card:'summary_large_image',title:product.name,description:product.description,images:[product.image]}}}
 export default async function ProductPage({params}:{params:Promise<{slug:string}>}){
   const{slug}=await params
